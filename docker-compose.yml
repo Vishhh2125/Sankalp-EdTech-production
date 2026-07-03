@@ -1,0 +1,328 @@
+version: '3.8'
+
+# ─────────────────────────────────────────────
+# Global log rotation applied to every service
+# max-size: rotate when a single log file hits 10 MB
+# max-file: keep only the last 5 rotated files
+# (= 50 MB max per service)
+# ─────────────────────────────────────────────
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+
+  nginx:
+    image: nginx:alpine
+    container_name: ott-nginx
+
+    ports:
+      - "8080:80"
+
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # Persist the HLS segment cache across nginx restarts.
+      # Remove this volume line if you prefer a cold cache on restart.
+      - nginx_hls_cache:/var/cache/nginx/hls
+      # Persist the thumbnail/banner cache across nginx restarts.
+      - nginx_image_cache:/var/cache/nginx/images
+      - nginx_live_hls_cache:/var/cache/nginx/live_hls
+
+    depends_on:
+      - admin
+      - backend
+      - mediamtx
+
+    # Nginx is I/O-bound (proxying + cache reads), 1 core is plenty.
+    # worker_processes auto inside nginx.conf uses all allocated CPUs.
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 50g
+
+    restart: unless-stopped
+    logging: *default-logging
+
+  admin:
+    build: ./frontend-admin
+    container_name: ott-admin-v2
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512m
+
+    restart: unless-stopped
+    logging: *default-logging
+
+  backend:
+    build: ./backend
+    container_name: ott-backend
+
+    command:
+      [
+        "sh",
+        "-c",
+        "npx prisma migrate deploy && npx prisma generate && node server.js"
+      ]
+      # NOTE: removed --watch (not suitable for production/shared server).
+      # Use PM2 outside Docker for clustering:
+      #   pm2 start server.js -i 4 --name ott-backend
+      # OR set MANUAL_CLUSTER=true + CLUSTER_WORKERS=4 below to let
+      # server.js manage its own workers inside the container.
+
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+    ports:
+      - "3000:3000"
+
+    env_file:
+      - ./backend/.env.docker
+
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+
+      # ── Cluster config ──────────────────────────────────────────
+      # Set MANUAL_CLUSTER=true to let server.js fork 4 worker
+      # processes inside this container (uses ~4 cores).
+      # Set to false if you're using PM2 outside Docker instead.
+      - MANUAL_CLUSTER=true
+      - CLUSTER_WORKERS=4
+
+      - REDIS_URL=redis://redis:6379
+      - MINIO_ENDPOINT=minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_BUCKET=ott-media
+      - MINIO_USE_SSL=false
+      - MINIO_PUBLIC_HOST=http://${LOCAL_IP}:8080
+      - SERVER_ORIGIN=http://${LOCAL_IP}:8080
+      - HLS_SIGNING_SECRET=0cc3d9a7f14d3cfe6eb43055be850b6a066b57c6564416ae18dc16573c75a6d5
+      - HLS_SIGNED_URL_TTL=7200
+      - MEDIAMTX_RTMP_HOST=mediamtx
+      - MEDIAMTX_RTMP_PORT=1935
+      - MEDIAMTX_WHIP_HOST=${LOCAL_IP}
+      - MEDIAMTX_WHIP_PORT=8889
+      - MEDIAMTX_HLS_HOST=mediamtx
+      - MEDIAMTX_HLS_PORT=8888
+      - LIVE_PUBLIC_BASE_URL=http://${LOCAL_IP}:8080
+      - CLAMAV_HOST=clamav
+      - CLAMAV_PORT=3310
+
+    depends_on:
+      - postgres
+      - redis
+      - minio
+
+    # 4 Node workers + occasional overhead — capped at 4.5 cores.
+    # Raise to 6.0 if you want headroom for burst traffic and your
+    # other hosted apps are not latency-sensitive.
+    deploy:
+      resources:
+        limits:
+          cpus: '4.5'
+          memory: 4g
+
+    restart: unless-stopped
+    logging: *default-logging
+
+  worker:
+    build: ./backend
+    container_name: ott-worker
+
+    command:
+      ["node", "workers/transcode.worker.js"]
+
+    env_file:
+      - ./backend/.env.docker
+
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://ottdev:ottdev123@postgres:5432/ott_dev
+      - REDIS_URL=redis://redis:6379
+      - MINIO_ENDPOINT=minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_BUCKET=ott-media
+      - MINIO_USE_SSL=false
+      - MINIO_PUBLIC_HOST=http://${LOCAL_IP}:8080
+      - SERVER_ORIGIN=http://${LOCAL_IP}:8080
+
+    depends_on:
+      - postgres
+      - redis
+      - minio
+
+    # FFmpeg is CPU-heavy. 3 cores handles concurrency:2 jobs
+    # with room for one profile to burst. Raise to 4.0 if you
+    # increase worker concurrency to 4 later.
+    deploy:
+      resources:
+        limits:
+          cpus: '3.0'
+          memory: 8g    # transcode worker downloads full video to /tmp
+
+    restart: unless-stopped
+    logging: *default-logging
+
+  # Live ingest (RTMP + WHIP) — parallel to VOD/MinIO pipeline (Part 1)
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: ott-mediamtx
+
+    volumes:
+      - ./mediamtx/mediamtx.yml:/mediamtx.yml:ro
+
+    environment:
+      - MTX_WEBRTCADDITIONALHOSTS=${LOCAL_IP}
+
+    ports:
+      - "1935:1935"       # RTMP (OBS)
+      - "8888:8888"       # HLS (viewer segments — nginx proxies in Part 3)
+      - "8889:8889"       # WebRTC/WHIP HTTP signaling
+      - "8189:8189/udp"   # WebRTC ICE/media (must be reachable for mobile NAT)
+      - "8189:8189/tcp"   # WebRTC ICE/media TCP fallback
+
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1g
+
+    depends_on:
+      - backend
+
+    restart: unless-stopped
+    logging: *default-logging
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ott-postgres
+
+    ports:
+      - "5432:5432"
+
+    environment:
+      POSTGRES_USER: ottdev
+      POSTGRES_PASSWORD: ottdev123
+      POSTGRES_DB: ott_dev
+
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 4g
+
+    restart: unless-stopped
+    logging: *default-logging
+
+  redis:
+    image: redis:7-alpine
+    container_name: ott-redis
+
+    command: redis-server --maxmemory 8gb --maxmemory-policy noeviction
+
+    volumes:
+      - redis_data:/data
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 9g    # slightly above maxmemory to give Redis OS overhead
+
+    restart: unless-stopped
+    logging: *default-logging
+
+  minio:
+    image: minio/minio:latest
+    container_name: ott-minio
+
+    command: server /data --console-address ':9001'
+
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+      MINIO_BROWSER_REDIRECT_URL: http://${LOCAL_IP}:8080/minio-console
+      MINIO_API_CORS_ALLOW_ORIGIN: "http://${LOCAL_IP},http://${LOCAL_IP}:8080,http://localhost,http://localhost:80"
+
+    volumes:
+      - minio_data:/data
+
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 8g
+
+    restart: unless-stopped
+    logging: *default-logging
+
+  prisma-studio:
+    build: ./backend
+    container_name: ott-prisma-studio
+
+    command: >
+      sh -c "npx prisma generate && npx prisma studio --port 5555 --browser none --hostname 0.0.0.0"
+
+    ports:
+      - "5555:5555"
+
+    volumes:
+      # Keep Prisma Studio in sync with local schema without rebuilding the image
+      - ./backend/prisma:/app/prisma
+
+    environment:
+      - DATABASE_URL=postgresql://ottdev:ottdev123@postgres:5432/ott_dev
+      - NODE_ENV=development
+
+    depends_on:
+      - postgres
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1g
+
+    restart: unless-stopped
+    logging: *default-logging
+
+  clamav:
+    image: clamav/clamav:latest
+    container_name: ott-clamav
+    volumes:
+      - clamav_data:/var/lib/clamav
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1g
+    restart: unless-stopped
+    logging: *default-logging
+
+volumes:
+  pg_data:
+  redis_data:
+  minio_data:
+  clamav_data:
+  nginx_hls_cache:    # persistent nginx HLS cache
+  nginx_image_cache:  # persistent nginx thumbnail/banner cache
+  nginx_live_hls_cache:

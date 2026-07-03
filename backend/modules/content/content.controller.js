@@ -1,0 +1,123 @@
+import * as service from './content.service.js';
+
+// ── Categories ──
+async function getCategories(req, res, next) {
+  try { res.json(await service.getAllCategories()); } catch (e) { next(e); }
+}
+async function createCategory(req, res, next) {
+  try { res.status(201).json(await service.createCategory(req.body, req.admin.id)); } catch (e) { next(e); }
+}
+async function updateCategory(req, res, next) {
+  try { res.json(await service.updateCategory(req.params.id, req.body)); } catch (e) { next(e); }
+}
+async function deleteCategory(req, res, next) {
+  try { res.json(await service.deleteCategory(req.params.id)); } catch (e) { next(e); }
+}
+
+// ── Tags ──
+async function getTags(req, res, next) {
+  try { res.json(await service.getAllTags()); } catch (e) { next(e); }
+}
+async function createTag(req, res, next) {
+  try { res.status(201).json(await service.createTag(req.body)); } catch (e) { next(e); }
+}
+async function updateTag(req, res, next) {
+  try { res.json(await service.updateTag(req.params.id, req.body)); } catch (e) { next(e); }
+}
+async function deleteTag(req, res, next) {
+  try { res.json(await service.deleteTag(req.params.id)); } catch (e) { next(e); }
+}
+
+// ── Shows (Dramas) ──
+async function getShows(req, res, next) {
+  try {
+    const { category_id, status, search, page, limit } = req.query;
+    res.json(await service.getAllShows({
+      category_id,
+      status,
+      search,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || 50,
+      include_inactive: req.query.include_inactive === 'true',
+    }));
+  } catch (e) { next(e); }
+}
+async function getShow(req, res, next) {
+  try { res.json(await service.getShowById(req.params.id)); } catch (e) { next(e); }
+}
+async function getRelatedShows(req, res, next) {
+  try {
+    const limit = Math.min(parseInt(req.query.limit, 10) || 6, 6);
+    res.json(await service.getRelatedShows(req.params.id, limit));
+  } catch (e) { next(e); }
+}
+async function createShow(req, res, next) {
+  try { res.status(201).json(await service.createShow(req.body, req.admin.id)); } catch (e) { next(e); }
+}
+async function updateShow(req, res, next) {
+  try { res.json(await service.updateShow(req.params.id, req.body)); } catch (e) { next(e); }
+}
+async function deleteShow(req, res, next) {
+  try { res.json(await service.deleteShow(req.params.id)); } catch (e) { next(e); }
+}
+async function togglePublish(req, res, next) {
+  try { res.json(await service.toggleShowPublish(req.params.id)); } catch (e) { next(e); }
+}
+async function updateFeedPosition(req, res, next) {
+  try {
+    const position = parseInt(req.body.feed_position) || 0;
+    res.json(await service.updateFeedPosition(req.params.id, position));
+  } catch (e) { next(e); }
+}
+
+// ── Episodes ──
+async function getEpisodes(req, res, next) {
+  try { res.json(await service.getEpisodesByShow(req.params.showId)); } catch (e) { next(e); }
+}
+async function createEpisode(req, res, next) {
+  try { res.status(201).json(await service.createEpisode(req.body)); } catch (e) { next(e); }
+}
+async function updateEpisode(req, res, next) {
+  try { res.json(await service.updateEpisode(req.params.id, req.body)); } catch (e) { next(e); }
+}
+async function deleteEpisode(req, res, next) {
+  try { res.json(await service.deleteEpisode(req.params.id)); } catch (e) { next(e); }
+}
+
+// ── Home promotions (mobile) ──
+async function getHomeBanners(req, res, next) {
+  try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 3, 1), 10);
+    const banners = await service.getActiveHomeBanners(limit);
+    res.json({ banners });
+  } catch (e) {
+    next(e);
+  }
+}
+
+async function getHomeHeroBanners(req, res, next) {
+  try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 20);
+    const banners = await service.getActiveHeroBanners(limit);
+    res.json({ banners });
+  } catch (e) {
+    next(e);
+  }
+}
+
+async function getHomeAnnouncements(req, res, next) {
+  try {
+    const announcements = await service.getLatestAnnouncements(3);
+    res.json({ announcements });
+  } catch (e) {
+    next(e);
+  }
+}
+
+export {
+  getCategories, createCategory, updateCategory, deleteCategory,
+  getTags, createTag, updateTag, deleteTag,
+  getShows, getShow, getRelatedShows, createShow, updateShow, deleteShow, togglePublish, updateFeedPosition,
+  getEpisodes, createEpisode, updateEpisode, deleteEpisode,
+  getHomeBanners, getHomeHeroBanners, getHomeAnnouncements,
+};

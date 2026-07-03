@@ -1,0 +1,242 @@
+/**
+ * Auth Service - Handles token management for mobile (iOS/Android)
+ * 
+ * Mobile (React Native Expo):
+ *   - Uses expo-secure-store for persistent storage
+ *   - accessToken: stored in Redux (runtime)
+ *   - refreshToken: stored in SecureStore (persistent)
+ * 
+ * Backend handles:
+ *   - Web cookies (set by backend for web clients)
+ *   - Token rotation on refresh
+ */
+
+import * as SecureStore from 'expo-secure-store';
+
+const PENDING_REGISTRATION_KEY = 'pendingRegistration';
+const PENDING_PASSWORD_RESET_KEY = 'pendingPasswordReset';
+
+/**
+ * Get refresh token from SecureStore
+ * @returns {Promise<string|null>} refreshToken or null
+ */
+export const getRefreshToken = async () => {
+  try {
+    const token = await SecureStore.getItemAsync('refreshToken');
+    return token || null;
+  } catch (error) {
+    console.error('[authService] Error getting refresh token:', error);
+    return null;
+  }
+};
+
+/**
+ * Get access token from SecureStore (used for offline cold-start fallback).
+ * At runtime the authoritative accessToken lives in Redux; this disk copy
+ * is only read by initAuth when a token-refresh API call fails due to
+ * no network.
+ * @returns {Promise<string|null>} accessToken or null
+ */
+export const getAccessTokenFromStore = async () => {
+  try {
+    const token = await SecureStore.getItemAsync('accessToken');
+    return token || null;
+  } catch (error) {
+    console.error('[authService] Error getting stored access token:', error);
+    return null;
+  }
+};
+
+/**
+ * Get access token from Redux store (passed as parameter)
+ * @param {object} store - Redux store
+ * @returns {string|null} accessToken or null
+ */
+export const getAccessToken = (store) => {
+  try {
+    return store?.auth?.accessToken || null;
+  } catch (error) {
+    console.error('[authService] Error getting access token:', error);
+    return null;
+  }
+};
+
+/**
+ * Save tokens to SecureStore and Redux state
+ * @param {string} accessToken - Access token (stored in Redux)
+ * @param {string} refreshToken - Refresh token (stored in SecureStore)
+ * @returns {Promise<void>}
+ */
+export const saveTokens = async (accessToken, refreshToken) => {
+  try {
+    // Mobile: save both tokens to SecureStore
+    // refreshToken is the primary persistent credential;
+    // accessToken is cached so initAuth can restore a stale session when offline.
+    if (refreshToken) {
+      await SecureStore.setItemAsync('refreshToken', refreshToken);
+    }
+    if (accessToken) {
+      await SecureStore.setItemAsync('accessToken', accessToken);
+    }
+    console.log('[authService] Tokens saved to SecureStore');
+  } catch (error) {
+    console.error('[authService] Error saving tokens:', error);
+    throw error;
+  }
+};
+
+/**
+ * Save user profile data to SecureStore
+ * @param {object} user - User object with name, email, role, plan, coins
+ * @returns {Promise<void>}
+ */
+export const saveUserData = async (user) => {
+  try {
+    if (user) {
+      await SecureStore.setItemAsync('userData', JSON.stringify(user));
+    }
+  } catch (error) {
+    console.error('[authService] Error saving user data:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get user profile data from SecureStore
+ * @returns {Promise<object|null>} user object or null
+ */
+export const getUserData = async () => {
+  try {
+    const userData = await SecureStore.getItemAsync('userData');
+    return userData ? JSON.parse(userData) : null;
+  } catch (error) {
+    console.error('[authService] Error getting user data:', error);
+    return null;
+  }
+};
+
+/**
+ * Merge partial fields into stored user JSON (e.g. coins after wallet top-up).
+ */
+export const patchUserDataInStore = async (partial) => {
+  try {
+    const existing = await getUserData();
+    if (!existing) return;
+    await saveUserData({ ...existing, ...partial });
+  } catch (error) {
+    console.error('[authService] Error patching user data:', error);
+    throw error;
+  }
+};
+
+/**
+ * Clear all tokens from SecureStore
+ * @returns {Promise<void>}
+ */
+export const clearTokens = async () => {
+  try {
+    // Mobile: remove all auth data from SecureStore
+    await SecureStore.deleteItemAsync('refreshToken');
+    await SecureStore.deleteItemAsync('accessToken');
+    await SecureStore.deleteItemAsync('userData');
+    await SecureStore.deleteItemAsync(PENDING_REGISTRATION_KEY);
+    await SecureStore.deleteItemAsync(PENDING_PASSWORD_RESET_KEY);
+    console.log('[authService] All auth data removed from SecureStore');
+  } catch (error) {
+    console.error('[authService] Error clearing tokens:', error);
+    throw error;
+  }
+};
+
+/**
+ * Save pending registration data so the OTP flow can survive app restarts.
+ * @param {object} registrationData
+ * @returns {Promise<void>}
+ */
+export const savePendingRegistration = async (registrationData) => {
+  try {
+    if (!registrationData) return;
+    await SecureStore.setItemAsync(
+      PENDING_REGISTRATION_KEY,
+      JSON.stringify(registrationData)
+    );
+  } catch (error) {
+    console.error('[authService] Error saving pending registration:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get pending registration data from SecureStore.
+ * @returns {Promise<object|null>}
+ */
+export const getPendingRegistration = async () => {
+  try {
+    const pending = await SecureStore.getItemAsync(PENDING_REGISTRATION_KEY);
+    return pending ? JSON.parse(pending) : null;
+  } catch (error) {
+    console.error('[authService] Error getting pending registration:', error);
+    return null;
+  }
+};
+
+/**
+ * Clear pending registration data.
+ * @returns {Promise<void>}
+ */
+export const clearPendingRegistration = async () => {
+  try {
+    await SecureStore.deleteItemAsync(PENDING_REGISTRATION_KEY);
+  } catch (error) {
+    console.error('[authService] Error clearing pending registration:', error);
+  }
+};
+
+export const savePendingPasswordReset = async (resetData) => {
+  try {
+    if (!resetData) return;
+    await SecureStore.setItemAsync(
+      PENDING_PASSWORD_RESET_KEY,
+      JSON.stringify(resetData)
+    );
+  } catch (error) {
+    console.error('[authService] Error saving pending password reset:', error);
+    throw error;
+  }
+};
+
+export const getPendingPasswordReset = async () => {
+  try {
+    const pending = await SecureStore.getItemAsync(PENDING_PASSWORD_RESET_KEY);
+    return pending ? JSON.parse(pending) : null;
+  } catch (error) {
+    console.error('[authService] Error getting pending password reset:', error);
+    return null;
+  }
+};
+
+export const clearPendingPasswordReset = async () => {
+  try {
+    await SecureStore.deleteItemAsync(PENDING_PASSWORD_RESET_KEY);
+  } catch (error) {
+    console.error('[authService] Error clearing pending password reset:', error);
+  }
+};
+
+/**
+ * Get client type header value (always mobile for this app)
+ * @returns {string} 'mobile'
+ */
+export const getClientType = () => {
+  return 'mobile';
+};
+
+/**
+ * Check if user is authenticated
+ * @param {object} store - Redux store
+ * @returns {boolean} true if accessToken exists
+ */
+export const isAuthenticated = (store) => {
+  return !!getAccessToken(store);
+};
+

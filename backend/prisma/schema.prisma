@@ -1,0 +1,801 @@
+// This is your Prisma schema file.
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────
+// ENUMS (from main)
+// ──────────────────────────────────────
+
+enum Role {
+  ADMIN
+  SUB_ADMIN
+  USER
+}
+
+enum Plan {
+  FREE
+  MEMBER
+}
+
+enum MembershipStatus {
+  ACTIVE
+  EXPIRED
+}
+
+enum LiveStreamStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+}
+
+// ──────────────────────────────────────
+// USERS
+// ──────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(255)
+  password     String   @db.VarChar(255)
+  name         String   @db.VarChar(100)
+  role         Role     @default(USER)
+  plan         Plan?
+  coins        Int?     @default(0)
+  refreshToken String?
+  fcm_token    String?  @db.VarChar(500)
+  isBlocked    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sub_admin_access       SubAdminAccess[]
+  memberships            UserMembership[]
+  coin_transactions      CoinTransaction[]
+  watch_history          WatchHistory[]
+  episode_access         EpisodeAccess[]
+  daily_checkins         DailyCheckin[]
+  bookmarks              Bookmark[]
+  playlists              Playlist[]
+  notifications          NotificationLog[]
+  payments               PaymentTransaction[]
+  ratings                Rating[]
+  activity_logs          AdminActivityLog[]
+  live_streams           LiveStream[]
+  viewer_sessions        LiveViewerSession[]
+  assignment_submissions AssignmentSubmission[] @relation("UserSubmissions")
+  graded_submissions     AssignmentSubmission[] @relation("GradedSubmissions")
+  quiz_attempts          QuizAttempt[]
+
+  @@map("users")
+}
+
+// ──────────────────────────────────────
+// OTP & REGISTRATION (Email Verification)
+// ──────────────────────────────────────
+
+model OtpToken {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(255) // Store email (not user_id) since user doesn't exist yet
+  otp_hash     String   @db.VarChar(255) // Bcrypt hashed OTP (NEVER store plaintext)
+  attempts     Int      @default(0) // Track failed attempts
+  max_attempts Int      @default(3) // Fail after 3 wrong attempts
+  expires_at   DateTime // OTP expires after 10 minutes
+  created_at   DateTime @default(now())
+  // Unique constraint already defined on the `email` field above (@unique)
+  @@index([expires_at]) // For cleanup queries
+  @@map("otp_tokens")
+}
+
+model RegistrationSession {
+  id            String   @id @default(uuid()) @db.Uuid
+  email         String   @unique @db.VarChar(255)
+  name          String   @db.VarChar(100)
+  password_hash String   @db.VarChar(255) // Store hashed password temporarily
+  expires_at    DateTime // Session expires after 24 hours or after OTP verified
+  created_at    DateTime @default(now())
+
+  @@index([expires_at]) // For cleanup queries
+  @@map("registration_sessions")
+}
+
+model PasswordResetSession {
+  id         String   @id @default(uuid()) @db.Uuid
+  email      String   @unique @db.VarChar(255)
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  @@index([expires_at])
+  @@map("password_reset_sessions")
+}
+
+model SubAdminAccess {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  section    String   @db.VarChar(50)
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, section])
+  @@map("sub_admin_access")
+}
+
+// ──────────────────────────────────────
+// MEMBERSHIPS & PAYMENTS
+// ──────────────────────────────────────
+
+model MembershipPlan {
+  id          String   @id @default(uuid()) @db.Uuid
+  category_id String?  @db.Uuid
+  name        String   @db.VarChar(50)
+  duration    String   @db.VarChar(20)
+  price       Decimal  @db.Decimal(10, 2)
+  currency    String   @default("INR") @db.VarChar(10)
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+
+  category    Category?        @relation(fields: [category_id], references: [id])
+  memberships UserMembership[]
+
+  @@index([category_id], name: "idx_membership_plans_category")
+  @@map("membership_plans")
+}
+
+model UserMembership {
+  id         String             @id @default(uuid()) @db.Uuid
+  user_id    String             @db.Uuid
+  plan_id    String             @db.Uuid
+  payment_id String?            @db.Uuid
+  start_date DateTime
+  end_date   DateTime?
+  status     MembershipStatus   @default(ACTIVE)
+  created_at DateTime           @default(now())
+
+  user    User                @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  plan    MembershipPlan      @relation(fields: [plan_id], references: [id])
+  payment PaymentTransaction? @relation(fields: [payment_id], references: [id])
+
+  @@index([user_id, status, end_date], name: "idx_um_user_status")
+  @@index([plan_id, status], name: "idx_um_plan_status")
+  @@map("user_memberships")
+}
+
+model PaymentTransaction {
+  id                  String   @id @default(uuid()) @db.Uuid
+  user_id             String   @db.Uuid
+  type                String   @db.VarChar(20)
+  amount              Decimal  @db.Decimal(10, 2)
+  currency            String   @default("INR") @db.VarChar(10)
+  gateway             String   @default("cashfree") @db.VarChar(30)
+  gateway_ref         String?  @db.VarChar(255)
+  status              String   @default("pending") @db.VarChar(20)
+  plan_id             String?  @db.Uuid
+  topup_plan_id       String?  @db.Uuid
+  wallet_coins        Int?
+  cashfree_order_id   String?  @unique @db.VarChar(255)
+  cashfree_payment_id String?  @db.VarChar(255)
+  payment_method      String?  @db.VarChar(50)
+  webhook_event_id    String?  @unique @db.VarChar(255)
+  webhook_payload     String?  @db.Text
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  user        User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  memberships UserMembership[]
+  coin_topups CoinTransaction[]
+
+  @@index([status, type, created_at(sort: Desc)], name: "idx_pt_status_type_created")
+  @@index([user_id, status, created_at(sort: Desc)], name: "idx_pt_user_status_created")
+  @@index([cashfree_order_id], name: "idx_pt_cashfree_order")
+  @@map("payment_transactions")
+}
+
+// ──────────────────────────────────────
+// TOP-UP PLANS (DYNAMIC COIN PACKAGES)
+// ──────────────────────────────────────
+
+model TopUpPlan {
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String   @db.VarChar(100)
+  price         Decimal  @db.Decimal(10, 2)
+  coins_amount  Int
+  currency      String   @default("INR") @db.VarChar(10)
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@map("top_up_plans")
+}
+
+// ──────────────────────────────────────
+// CONTENT: CATEGORIES, TAGS, SHOWS, EPISODES
+// ──────────────────────────────────────
+
+model Category {
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String   @db.VarChar(100)
+  display_order Int      @default(0)
+  is_active     Boolean  @default(true)
+  created_by    String?  @db.Uuid
+  created_at    DateTime @default(now())
+
+  shows            Show[]
+  membership_plans MembershipPlan[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique @db.VarChar(50)
+  is_trending Boolean  @default(false)
+  created_at  DateTime @default(now())
+
+  show_tags ShowTag[]
+
+  @@map("tags")
+}
+
+model Show {
+  id                  String   @id @default(uuid()) @db.Uuid
+  category_id         String   @db.Uuid
+  title               String   @db.VarChar(255)
+  synopsis            String?  @db.Text
+  thumbnail_url       String?  @db.VarChar(500)
+  banner_url          String?  @db.VarChar(500)
+  view_count          Int      @default(0)
+  manual_view_count   Int      @default(0)
+  rating_avg          Float    @default(0)
+  rating_count        Int      @default(0)
+  feed_position       Int      @default(0)
+  is_active           Boolean  @default(true)
+  created_at          DateTime @default(now())
+
+  category          Category         @relation(fields: [category_id], references: [id])
+  episodes          Episode[]
+  show_tags         ShowTag[]
+  banners           Banner[]
+  hero_banners      HeroBanner[]
+  bookmarks         Bookmark[]
+  playlist_items    PlaylistItem[]
+  collection_shows  CollectionShow[]
+  ratings           Rating[]
+  view_count_events ViewCountEvent[]
+  assignments       Assignment[]
+  materials         Material[]
+  quizzes           Quiz[]
+
+  @@index([category_id, is_active], name: "idx_shows_category")
+  @@index([feed_position, is_active], name: "idx_shows_feed_position")
+}
+
+model ShowTag {
+  show_id String @db.Uuid
+  tag_id  String @db.Uuid
+
+  show Show @relation(fields: [show_id], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@id([show_id, tag_id])
+  @@map("show_tags")
+}
+
+enum VideoSource {
+  UPLOAD
+  YOUTUBE
+}
+
+model Episode {
+  id                 String          @id @default(uuid()) @db.Uuid
+  show_id            String          @db.Uuid
+  episode_num        Int
+  title              String          @db.VarChar(255)
+  is_free            Boolean         @default(false)
+  coin_cost          Int             @default(0)
+  hls_master_url     String?         @db.VarChar(500)
+  duration_sec       Int             @default(0)
+  status             String          @default("processing") @db.VarChar(20)
+  total_profiles     Int             @default(4)
+  completed_profiles Int             @default(0)
+  video_source       VideoSource     @default(UPLOAD)
+  youtube_video_id   String?         @db.VarChar(20)
+  created_at         DateTime        @default(now())
+
+  show               Show            @relation(fields: [show_id], references: [id], onDelete: Cascade)
+  watch_history      WatchHistory[]
+  episode_access     EpisodeAccess[]
+  
+  // This is the missing line that fixes the error:
+  bookmarks          Bookmark[]      
+
+  @@index([show_id, episode_num], name: "idx_episodes_show")
+  @@map("episodes")
+}
+
+// ──────────────────────────────────────
+// USER ACTIVITY: WATCH, UNLOCK, COINS
+// ──────────────────────────────────────
+
+model WatchHistory {
+  id           String   @id @default(uuid()) @db.Uuid
+  user_id      String   @db.Uuid
+  episode_id   String   @db.Uuid
+  progress_sec Int      @default(0)
+  last_watched DateTime @default(now())
+
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  episode Episode @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, episode_id], name: "idx_wh_user_ep")
+  @@index([user_id, last_watched(sort: Desc)], name: "idx_wh_user_last")
+  @@map("watch_history")
+}
+
+model EpisodeAccess {
+  id          String   @id @default(uuid()) @db.Uuid
+  user_id     String   @db.Uuid
+  episode_id  String   @db.Uuid
+  coins_spent Int
+  unlocked_at DateTime @default(now())
+
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  episode Episode @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, episode_id], name: "idx_ea_user_ep")
+  @@index([episode_id], name: "idx_ea_episode_id")
+  @@map("episode_access")
+}
+
+// ──────────────────────────────────────
+// VIEW COUNT EVENTS (audit log per qualified watch)
+// ──────────────────────────────────────
+
+model ViewCountEvent {
+  id                   String   @id @default(uuid()) @db.Uuid
+  session_id           String   @db.VarChar(100)
+  show_id              String   @db.Uuid
+  episode_id           String?  @db.Uuid
+  user_id              String?  @db.Uuid
+  watch_duration_sec   Int
+  source               String   @default("organic") @db.VarChar(10)
+  note                 String?  @db.Text
+  created_at           DateTime @default(now())
+
+  show Show @relation(fields: [show_id], references: [id], onDelete: Cascade)
+
+  // Deduplication key: one view per session per show
+  @@unique([session_id, show_id], name: "idx_vce_session_show")
+  @@index([show_id, created_at(sort: Desc)], name: "idx_vce_show_created")
+  @@index([created_at(sort: Desc)], name: "idx_vce_created")
+  @@map("view_count_events")
+}
+
+model CoinTransaction {
+  id          String   @id @default(uuid()) @db.Uuid
+  user_id     String   @db.Uuid
+  type        String   @db.VarChar(10)
+  amount      Int
+  reason      String   @db.VarChar(30)
+  ref_id      String?  @db.VarChar(100)
+  title       String?  @db.VarChar(120)
+  description String?  @db.VarChar(255)
+  fiat_paise  Int?
+  payment_id  String?  @db.Uuid
+  status      String   @default("completed") @db.VarChar(20)
+  created_at  DateTime @default(now())
+
+  user                User                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  payment_transaction PaymentTransaction?  @relation(fields: [payment_id], references: [id])
+
+  @@index([user_id, created_at(sort: Desc)], name: "idx_ct_user_created")
+  @@index([reason, created_at(sort: Desc)], name: "idx_ct_reason_created")
+  @@map("coin_transactions")
+}
+
+model DailyCheckin {
+  id           String   @id @default(uuid()) @db.Uuid
+  user_id      String   @db.Uuid
+  checkin_date DateTime @db.Date
+  coins_awarded Int
+  streak_day   Int
+  created_at   DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, checkin_date], name: "idx_dc_user_date")
+  @@map("daily_checkins")
+}
+
+// ──────────────────────────────────────
+// BANNERS, COLLECTIONS, BOOKMARKS, PLAYLISTS
+// ──────────────────────────────────────
+
+model Banner {
+  id            String    @id @default(uuid()) @db.Uuid
+  show_id       String?   @db.Uuid
+  image_url     String    @db.VarChar(500)
+  title         String?   @db.VarChar(255)
+  // `link_type` and `display_order` removed: banners always link to a show and are
+  // ordered by creation time (first uploaded first).
+  is_active     Boolean   @default(true)
+  starts_at     DateTime?
+  ends_at       DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  show Show? @relation(fields: [show_id], references: [id])
+
+  @@index([is_active, starts_at, ends_at], name: "idx_banners_active")
+  @@map("banners")
+}
+
+model HeroBanner {
+  id            String    @id @default(uuid()) @db.Uuid
+  show_id       String?   @db.Uuid
+  image_url     String    @db.VarChar(500)
+  title         String?   @db.VarChar(255)
+  display_order Int       @default(0)
+  is_active     Boolean   @default(true)
+  starts_at     DateTime?
+  ends_at       DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  show Show? @relation(fields: [show_id], references: [id])
+
+  @@index([is_active, display_order], name: "idx_hero_banners_active_order")
+  @@map("hero_banners")
+}
+
+model Collection {
+  id              String   @id @default(uuid()) @db.Uuid
+  title           String   @db.VarChar(255)
+  subtitle        String?  @db.VarChar(255)
+  cover_image_url String?  @db.VarChar(500)
+  display_order   Int      @default(0)
+  is_active       Boolean  @default(true)
+  created_by      String?  @db.Uuid
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  collection_shows CollectionShow[]
+
+  @@index([is_active, display_order], name: "idx_collections_order")
+  @@map("collections")
+}
+
+model CollectionShow {
+  id            String @id @default(uuid()) @db.Uuid
+  collection_id String @db.Uuid
+  show_id       String @db.Uuid
+  display_order Int    @default(0)
+
+  collection Collection @relation(fields: [collection_id], references: [id], onDelete: Cascade)
+  show       Show       @relation(fields: [show_id], references: [id], onDelete: Cascade)
+
+  @@map("collection_shows")
+}
+
+model Bookmark {
+  id           String   @id @default(uuid()) @db.Uuid
+  user_id      String   @db.Uuid
+  show_id      String   @db.Uuid
+  episode_id   String?  @db.Uuid
+  progress_sec Int      @default(0)
+  created_at   DateTime @default(now())
+
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  show    Show    @relation(fields: [show_id], references: [id])
+  episode Episode? @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, show_id], name: "idx_bm_user_show")
+  @@index([user_id, created_at(sort: Desc)], name: "idx_bm_user_created")
+  @@map("bookmarks")
+}
+
+
+model Playlist {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  name       String   @db.VarChar(100)
+  is_public  Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user  User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  items PlaylistItem[]
+
+  @@map("playlists")
+}
+
+model PlaylistItem {
+  id            String   @id @default(uuid()) @db.Uuid
+  playlist_id   String   @db.Uuid
+  show_id       String   @db.Uuid
+  display_order Int      @default(0)
+  added_at      DateTime @default(now())
+
+  playlist Playlist @relation(fields: [playlist_id], references: [id], onDelete: Cascade)
+  show     Show     @relation(fields: [show_id], references: [id])
+
+  @@map("playlist_items")
+}
+
+// ──────────────────────────────────────
+// RATINGS
+// ──────────────────────────────────────
+
+model Rating {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  show_id    String   @db.Uuid
+  score      Int
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  show Show @relation(fields: [show_id], references: [id])
+
+  @@unique([user_id, show_id])
+  @@map("ratings")
+}
+
+// ──────────────────────────────────────
+// NOTIFICATIONS
+// ──────────────────────────────────────
+
+model NotificationLog {
+  id      String    @id @default(uuid()) @db.Uuid
+  user_id String?   @db.Uuid
+  title   String    @db.VarChar(255)
+  body    String    @db.Text
+  type    String    @db.VarChar(20)
+  is_read Boolean   @default(false)
+  sent_at DateTime  @default(now())
+  read_at DateTime?
+
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id, sent_at(sort: Desc)], name: "idx_nl_user_sent")
+  @@map("notification_log")
+}
+
+// ──────────────────────────────────────
+// ADMIN ACTIVITY LOG
+// ──────────────────────────────────────
+
+model AdminActivityLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  user_id     String   @db.Uuid
+  action      String   @db.VarChar(100)
+  entity_type String?  @db.VarChar(50)
+  entity_id   String?  @db.VarChar(100)
+  details     String?  @db.Text
+  created_at  DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([created_at(sort: Desc)], name: "idx_aal_created")
+  @@map("admin_activity_log")
+}
+
+// ──────────────────────────────────────
+// SETTINGS (key-value for coin rules, app config)
+// ──────────────────────────────────────
+
+model Setting {
+  key        String   @id @db.VarChar(100)
+  value      String   @db.VarChar(500)
+  updated_at DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// ──────────────────────────────────────
+// CMS PAGES
+// ──────────────────────────────────────
+
+model CmsPage {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String   @db.VarChar(100)
+  slug       String   @unique @db.VarChar(100)
+  content    String?  @db.Text
+  status     String   @default("draft") @db.VarChar(20)
+  version    Int      @default(1)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("cms_pages")
+}
+
+enum LiveSourceType {
+  MEDIAMTX
+  YOUTUBE
+}
+
+model LiveStream {
+  id               String           @id @default(uuid()) @db.Uuid
+  title            String           @db.VarChar(255)
+  thumbnail_url    String?          @db.VarChar(500)
+  stream_key       String           @unique @db.VarChar(64)
+  status           LiveStreamStatus @default(SCHEDULED)
+  source_protocol  String?          @db.VarChar(10) // RTMP | WHIP (informational)
+  source_type      LiveSourceType   @default(MEDIAMTX)
+  youtube_video_id String?          @db.VarChar(20)
+  created_by       String           @db.Uuid
+  scheduled_at     DateTime?
+  started_at       DateTime?
+  ended_at         DateTime?
+  created_at       DateTime         @default(now())
+
+  creator User @relation(fields: [created_by], references: [id], onDelete: Cascade)
+  viewerSessions LiveViewerSession[]
+
+  @@index([status, created_at(sort: Desc)], name: "idx_live_streams_status_created")
+  @@index([created_by], name: "idx_live_streams_created_by")
+  @@map("live_streams")
+}
+
+// ──────────────────────────────────────
+// LIVE VIEWER SESSIONS (who is watching a live stream)
+// ──────────────────────────────────────
+
+model LiveViewerSession {
+  id         String    @id @default(uuid()) @db.Uuid
+  stream_id  String    @db.Uuid
+  user_id    String?   @db.Uuid
+  guest_name String?   @db.VarChar(50)
+  joined_at  DateTime  @default(now())
+  left_at    DateTime?
+  is_active  Boolean   @default(true)
+
+  stream LiveStream @relation(fields: [stream_id], references: [id], onDelete: Cascade)
+  user   User?      @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([stream_id, is_active], name: "idx_lvs_stream_active")
+  @@map("live_viewer_sessions")
+}
+
+// ──────────────────────────────────────
+// COURSEWORK MODULES
+// ──────────────────────────────────────
+
+enum SubmissionStatus {
+  PENDING
+  SUBMITTED
+  GRADED
+}
+
+model Assignment {
+  id                String   @id @default(uuid()) @db.Uuid
+  show_id           String   @db.Uuid
+  title             String   @db.VarChar(255)
+  problem_statement String   @db.Text
+  due_at            DateTime?
+  order_index       Int
+  is_active         Boolean  @default(true)
+  created_at        DateTime @default(now())
+
+  show        Show                 @relation(fields: [show_id], references: [id], onDelete: Cascade)
+  submissions AssignmentSubmission[]
+
+  @@map("assignments")
+}
+
+model AssignmentSubmission {
+  id             String           @id @default(uuid()) @db.Uuid
+  assignment_id  String           @db.Uuid
+  user_id        String           @db.Uuid
+  answer_text    String?          @db.Text
+  attachment_url String?          @db.VarChar(500)
+  status         SubmissionStatus @default(PENDING)
+  score          Int?
+  feedback       String?          @db.Text
+  graded_by      String?          @db.Uuid
+  graded_at      DateTime?
+  submitted_at   DateTime?
+  created_at     DateTime         @default(now())
+  updated_at     DateTime         @updatedAt
+
+  assignment Assignment @relation(fields: [assignment_id], references: [id], onDelete: Cascade)
+  user       User       @relation("UserSubmissions", fields: [user_id], references: [id], onDelete: Cascade)
+  grader     User?      @relation("GradedSubmissions", fields: [graded_by], references: [id], onDelete: SetNull)
+
+  @@unique([assignment_id, user_id])
+  @@map("assignment_submissions")
+}
+
+model Material {
+  id               String   @id @default(uuid()) @db.Uuid
+  show_id          String   @db.Uuid
+  title            String   @db.VarChar(255)
+  file_url         String   @db.VarChar(500)
+  file_type        String   @db.VarChar(10)
+  file_size_bytes  Int?
+  order_index      Int
+  is_active        Boolean  @default(true)
+  created_at       DateTime @default(now())
+
+  show Show @relation(fields: [show_id], references: [id], onDelete: Cascade)
+
+  @@map("materials")
+}
+
+model Quiz {
+  id          String   @id @default(uuid()) @db.Uuid
+  show_id     String   @db.Uuid
+  title       String   @db.VarChar(255)
+  order_index Int
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+
+  show      Show           @relation(fields: [show_id], references: [id], onDelete: Cascade)
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+
+  @@map("quizzes")
+}
+
+model QuizQuestion {
+  id            String   @id @default(uuid()) @db.Uuid
+  quiz_id       String   @db.Uuid
+  question_text String   @db.Text
+  explanation   String?  @db.Text
+  order_index   Int
+  created_at    DateTime @default(now())
+
+  quiz    Quiz         @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+  options QuizOption[]
+  answers QuizAnswer[]
+
+  @@map("quiz_questions")
+}
+
+model QuizOption {
+  id          String   @id @default(uuid()) @db.Uuid
+  question_id String   @db.Uuid
+  option_text String   @db.VarChar(255)
+  is_correct  Boolean  @default(false)
+  order_index Int
+
+  question QuizQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  answers  QuizAnswer[]
+
+  @@map("quiz_options")
+}
+
+model QuizAttempt {
+  id              String   @id @default(uuid()) @db.Uuid
+  quiz_id         String   @db.Uuid
+  user_id         String   @db.Uuid
+  score           Int
+  total_questions Int
+  completed_at    DateTime @default(now())
+  created_at      DateTime @default(now())
+
+  quiz    Quiz         @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  answers QuizAnswer[]
+
+  @@unique([quiz_id, user_id])
+  @@map("quiz_attempts")
+}
+
+model QuizAnswer {
+  id                 String  @id @default(uuid()) @db.Uuid
+  attempt_id         String  @db.Uuid
+  question_id        String  @db.Uuid
+  selected_option_id String  @db.Uuid
+  is_correct         Boolean
+
+  attempt         QuizAttempt  @relation(fields: [attempt_id], references: [id], onDelete: Cascade)
+  question        QuizQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  selected_option QuizOption   @relation(fields: [selected_option_id], references: [id], onDelete: Cascade)
+
+  @@map("quiz_answers")
+}

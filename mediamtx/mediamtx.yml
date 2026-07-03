@@ -1,0 +1,69 @@
+###############################################
+# MediaMTX — Live ingest (RTMP + WHIP → HLS)
+# Paths: live/{streamKey}
+###############################################
+
+logLevel: info
+logDestinations: [stdout]
+
+readTimeout: 10s
+writeTimeout: 10s
+
+###############################################
+# HTTP auth via backend (publish validated per stream_key)
+###############################################
+
+authMethod: http
+authHTTPAddress: http://backend:3000/api/live/auth-hook
+authHTTPExclude:
+  - action: api
+  - action: metrics
+  - action: pprof
+
+###############################################
+# Control API — internal only
+###############################################
+
+api: true
+apiAddress: :9997
+
+###############################################
+# RTMP ingest (OBS)
+###############################################
+
+rtmp: true
+rtmpAddress: :1935
+
+###############################################
+# HLS output — nginx proxies /live/hls/ → :8888
+###############################################
+
+hls: true
+hlsAddress: :8888
+hlsAllowOrigins: ["*"]
+hlsVariant: fmp4
+hlsSegmentCount: 5
+hlsSegmentDuration: 2s
+
+###############################################
+# WebRTC / WHIP (browser go-live — HTTPS required off localhost)
+###############################################
+
+webrtc: true
+webrtcAddress: :8889
+webrtcAllowOrigins: ["*"]
+webrtcLocalUDPAddress: :8189
+webrtcLocalTCPAddress: :8189
+webrtcIPsFromInterfaces: true
+
+###############################################
+# Path defaults
+###############################################
+
+pathDefaults:
+  source: publisher
+  overridePublisher: true
+
+paths:
+  ~^live/.+$:
+    source: publisher

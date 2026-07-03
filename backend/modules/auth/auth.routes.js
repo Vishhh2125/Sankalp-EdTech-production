@@ -1,0 +1,99 @@
+import express from 'express';
+import {
+  register,
+  login,
+  registerAdminController,
+  refreshToken,
+  logout,
+  getCurrentUser,
+  verifyOtp,
+  resendOtpController,
+  forgotPassword,
+  resendForgotOtpController,
+  resetPassword,
+} from './auth.controller.js';
+import { requireAuth } from '../../middleware/auth.middleware.js';
+
+const router = express.Router();
+
+/**
+ * POST /auth/register
+ * Register new user
+ * Body: { name, email, password }
+ */
+router.post('/register', register);
+
+/**
+ * POST /auth/login
+ * Login user
+ * Body: { email, password }
+ */
+router.post('/login', login);
+
+/**
+ * POST /auth/verify-otp
+ * Verify OTP and create user account
+ * Body: { sessionId, otp }
+ */
+router.post('/verify-otp', verifyOtp);
+
+/**
+ * POST /auth/resend-otp
+ * Resend OTP for a registration session
+ * Body: { sessionId }
+ */
+router.post('/resend-otp', resendOtpController);
+
+/**
+ * POST /auth/forgot-password
+ * Request OTP for password reset (existing account)
+ * Body: { email }
+ */
+router.post('/forgot-password', forgotPassword);
+
+/**
+ * POST /auth/resend-forgot-otp
+ * Resend OTP for password reset session
+ * Body: { sessionId }
+ */
+router.post('/resend-forgot-otp', resendForgotOtpController);
+
+/**
+ * POST /auth/reset-password
+ * Verify OTP and set new password
+ * Body: { sessionId, otp, newPassword }
+ */
+router.post('/reset-password', resetPassword);
+
+/**
+ * POST /auth/register-admin
+ * Register new admin user
+ * Body: { name, email, password, adminSecret }
+ */
+router.post('/register-admin', registerAdminController);
+
+router.get("/refresh-token", refreshToken);
+
+/**
+ * GET /auth/me
+ * Fetch current authenticated user profile (coins, plan, role, etc.)
+ * 
+ * Middleware: requireAuth (verifies accessToken)
+ * Used by frontend to sync user data (coins) in real-time
+ */
+router.get('/me', requireAuth, getCurrentUser);
+
+/**
+ * POST /auth/logout
+ * Logout user (invalidate refresh token in DB)
+ * 
+ * Middleware: requireAuth (verifies accessToken)
+ * Expects: accessToken in Authorization header
+ * Mobile: Authorization: Bearer <accessToken>
+ * Web: Authorization: Bearer <accessToken> + Cookie: refreshToken (to clear)
+ * 
+ * Controller uses req.user (attached by middleware)
+ */
+router.post("/logout", requireAuth, logout);
+
+export default router;

@@ -1,0 +1,91 @@
+import express from 'express';
+import { requireAuth } from '../../middleware/auth.middleware.js';
+import { requireAdmin, requireAnyAdmin, requireMainAdmin } from '../../middleware/admin.middleware.js';
+import {
+  getAllUsers,
+  toggleUserStatus,
+  adjustUserCoins,
+  getUserProfile,
+  getCoinRules,
+  saveCoinRules,
+  getCoinMetrics,
+  getCoinTransactions,
+  getBanners,
+  createBanner,
+  updateBanner,
+  deleteBanner,
+  toggleBanner,
+  getHeroBanners,
+  createHeroBanner,
+  updateHeroBanner,
+  deleteHeroBanner,
+  toggleHeroBanner,
+  reorderHeroBanners,
+  getDashboardMetrics,
+  getRevenueChart,
+  getTopShowsChart,
+  getAnalyticsReport,
+  adjustShowViewCount,
+  getShowStats,
+} from './admin.controller.js';
+import {
+  getAdminMe,
+  getSubAdmins,
+  postSubAdmin,
+  patchSubAdmin,
+  removeSubAdmin,
+  getActivityLogs,
+} from './subadmin.controller.js';
+
+const router = express.Router();
+
+// ── Profile (any admin) ──
+router.get('/me', requireAnyAdmin(), getAdminMe);
+
+// ── Sub-admin management (main admin only) ──
+router.get('/sub-admins', requireMainAdmin(), getSubAdmins);
+router.post('/sub-admins', requireMainAdmin(), postSubAdmin);
+router.patch('/sub-admins/:id', requireMainAdmin(), patchSubAdmin);
+router.delete('/sub-admins/:id', requireMainAdmin(), removeSubAdmin);
+router.get('/activity-logs', requireMainAdmin(), getActivityLogs);
+
+// ── Dashboard ──
+router.get('/dashboard/metrics', requireAdmin('dashboard'), getDashboardMetrics);
+router.get('/dashboard/revenue-chart', requireAdmin('dashboard'), getRevenueChart);
+router.get('/dashboard/top-shows', requireAdmin('dashboard'), getTopShowsChart);
+
+// ── Users ──
+router.get('/users', requireAuth, requireAdmin('users'), getAllUsers);
+router.get('/users/:userId/profile', requireAuth, requireAdmin('users'), getUserProfile);
+router.patch('/users/:userId/status', requireAuth, requireAdmin('users'), toggleUserStatus);
+router.patch('/users/:userId/coins', requireAuth, requireAdmin('users'), adjustUserCoins);
+
+// ── Coins ──
+router.get('/coins/rules', requireAuth, requireAdmin('coins'), getCoinRules);
+router.put('/coins/rules', requireAuth, requireAdmin('coins'), saveCoinRules);
+router.get('/coins/metrics', requireAuth, requireAdmin('coins'), getCoinMetrics);
+router.get('/coins/transactions', requireAuth, requireAdmin('coins'), getCoinTransactions);
+
+// ── Analytics ──
+router.get('/reports/:reportType', requireAuth, requireAdmin('analytics'), getAnalyticsReport);
+
+// ── Banners ──
+router.get('/banners', requireAuth, requireAdmin('banners'), getBanners);
+router.post('/banners', requireAuth, requireAdmin('banners'), createBanner);
+router.put('/banners/:id', requireAuth, requireAdmin('banners'), updateBanner);
+router.patch('/banners/:id/toggle', requireAuth, requireAdmin('banners'), toggleBanner);
+router.delete('/banners/:id', requireAuth, requireAdmin('banners'), deleteBanner);
+
+// ── Hero banners (home slider) ──
+router.get('/hero-banners', requireAuth, requireAdmin('hero_banners'), getHeroBanners);
+router.post('/hero-banners', requireAuth, requireAdmin('hero_banners'), createHeroBanner);
+router.put('/hero-banners/reorder', requireAuth, requireAdmin('hero_banners'), reorderHeroBanners);
+router.put('/hero-banners/:id', requireAuth, requireAdmin('hero_banners'), updateHeroBanner);
+router.patch('/hero-banners/:id/toggle', requireAuth, requireAdmin('hero_banners'), toggleHeroBanner);
+router.delete('/hero-banners/:id', requireAuth, requireAdmin('hero_banners'), deleteHeroBanner);
+
+// ── View count (dramas section) --
+router.post('/shows/:showId/view-count-adjust', requireAuth, requireAdmin('dramas'), adjustShowViewCount);
+router.get('/shows/:showId/stats', requireAuth, requireAdmin('dramas'), getShowStats);
+
+export default router;

@@ -1,0 +1,632 @@
+import express from 'express';
+import { prisma } from '../../prisma/client.js';
+import { requireAuth } from '../../middleware/auth.middleware.js';
+import { ApiResponse } from '../../utils/ApiResponse.js';
+import { unlockEpisodeForUser } from './episode-unlock.service.js';
+import {
+  getCheckinStatus,
+  claimDailyCheckin,
+} from './daily-checkin.service.js';
+import { getAllActiveTopUpPlans } from '../topup/topup.service.js';
+import { recordView } from './view-count.service.js';
+
+const router = express.Router();
+
+// ─────────────────────────────────────────────────────────────────
+// BOOKMARKS
+// ─────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/user/bookmarks/:showId
+ * Toggle bookmark for a show.
+ * Body: { episode_id?, progress_sec? }
+ *
+ * If episode_id is provided but progress_sec is not,
+ * we check WatchHistory to find the most recent progress for this user+show
+ * and use that instead (covers the DramaDetailsSheet case).
+ *
+ * Returns: { bookmarked: boolean, episode_id, progress_sec }
+ */
+router.post('/bookmarks/:showId', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { showId } = req.params;
+    let { episode_id, progress_sec } = req.body;
+
+    // Validate show exists
+    const show = await prisma.show.findUnique({ where: { id: showId } });
+    if (!show) {
+      return res.status(404).json(new ApiResponse(404, null, 'Show not found'));
+    }
+
+    // Check if bookmark already exists for this user+show
+    const existing = await prisma.bookmark.findUnique({
+      where: { idx_bm_user_show: { user_id: userId, show_id: showId } },
+    });
+
+    // If bookmark exists with the SAME episode → toggle off (remove)
+    if (existing && existing.episode_id === episode_id) {
+      await prisma.bookmark.delete({ where: { id: existing.id } });
+      return res.json(new ApiResponse(200, {
+        bookmarked: false,
+        show_id: showId,
+      }, 'Bookmark removed'));
+    }
+
+    // Fetch full show data for response
+    const showData = await prisma.show.findUnique({
+      where: { id: showId },
+      select: {
+        id: true,
+        title: true,
+        thumbnail_url: true,
+        category: { select: { name: true } },
+      },
+    });
+
+    // Resolve episode_id and progress_sec if not fully provided
+    // Case 1: episode_id given but no progress_sec → look up WatchHistory
+    if (episode_id && (progress_sec === undefined || progress_sec === null)) {
+      const watchEntry = await prisma.watchHistory.findUnique({
+        where: { idx_wh_user_ep: { user_id: userId, episode_id } },
+      });
+      progress_sec = watchEntry?.progress_sec ?? 0;
+    }
+
+    // Case 2: no episode_id at all → find most recently watched episode of this show
+    if (!episode_id) {
+      const recentWatch = await prisma.watchHistory.findFirst({
+        where: {
+          user_id: userId,
+          episode: { show_id: showId },
+        },
+        orderBy: { last_watched: 'desc' },
+      });
+
+      if (recentWatch) {
+        episode_id = recentWatch.episode_id;
+        progress_sec = recentWatch.progress_sec;
+      } else {
+        // No watch history — fall back to episode 1
+        const ep1 = await prisma.episode.findFirst({
+          where: { show_id: showId, episode_num: 1 },
+          select: { id: true },
+        });
+        episode_id = ep1?.id || null;
+        progress_sec = 0;
+      }
+    }
+
+    const progressFloor = Math.floor(progress_sec || 0);
+
+    // If bookmark exists with DIFFERENT episode → UPDATE to latest episode
+    if (existing) {
+      const updated = await prisma.bookmark.update({
+        where: { id: existing.id },
+        data: {
+          episode_id: episode_id || null,
+          progress_sec: progressFloor,
+        },
+      });
+      return res.json(new ApiResponse(200, {
+        bookmarked: true,
+        show_id: showId,
+        episode_id: updated.episode_id,
+        progress_sec: updated.progress_sec,
+        show_title: showData?.title || '',
+        thumbnail_url: showData?.thumbnail_url || null,
+        category: showData?.category?.name || null,
+      }, 'Bookmark updated'));
+    }
+
+    // No existing bookmark → CREATE
+    const bookmark = await prisma.bookmark.create({
+      data: {
+        user_id: userId,
+        show_id: showId,
+        episode_id: episode_id || null,
+        progress_sec: progressFloor,
+      },
+    });
+
+    return res.json(new ApiResponse(200, {
+      bookmarked: true,
+      show_id: showId,
+      episode_id: bookmark.episode_id,
+      progress_sec: bookmark.progress_sec,
+      show_title: showData?.title || '',
+      thumbnail_url: showData?.thumbnail_url || null,
+      category: showData?.category?.name || null,
+    }, 'Bookmark added'));
+
+  } catch (e) { next(e); }
+});
+
+/**
+ * GET /api/user/bookmarks
+ * Fetch all bookmarks for the logged-in user, ordered newest first.
+ * Joins Show for title/thumbnail, Episode for episode_num/duration_sec.
+ */
+router.get('/bookmarks', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const bookmarks = await prisma.bookmark.findMany({
+      where: {
+        user_id: userId,
+        show: { is_active: true },
+      },
+      orderBy: { created_at: 'desc' },
+      include: {
+        show: {
+          select: {
+            id: true,
+            title: true,
+            thumbnail_url: true,
+            category: { select: { name: true } },
+          },
+        },
+        episode: {
+          select: {
+            id: true,
+            episode_num: true,
+            duration_sec: true,
+            title: true,
+          },
+        },
+      },
+    });
+
+    const showIds = [...new Set(bookmarks.map((b) => b.show_id).filter(Boolean))];
+    const totalEpisodesByShowId = {};
+    await Promise.all(
+      showIds.map(async (sid) => {
+        totalEpisodesByShowId[sid] = await prisma.episode.count({
+          where: { show_id: sid },
+        });
+      })
+    );
+
+    const items = bookmarks.map(b => ({
+      bookmark_id: b.id,
+      show_id: b.show_id,
+      show_title: b.show?.title || '',
+      thumbnail_url: b.show?.thumbnail_url || null,
+      category: b.show?.category?.name || null,
+      episode_id: b.episode_id,
+      episode_num: b.episode?.episode_num || 1,
+      episode_title: b.episode?.title || null,
+      duration_sec: b.episode?.duration_sec || 0,
+      progress_sec: b.progress_sec,
+      total_episodes: totalEpisodesByShowId[b.show_id] ?? null,
+      created_at: b.created_at,
+    }));
+
+    return res.json(new ApiResponse(200, { items }, 'Bookmarks fetched'));
+
+  } catch (e) { next(e); }
+});
+
+// ─────────────────────────────────────────────────────────────────
+// WATCH HISTORY
+// ─────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/user/watch-history
+ * Upsert a watch history entry.
+ * Body: { episode_id, progress_sec }
+ *
+ * Creates if first time watching, updates progress_sec + last_watched
+ * if already exists. Uses the idx_wh_user_ep unique constraint.
+ */
+router.post('/watch-history', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { episode_id, progress_sec } = req.body;
+
+    if (!episode_id) {
+      return res.status(400).json(new ApiResponse(400, null, 'episode_id is required'));
+    }
+
+    const episode = await prisma.episode.findUnique({
+      where: { id: episode_id },
+      select: { id: true, show_id: true },
+    });
+    if (!episode) {
+      return res.status(404).json(new ApiResponse(404, null, 'Episode not found'));
+    }
+
+    const entry = await prisma.watchHistory.upsert({
+      where: { idx_wh_user_ep: { user_id: userId, episode_id } },
+      create: {
+        user_id: userId,
+        episode_id,
+        progress_sec: Math.floor(progress_sec || 0),
+        last_watched: new Date(),
+      },
+      update: {
+        progress_sec: Math.floor(progress_sec || 0),
+        last_watched: new Date(),
+      },
+    });
+
+    return res.json(new ApiResponse(200, {
+      episode_id: entry.episode_id,
+      progress_sec: entry.progress_sec,
+      last_watched: entry.last_watched,
+    }, 'Watch history updated'));
+
+  } catch (e) { next(e); }
+});
+
+/**
+ * GET /api/user/watch-history
+ * Fetch recent watch history for logged-in user.
+ * Ordered by last_watched descending. Limit 20.
+ * Joins Episode → Show for full card data.
+ */
+router.get('/watch-history', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    // Fetch more than needed so we have enough after show-level dedup
+    const history = await prisma.watchHistory.findMany({
+      where: {
+        user_id: userId,
+        episode: { show: { is_active: true } },
+      },
+      orderBy: { last_watched: 'desc' },
+      take: 100,
+      include: {
+        episode: {
+          select: {
+            id: true,
+            episode_num: true,
+            duration_sec: true,
+            title: true,
+            show: {
+              select: {
+                id: true,
+                title: true,
+                thumbnail_url: true,
+                category: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Deduplicate by show — keep only the most recently watched episode per show.
+    // Results are already ordered by last_watched desc so the first occurrence
+    // of each show_id is always the most recent episode for that show.
+    const seenShowIds = new Set();
+    const deduplicated = [];
+
+    for (const h of history) {
+      const showId = h.episode?.show?.id;
+      if (!showId) continue;
+      if (seenShowIds.has(showId)) continue;
+      seenShowIds.add(showId);
+      deduplicated.push(h);
+      if (deduplicated.length >= 20) break;
+    }
+
+    const dedupShowIds = [
+      ...new Set(deduplicated.map((h) => h.episode?.show?.id).filter(Boolean)),
+    ];
+    const totalEpisodesByShowId = {};
+    await Promise.all(
+      dedupShowIds.map(async (sid) => {
+        totalEpisodesByShowId[sid] = await prisma.episode.count({
+          where: { show_id: sid },
+        });
+      })
+    );
+
+    const items = deduplicated.map(h => ({
+      history_id: h.id,
+      show_id: h.episode?.show?.id || null,
+      show_title: h.episode?.show?.title || '',
+      thumbnail_url: h.episode?.show?.thumbnail_url || null,
+      category: h.episode?.show?.category?.name || null,
+      episode_id: h.episode_id,
+      episode_num: h.episode?.episode_num || 1,
+      episode_title: h.episode?.title || null,
+      duration_sec: h.episode?.duration_sec || 0,
+      progress_sec: h.progress_sec,
+      total_episodes: totalEpisodesByShowId[h.episode?.show?.id] ?? null,
+      last_watched: h.last_watched,
+    }));
+
+    return res.json(new ApiResponse(200, { items }, 'Watch history fetched'));
+
+  } catch (e) { next(e); }
+});
+
+/**
+ * DELETE /api/user/watch-history/:historyId
+ * Remove a watch history entry for the logged-in user.
+ */
+router.delete('/watch-history/:historyId', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { historyId } = req.params;
+
+    const entry = await prisma.watchHistory.findFirst({
+      where: { id: historyId, user_id: userId },
+    });
+
+    if (!entry) {
+      return res.status(404).json(new ApiResponse(404, null, 'Watch history entry not found'));
+    }
+
+    await prisma.watchHistory.delete({ where: { id: historyId } });
+
+    return res.json(new ApiResponse(200, { history_id: historyId }, 'Watch history entry removed'));
+  } catch (e) { next(e); }
+});
+
+// ─────────────────────────────────────────────────────────────────
+// WALLET (Dynamic Top-up Plans from Database)
+// Coins are issued based on admin-configured top-up plans
+// CoinTransaction: type "credit", reason "wallet_topup_simulated", ref_id = plan_id
+// ─────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/user/wallet/top-up-options
+ * Returns all active top-up plans from database (dynamic)
+ */
+router.get('/wallet/top-up-options', requireAuth, async (req, res, next) => {
+  try {
+    const plans = await getAllActiveTopUpPlans();
+    
+    const packs = plans.map((p) => ({
+      pack_id: p.id, // Use plan ID as pack_id
+      label: `₹${parseFloat(p.price).toFixed(2)} → ${p.coins_amount} coins`,
+      inr_paise: Math.round(parseFloat(p.price) * 100), // Convert to paise
+      coins: p.coins_amount,
+      name: p.name,
+    }));
+    
+    return res.json(new ApiResponse(200, { packs }, 'Top-up options'));
+  } catch (e) {
+    next(e);
+  }
+});
+
+/**
+ * POST /api/user/wallet/simulate-purchase
+ * Body: { pack_id: string (top-up plan ID) }
+ * Credits coins and appends a coin_transactions ledger row (simulated payment).
+ * Now uses dynamic top-up plans from database instead of hardcoded packs.
+ */
+router.post('/wallet/simulate-purchase', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const planId = req.body?.pack_id; // pack_id now contains the TopUpPlan ID
+
+    if (!planId || typeof planId !== 'string') {
+      return res.status(400).json(new ApiResponse(400, null, 'pack_id is required'));
+    }
+
+    // Fetch the top-up plan from database
+    const plan = await prisma.topUpPlan.findUnique({
+      where: { id: planId },
+    });
+
+    if (!plan || !plan.is_active) {
+      return res.status(400).json(new ApiResponse(400, null, 'Top-up plan not found or inactive'));
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { id: true, coins: true },
+      });
+      if (!user) {
+        return null;
+      }
+
+      const prev = user.coins ?? 0;
+      const coinsToAdd = plan.coins_amount;
+      const nextCoins = prev + coinsToAdd;
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { coins: nextCoins },
+      });
+
+      // Create a PaymentTransaction record first (simulated for now, real gateway later)
+      const payment = await tx.paymentTransaction.create({
+        data: {
+          user_id: userId,
+          type: 'topup',
+          amount: parseFloat(plan.price),
+          currency: plan.currency,
+          gateway: 'simulated',
+          status: 'completed',
+        },
+      });
+
+      // Create CoinTransaction linked to the PaymentTransaction
+      const row = await tx.coinTransaction.create({
+        data: {
+          user_id: userId,
+          type: 'credit',
+          amount: coinsToAdd,
+          reason: 'wallet_topup_simulated',
+          ref_id: plan.id,
+          payment_id: payment.id,
+          title: 'Coin top-up',
+          description: `${plan.name} - ₹${parseFloat(plan.price).toFixed(2)} → ${coinsToAdd} coins`,
+          fiat_paise: parseFloat(plan.price),
+          status: 'completed',
+        },
+      });
+
+      return { coins: nextCoins, transaction_id: row.id, payment_id: payment.id };
+    });
+
+    if (!result) {
+      return res.status(404).json(new ApiResponse(404, null, 'User not found'));
+    }
+
+    return res.json(
+      new ApiResponse(200, result, 'Purchase simulated; coins credited')
+    );
+  } catch (e) {
+    next(e);
+  }
+});
+
+/**
+ * GET /api/user/wallet/transactions?limit=50&offset=0
+ * Paginated coin ledger for Transaction History UI.
+ */
+router.get('/wallet/transactions', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 100);
+    const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0);
+
+    const [items, total] = await Promise.all([
+      prisma.coinTransaction.findMany({
+        where: { user_id: userId },
+        orderBy: { created_at: 'desc' },
+        take: limit,
+        skip: offset,
+        select: {
+          id: true,
+          type: true,
+          amount: true,
+          reason: true,
+          ref_id: true,
+          title: true,
+          description: true,
+          fiat_paise: true,
+          status: true,
+          created_at: true,
+        },
+      }),
+      prisma.coinTransaction.count({ where: { user_id: userId } }),
+    ]);
+
+    return res.json(
+      new ApiResponse(200, { items, total, limit, offset }, 'Transactions fetched')
+    );
+  } catch (e) {
+    next(e);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────
+// DAILY CHECK-IN (7-day streak; rules from admin settings)
+// ─────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/user/checkin
+ * Status: rules, streak_day, claimed_today, today_reward, coins
+ */
+router.get('/checkin', requireAuth, async (req, res, next) => {
+  try {
+    const data = await getCheckinStatus(req.user.id);
+    return res.json(new ApiResponse(200, data, 'Check-in status fetched'));
+  } catch (e) {
+    next(e);
+  }
+});
+
+/**
+ * POST /api/user/checkin
+ * Claim today's daily reward
+ */
+router.post('/checkin', requireAuth, async (req, res, next) => {
+  try {
+    const result = await claimDailyCheckin(req.user.id);
+    if (!result.ok) {
+      return res
+        .status(result.status)
+        .json(new ApiResponse(result.status, null, result.message));
+    }
+    return res.json(new ApiResponse(200, result.data, result.message));
+  } catch (e) {
+    next(e);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────
+// EPISODE UNLOCK (coins → episode_access)
+// POST /api/user/episodes/:episodeId/unlock
+// ─────────────────────────────────────────────────────────────────
+
+router.post('/episodes/:episodeId/unlock', requireAuth, async (req, res, next) => {
+  try {
+    const result = await unlockEpisodeForUser(req.user.id, req.params.episodeId);
+    if (!result.ok) {
+      return res
+        .status(result.status)
+        .json(new ApiResponse(result.status, result.data, result.message));
+    }
+    return res.json(new ApiResponse(200, result.data, result.message));
+  } catch (e) {
+    next(e);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────
+// VIEW COUNT
+// ─────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/user/shows/:showId/view
+ * Called by the mobile player once the user has watched for at least
+ * min_view_duration_seconds of cumulative active playback time.
+ *
+ * Body: {
+ *   session_id:          string  (UUID v4 — generated by client at playback start)
+ *   episode_id:          string  (which episode triggered the threshold)
+ *   watch_duration_sec:  number  (cumulative active playback seconds — not seek position)
+ * }
+ *
+ * Idempotent: calling more than once with the same session_id + showId is safe.
+ * Supports both authenticated and guest (allowGuest) callers — user_id will be
+ * null for guests but the view is still recorded.
+ */
+router.post('/shows/:showId/view', requireAuth, async (req, res, next) => {
+  try {
+    const { showId } = req.params;
+    const { session_id, episode_id, watch_duration_sec } = req.body;
+    const userId = req.user?.id ?? null;
+
+    // ── Input validation ──────────────────────────────────────
+    if (!session_id || typeof session_id !== 'string' || session_id.trim() === '') {
+      return res.status(400).json(new ApiResponse(400, null, 'session_id is required'));
+    }
+    if (watch_duration_sec === undefined || watch_duration_sec === null || isNaN(Number(watch_duration_sec))) {
+      return res.status(400).json(new ApiResponse(400, null, 'watch_duration_sec is required'));
+    }
+
+    // ── Show must exist ───────────────────────────────────────
+    const show = await prisma.show.findUnique({
+      where: { id: showId },
+      select: { id: true, is_active: true },
+    });
+    if (!show) {
+      return res.status(404).json(new ApiResponse(404, null, 'Show not found'));
+    }
+
+    // ── Record view (handles threshold check + dedup internally) ──
+    const result = await recordView({
+      showId,
+      sessionId: session_id.trim(),
+      userId,
+      episodeId: episode_id ?? null,
+      watchDurationSec: Number(watch_duration_sec),
+    });
+
+    return res.json(new ApiResponse(200, { counted: result.counted }, result.reason));
+  } catch (e) { next(e); }
+});
+
+export default router;
