@@ -21,7 +21,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import Video from 'react-native-video';
 import YoutubePlayer from 'react-native-youtube-iframe';
-import { CaptureProtection, useCaptureProtection } from 'react-native-capture-protection';
 
 import ProgressBar from './ProgressBar';
 import SideAction from './SideAction';
@@ -88,7 +87,7 @@ export default function ShortVideoReelItem({
   const landscapeWidth = Math.max(windowWidth, windowHeight);
   const landscapeHeight = Math.min(windowWidth, windowHeight);
 
-  const { status } = useCaptureProtection();
+
 
   const accessToken = useSelector((state) => state.auth?.accessToken);
   const isBookmarked = useSelector(selectIsBookmarked(item.show_id));
@@ -206,18 +205,7 @@ export default function ShortVideoReelItem({
     }
   };
   
-  useEffect(() => {
-    CaptureProtection.prevent({
-      screenshot: true,
-      record: true,
-      appSwitcher: true,
-    });
-    return () => {
-      CaptureProtection.allow();
-    };
-  }, []);
-
-  const isBeingRecorded = Platform.OS === 'ios' && status?.record === true;
+  const isBeingRecorded = false;
 
   // Log streamUrl setup for debugging
   useEffect(() => {
