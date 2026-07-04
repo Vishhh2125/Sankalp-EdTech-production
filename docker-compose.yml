@@ -306,7 +306,7 @@ services:
     logging: *default-logging
 
   clamav:
-    image: clamav/clamav:latest
+    image: mkodockx/docker-clamav:alpine
     container_name: ott-clamav
     volumes:
       - clamav_data:/var/lib/clamav
