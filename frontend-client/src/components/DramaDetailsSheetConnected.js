@@ -370,7 +370,12 @@ export default function DramaDetailsSheetConnected({
                 </Pressable>
               </View>
 
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsRow}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.tabsScroll}
+                contentContainerStyle={styles.tabsRow}
+              >
                 {[
                   { key: 'synopsis', label: 'Intro' },
                   { key: 'episodes', label: 'Lectures' },
@@ -378,8 +383,15 @@ export default function DramaDetailsSheetConnected({
                   { key: 'materials', label: 'Materials' },
                   { key: 'quizzes', label: 'Quiz' },
                 ].map(t => (
-                  <Pressable key={t.key} onPress={() => { setTab(t.key); scrollRef.current?.scrollTo({ y: 0, animated: true }); }} style={styles.tabBtn}>
-                    <Text style={[styles.tabText, tab === t.key && styles.tabTextActive]}>
+                  <Pressable
+                    key={t.key}
+                    onPress={() => { setTab(t.key); scrollRef.current?.scrollTo({ y: 0, animated: true }); }}
+                    style={[styles.tabBtn, tab === t.key && styles.tabBtnActive]}
+                  >
+                    <Text
+                      style={[styles.tabText, tab === t.key && styles.tabTextActive]}
+                      numberOfLines={1}
+                    >
                       {t.label}
                     </Text>
                     {tab === t.key && <View style={styles.tabUnderline} />}
@@ -389,6 +401,7 @@ export default function DramaDetailsSheetConnected({
 
               <ScrollView
                 ref={scrollRef}
+                style={styles.bodyScroll}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.content}
               >
@@ -576,35 +589,60 @@ const styles = StyleSheet.create({
   },
   tabsRow: {
     flexDirection: 'row',
-    gap: 24,
+    alignItems: 'center',
+    gap: 8,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.1)',
-    paddingBottom: 4,
-    paddingHorizontal: 8,
+    paddingTop: 4,
+    paddingBottom: 10,
+    paddingRight: 8,
+  },
+  tabsScroll: {
+    flexGrow: 0,
+    height: 58,
+    marginHorizontal: -2,
   },
   tabBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 4,
+    minWidth: 70,
+    height: 40,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabBtnActive: {
+    backgroundColor: 'rgba(255,45,85,0.14)',
+    borderColor: 'rgba(255,45,85,0.5)',
   },
   tabText: {
     color: theme.gray,
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '800',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   tabTextActive: {
     color: theme.white,
   },
   tabUnderline: {
     position: 'absolute',
-    bottom: -5,
-    left: 0,
-    right: 0,
+    bottom: 0,
+    left: 12,
+    right: 12,
     height: 3,
     backgroundColor: theme.crimson,
-    borderRadius: 2,
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
+  },
+  bodyScroll: {
+    flex: 1,
   },
   content: {
-    paddingTop: 18,
+    paddingTop: 20,
     paddingBottom: 50,
   },
   sectionTitle: {

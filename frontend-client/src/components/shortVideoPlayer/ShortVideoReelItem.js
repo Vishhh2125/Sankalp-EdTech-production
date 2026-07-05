@@ -21,6 +21,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import Video from 'react-native-video';
 import YoutubePlayer from 'react-native-youtube-iframe';
+import { CaptureProtection, useCaptureProtection } from 'react-native-capture-protection';
 
 import ProgressBar from './ProgressBar';
 import SideAction from './SideAction';
@@ -87,7 +88,7 @@ export default function ShortVideoReelItem({
   const landscapeWidth = Math.max(windowWidth, windowHeight);
   const landscapeHeight = Math.min(windowWidth, windowHeight);
 
-
+  const { status } = useCaptureProtection();
 
   const accessToken = useSelector((state) => state.auth?.accessToken);
   const isBookmarked = useSelector(selectIsBookmarked(item.show_id));
@@ -205,7 +206,18 @@ export default function ShortVideoReelItem({
     }
   };
   
-  const isBeingRecorded = false;
+  /*useEffect(() => {
+    CaptureProtection.prevent({
+      screenshot: true,
+      record: true,
+      appSwitcher: true,
+    });
+    return () => {
+      CaptureProtection.allow();
+    };
+  }, []);*/
+
+  const isBeingRecorded = Platform.OS === 'ios' && status?.record === true;
 
   // Log streamUrl setup for debugging
   useEffect(() => {
@@ -240,10 +252,8 @@ export default function ShortVideoReelItem({
     episodeId: item.episode_id,
     accessToken,
   });
-  const shouldRenderVideo = Boolean((isActive || shouldPreload) && isFocused && !isLocked && (streamUrl || hasYouTubeVideo));
-  const videoIsVisible = isActive && shouldRenderVideo && firstFrameReady;
-  const showActiveBuffering = isActive && shouldRenderVideo && !firstFrameReady;
   const {
+    isLandscape,
     isLandscapeActive,
     enterLandscape,
     exitLandscape,
@@ -251,17 +261,26 @@ export default function ShortVideoReelItem({
     isActive: isActive && !isLocked && firstFrameReady,
     enabled: enableLandscapeMode,
   });
+  const shouldRenderVideo = Boolean(
+    (isActive || (shouldPreload && !isLandscape))
+      && isFocused
+      && !isLocked
+      && (streamUrl || hasYouTubeVideo)
+  );
+  const videoIsVisible = isActive && shouldRenderVideo && firstFrameReady;
+  const showActiveBuffering = isActive && shouldRenderVideo && !firstFrameReady;
   // For downloaded videos, we use 'contain' so horizontal (16:9) videos are letterboxed correctly
   // and not stretched to fill the vertical dimensions, copying the behavior of the normal players.
   // Regular short reels will continue to use 'cover'.
   const videoResizeMode = item.localVideoPath ? 'contain' : 'cover';
-  const showPortraitChrome = !isLandscapeActive;
+  const showPortraitChrome = !isLandscape;
   const showLandscapeToggle = enableLandscapeMode
     && showPortraitChrome
     && isActive
     && !isLocked
     && !isYouTube
     && firstFrameReady;
+
   const showMainOverlay = showOttOverlayControls || controlsVisible || manuallyPaused;
   const effectiveMuted = muted || volume <= 0;
   const youtubePortraitHeight = Math.min(windowWidth * (9 / 16), layoutHeight);
@@ -325,7 +344,7 @@ export default function ShortVideoReelItem({
     if (onFirstFrameReady) {
       onFirstFrameReady();
     }
-  }, [originalOnReadyForDisplay, onFirstFrameReady, item.episode_num]);
+  }, [originalOnReadyForDisplay, onFirstFrameReady]);
 
   const handleYouTubeReady = useCallback(() => {
     setFirstFrameReady(true);
@@ -348,6 +367,29 @@ export default function ShortVideoReelItem({
     setControlsVisible(true);
     onPlaybackEnd?.(item);
   }, [item, onPlaybackEnd]);
+
+  const handleVideoEnd = useCallback(() => {
+    if (!autoAdvanceOnEnd) {
+      if (repeatPlayback) {
+        setManualPaused(false);
+        setControlsVisible(true);
+        return;
+      }
+
+      seekTo(0);
+      setManualPaused(false);
+      setControlsVisible(true);
+      return;
+    }
+
+    handlePlaybackEnd();
+  }, [
+    autoAdvanceOnEnd,
+    handlePlaybackEnd,
+    repeatPlayback,
+    seekTo,
+    setManualPaused,
+  ]);
 
   const renderSeekControls = () => (
     <View style={styles.ottSeekRow}>
@@ -541,7 +583,7 @@ export default function ShortVideoReelItem({
                   onReady={handleYouTubeReady}
                   onChangeState={(state) => {
                     if (state === 'ended') {
-                      handlePlaybackEnd();
+                      handleVideoEnd();
                     }
                   }}
                   initialPlayerParams={{
@@ -574,7 +616,7 @@ export default function ShortVideoReelItem({
                 progressUpdateInterval={500}
                 onLoad={wrappedOnLoad}
                 onProgress={onProgress}
-                onEnd={handlePlaybackEnd}
+                onEnd={handleVideoEnd}
                 onReadyForDisplay={onReadyForDisplay}
                 onError={(e) => {
                   const msg = e?.error?.localizedDescription || e?.error?.code || 'Playback error';
@@ -642,7 +684,7 @@ export default function ShortVideoReelItem({
                   progressUpdateInterval={500}
                   onLoad={wrappedOnLoad}
                   onProgress={onProgress}
-                  onEnd={handlePlaybackEnd}
+                  onEnd={handleVideoEnd}
                   onReadyForDisplay={onReadyForDisplay}
                   onError={(e) => {
                     const msg = e?.error?.localizedDescription || e?.error?.code || 'Playback error';
@@ -960,7 +1002,7 @@ export default function ShortVideoReelItem({
 
             <View style={styles.epBadge}>
               <Ionicons name="videocam" size={12} color={shortVideoTheme.crimson} />
-              <Text style={styles.epBadgeText}>LEC.{item.episode_num}</Text>
+              <Text style={styles.epBadgeText}>EP.{item.episode_num}</Text>
             </View>
 
             <View style={styles.tagsRow}>
@@ -1179,7 +1221,7 @@ function LockOverlay({ item, accessToken, navigation, dispatch, walletReturnPara
         <View style={styles.lockIconWrap}>
           <Ionicons name="lock-closed" size={32} color="#fff" />
         </View>
-        <Text style={styles.lockTitle}>This lecture is locked</Text>
+        <Text style={styles.lockTitle}>This episode is locked</Text>
       </View>
     );
   }

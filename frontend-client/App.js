@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { Provider } from 'react-redux';
+//import { CaptureProtectionProvider } from 'react-native-capture-protection';
 import { LogBox } from 'react-native';
 
 LogBox.ignoreLogs(['Network Error', 'Network error']);
@@ -32,7 +33,8 @@ setShowPlayerStore(store);
 export default function App() {
   return (
     <NetworkProvider>
-      <Provider store={store}>
+      {/* <CaptureProtectionProvider> */}
+        <Provider store={store}>
         <PlaybackSpeedProvider>
           <PlaybackVolumeProvider>
             <VideoQualityProvider>
@@ -45,6 +47,7 @@ export default function App() {
           </PlaybackVolumeProvider>
         </PlaybackSpeedProvider>
       </Provider>
+    {/* </CaptureProtectionProvider> */}
     </NetworkProvider>
   );
 }
