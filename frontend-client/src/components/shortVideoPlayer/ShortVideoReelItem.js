@@ -960,7 +960,7 @@ export default function ShortVideoReelItem({
 
             <View style={styles.epBadge}>
               <Ionicons name="videocam" size={12} color={shortVideoTheme.crimson} />
-              <Text style={styles.epBadgeText}>EP.{item.episode_num}</Text>
+              <Text style={styles.epBadgeText}>LEC.{item.episode_num}</Text>
             </View>
 
             <View style={styles.tagsRow}>
@@ -1179,7 +1179,7 @@ function LockOverlay({ item, accessToken, navigation, dispatch, walletReturnPara
         <View style={styles.lockIconWrap}>
           <Ionicons name="lock-closed" size={32} color="#fff" />
         </View>
-        <Text style={styles.lockTitle}>This episode is locked</Text>
+        <Text style={styles.lockTitle}>This lecture is locked</Text>
       </View>
     );
   }

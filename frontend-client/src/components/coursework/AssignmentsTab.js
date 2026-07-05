@@ -102,7 +102,7 @@ export default function AssignmentsTab({ assignments, loading, showId, onSubmiss
 const styles = StyleSheet.create({
   sectionTitle: {
     color: theme.white,
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: '800',
     marginBottom: 4,
   },

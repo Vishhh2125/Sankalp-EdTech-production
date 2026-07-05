@@ -437,7 +437,7 @@ export default function DramaDetailsSheetConnected({
                     {loading ? (
                       <View style={styles.stateBlock}>
                         <ActivityIndicator size="small" color={theme.white} />
-                        <Text style={styles.stateText}>Loading episodes...</Text>
+                        <Text style={styles.stateText}>Loading lectures...</Text>
                       </View>
                     ) : error ? (
                       <View style={styles.stateBlock}>
@@ -459,7 +459,7 @@ export default function DramaDetailsSheetConnected({
                       </View>
                     ) : (
                       <View style={styles.stateBlock}>
-                        <Text style={styles.stateText}>No episodes available yet.</Text>
+                        <Text style={styles.stateText}>No lectures available yet.</Text>
                       </View>
                     )}
                   </View>
@@ -576,13 +576,15 @@ const styles = StyleSheet.create({
   },
   tabsRow: {
     flexDirection: 'row',
-    gap: 20,
+    gap: 24,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
-    paddingRight: 16,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+    paddingBottom: 4,
+    paddingHorizontal: 8,
   },
   tabBtn: {
     paddingVertical: 12,
+    paddingHorizontal: 4,
   },
   tabText: {
     color: theme.gray,
@@ -594,11 +596,11 @@ const styles = StyleSheet.create({
   },
   tabUnderline: {
     position: 'absolute',
-    bottom: -1,
+    bottom: -5,
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: theme.white,
+    backgroundColor: theme.crimson,
     borderRadius: 2,
   },
   content: {

@@ -421,7 +421,7 @@ export default function MembershipScreen({ navigation }) {
               {hasAllAccess ? ' · All categories' : ''}
             </Text>
           ) : (
-            <Text style={styles.heroSub}>Unlock paid episodes for the categories you choose</Text>
+            <Text style={styles.heroSub}>Unlock paid lectures for the categories you choose</Text>
           )}
         </View>
 

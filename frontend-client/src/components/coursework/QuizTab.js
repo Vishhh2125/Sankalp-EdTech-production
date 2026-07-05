@@ -118,7 +118,7 @@ export default function QuizTab({ quizzes, loading, showId, onAttemptCompleted }
 const styles = StyleSheet.create({
   sectionTitle: {
     color: theme.white,
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: '800',
     marginBottom: 4,
   },
