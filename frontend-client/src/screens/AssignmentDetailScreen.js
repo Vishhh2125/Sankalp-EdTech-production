@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { theme } from '../constants/theme';
 import { courseworkApi, formatFileSize } from '../services/courseworkApi';
+import { downloadFile } from '../utils/fileDownloader';
 
 const ANSWER_LIMIT = 1000;
 
@@ -189,7 +190,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
             {submission.attachment_url ? (
               <Pressable
                 style={styles.attachmentPill}
-                onPress={() => Linking.openURL(submission.attachment_url).catch(() => {})}
+                onPress={() => downloadFile(submission.attachment_url, currentAttachmentName || 'Attachment')}
               >
                 <Ionicons name="document-attach-outline" size={16} color={theme.white} />
                 <Text style={styles.attachmentPillText} numberOfLines={1}>
@@ -226,7 +227,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
                   <View style={{ flex: 1 }}>
                     <Text style={styles.existingAttachmentLabel}>Current attachment</Text>
                     <Text style={styles.pickedName} numberOfLines={1}>{currentAttachmentName || 'Attachment'}</Text>
-                    <Pressable onPress={() => Linking.openURL(submission.attachment_url).catch(() => {})}>
+                    <Pressable onPress={() => downloadFile(submission.attachment_url, currentAttachmentName || 'Attachment')}>
                       <Text style={styles.openLinkText}>Open attachment</Text>
                     </Pressable>
                   </View>

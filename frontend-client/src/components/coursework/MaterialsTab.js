@@ -10,6 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { formatFileSize } from '../../services/courseworkApi';
+import { downloadFile } from '../../utils/fileDownloader';
 
 export default function MaterialsTab({ materials, loading, hasAccess }) {
   if (loading) {
@@ -49,7 +50,7 @@ export default function MaterialsTab({ materials, loading, hasAccess }) {
             style={styles.card}
             onPress={() => {
               if (m.file_url) {
-                Linking.openURL(m.file_url).catch(() => {});
+                downloadFile(m.file_url, m.title, m.file_type);
               }
             }}
           >
@@ -67,7 +68,7 @@ export default function MaterialsTab({ materials, loading, hasAccess }) {
               style={styles.downloadBtn}
               onPress={() => {
                 if (m.file_url) {
-                  Linking.openURL(m.file_url).catch(() => {});
+                  downloadFile(m.file_url, m.title, m.file_type);
                 }
               }}
             >

@@ -52,6 +52,7 @@
     "plugins": [
       "expo-dev-client",
       "expo-secure-store",
+      "@config-plugins/react-native-blob-util",
       [
         "react-native-video",
         {
