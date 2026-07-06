@@ -46,7 +46,7 @@ const TAB_SAVED = 'saved';
 const TAB_CONTINUE = 'continue';
 const TAB_DOWNLOADS = 'downloads';
 
-import { getDownloadedEpisodes } from '../services/downloadManager';
+import { getDownloadedEpisodes, removeDownload } from '../services/downloadManager';
 
 // ─────────────────────────────────────────────────────────────────
 // Progress bar shown on the thumbnail
@@ -92,7 +92,7 @@ const pStyles = StyleSheet.create({
 // Show card — matches the UI reference image exactly
 // thumbnail on left, title + category + EP.X / EP.TOTAL on right
 // ─────────────────────────────────────────────────────────────────
-function ShowCard({ item, onPress, onLongPress, selectionMode, selected }) {
+function ShowCard({ item, onPress, onLongPress, selectionMode, selected, onDelete }) {
   const progressPct =
     item.duration_sec > 0
       ? Math.min(Math.round((item.progress_sec / item.duration_sec) * 100), 100)
@@ -163,6 +163,13 @@ function ShowCard({ item, onPress, onLongPress, selectionMode, selected }) {
           EP.{item.episode_num} {'/'} EP.{item.total_episodes || '?'}
         </Text>
       </View>
+
+      {/* Delete button on top right of the card */}
+      {!selectionMode && onDelete && (
+        <TouchableOpacity style={cardStyles.deleteBtn} onPress={onDelete}>
+          <Ionicons name="trash-outline" size={16} color={theme.white} />
+        </TouchableOpacity>
+      )}
     </Pressable>
   );
 }
@@ -308,6 +315,7 @@ export default function MyListScreen() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [downloads, setDownloads] = useState([]);
 
   // Fetch data on mount if authenticated and not yet loaded
@@ -383,7 +391,11 @@ export default function MyListScreen() {
   }, [dispatch, navigation]);
 
   const handleCardPressAction = useCallback((entry) => {
-    const id = activeTab === TAB_SAVED ? entry.bookmark_id : entry.history_id;
+    let id;
+    if (activeTab === TAB_SAVED) id = entry.bookmark_id;
+    else if (activeTab === TAB_CONTINUE) id = entry.history_id;
+    else if (activeTab === TAB_DOWNLOADS) id = entry.episodeId;
+
     if (selectionMode) {
       setSelectedItems((prev) => {
         const next = new Set(prev);
@@ -403,7 +415,10 @@ export default function MyListScreen() {
   const handleCardLongPress = useCallback((entry) => {
     if (!selectionMode) {
       setSelectionMode(true);
-      const id = activeTab === TAB_SAVED ? entry.bookmark_id : entry.history_id;
+      let id;
+      if (activeTab === TAB_SAVED) id = entry.bookmark_id;
+      else if (activeTab === TAB_CONTINUE) id = entry.history_id;
+      else if (activeTab === TAB_DOWNLOADS) id = entry.episodeId;
       setSelectedItems(new Set([id]));
     }
   }, [selectionMode, activeTab]);
@@ -413,26 +428,55 @@ export default function MyListScreen() {
     setSelectedItems(new Set());
   }, []);
 
-  const confirmDeleteSelected = useCallback(() => {
-    if (activeTab === TAB_SAVED) {
-      selectedItems.forEach(id => {
-        const item = bookmarks.find(b => b.bookmark_id === id);
-        if (item) {
-          dispatch(toggleBookmark({
-            showId: item.show_id,
-            episodeId: item.episode_id,
-            progressSec: item.progress_sec || 0,
-          }));
-        }
-      });
+  const confirmDeleteSelected = useCallback(async () => {
+    if (deleteTarget) {
+      const { item, tab } = deleteTarget;
+      if (tab === TAB_SAVED) {
+        dispatch(toggleBookmark({
+          showId: item.show_id,
+          episodeId: item.episode_id,
+          progressSec: item.progress_sec || 0,
+        }));
+      } else if (tab === TAB_CONTINUE) {
+        dispatch(deleteWatchHistory({ historyId: item.history_id }));
+      } else if (tab === TAB_DOWNLOADS) {
+        await removeDownload(item.episodeId);
+        const updatedDownloads = await getDownloadedEpisodes();
+        setDownloads(updatedDownloads);
+      }
     } else {
-      selectedItems.forEach(id => {
-        dispatch(deleteWatchHistory({ historyId: id }));
-      });
+      if (activeTab === TAB_SAVED) {
+        selectedItems.forEach(id => {
+          const item = bookmarks.find(b => b.bookmark_id === id);
+          if (item) {
+            dispatch(toggleBookmark({
+              showId: item.show_id,
+              episodeId: item.episode_id,
+              progressSec: item.progress_sec || 0,
+            }));
+          }
+        });
+      } else if (activeTab === TAB_CONTINUE) {
+        selectedItems.forEach(id => {
+          dispatch(deleteWatchHistory({ historyId: id }));
+        });
+      } else if (activeTab === TAB_DOWNLOADS) {
+        for (const id of selectedItems) {
+          await removeDownload(id);
+        }
+        const updatedDownloads = await getDownloadedEpisodes();
+        setDownloads(updatedDownloads);
+      }
+      cancelSelection();
     }
     setDeleteModalVisible(false);
-    cancelSelection();
-  }, [selectedItems, activeTab, bookmarks, dispatch, cancelSelection]);
+    setDeleteTarget(null);
+  }, [deleteTarget, selectedItems, activeTab, bookmarks, dispatch, cancelSelection]);
+
+  const handleDeleteDirect = useCallback((item, tab) => {
+    setDeleteTarget({ item, tab });
+    setDeleteModalVisible(true);
+  }, []);
 
   // ── Merge bookmark with latest watch history ──────────────────
   // If a show was bookmarked but the user watched a later episode,
@@ -461,6 +505,12 @@ export default function MyListScreen() {
     return bookmark;
   }, [watchHistory]);
 
+  const isBulk = deleteTarget === null;
+  const modalTitle = isBulk ? "Delete Selected" : "Remove Item";
+  const modalText = isBulk
+    ? "Are you sure you want to delete the selected videos from your list?"
+    : "Are you sure you want to remove this video from your list?";
+
   const totalCount = bookmarks.length + watchHistory.length + downloads.length;
 
   if (!accessToken) {
@@ -483,7 +533,7 @@ export default function MyListScreen() {
             <Text style={styles.cancelBtnText}>Cancel</Text>
           </TouchableOpacity>
           <Text style={styles.selectionTitle}>{selectedItems.size} Selected</Text>
-          <TouchableOpacity onPress={() => setDeleteModalVisible(true)} style={styles.deleteActionBtn}>
+          <TouchableOpacity onPress={() => { setDeleteTarget(null); setDeleteModalVisible(true); }} style={styles.deleteActionBtn}>
             <Text style={styles.deleteActionText}>Delete</Text>
           </TouchableOpacity>
         </View>
@@ -573,6 +623,7 @@ export default function MyListScreen() {
                   }}
                   selectionMode={selectionMode}
                   selected={selectedItems.has(item.bookmark_id)}
+                  onDelete={() => handleDeleteDirect(item, TAB_SAVED)}
                   onPress={() => handleCardPressAction({
                     show_id: displayEntry.show_id,
                     show_title: displayEntry.show_title,
@@ -620,6 +671,7 @@ export default function MyListScreen() {
                 }}
                 selectionMode={selectionMode}
                 selected={selectedItems.has(item.history_id)}
+                onDelete={() => handleDeleteDirect(item, TAB_CONTINUE)}
                 onPress={() => handleCardPressAction(item)}
                 onLongPress={() => handleCardLongPress(item)}
               />
@@ -654,9 +706,11 @@ export default function MyListScreen() {
                   total_episodes: item.episodeNum,
                   tags: ['Offline'],
                 }}
-                selectionMode={false} // selection for downloads not implemented yet
-                selected={false}
-                onPress={() => handleCardPress({
+                selectionMode={selectionMode}
+                selected={selectedItems.has(item.episodeId)}
+                onDelete={() => handleDeleteDirect(item, TAB_DOWNLOADS)}
+                onPress={() => handleCardPressAction({
+                  episodeId: item.episodeId,
                   show_id: item.showName || item.episodeId,
                   show_title: item.showName || item.title,
                   thumbnail_url: item.localImagePath,
@@ -664,10 +718,12 @@ export default function MyListScreen() {
                   episode_num: item.episodeNum,
                   duration_sec: item.duration,
                   progress_sec: 0,
-                  total_episodes: 1, // Set to 1 so the player won't try to fetch more episodes offline
+                  total_episodes: 1, 
                   localVideoPath: item.localVideoPath,
                 })}
-                onLongPress={() => {}}
+                onLongPress={() => handleCardLongPress({
+                  episodeId: item.episodeId,
+                })}
               />
             )}
           />
@@ -678,14 +734,15 @@ export default function MyListScreen() {
       <Modal visible={deleteModalVisible} transparent animationType="fade">
         <View style={styles.modalBackdrop}>
           <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Delete Selected</Text>
-            <Text style={styles.modalText}>
-              Are you sure you want to delete the selected videos from your list?
-            </Text>
+            <Text style={styles.modalTitle}>{modalTitle}</Text>
+            <Text style={styles.modalText}>{modalText}</Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={styles.modalBtnCancel}
-                onPress={() => setDeleteModalVisible(false)}
+                onPress={() => {
+                  setDeleteModalVisible(false);
+                  setDeleteTarget(null);
+                }}
               >
                 <Text style={styles.modalBtnCancelText}>Cancel</Text>
               </TouchableOpacity>
