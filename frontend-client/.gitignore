@@ -38,3 +38,4 @@ yarn-error.*
 /android
 
 docker-compose.yml
+app.json 
