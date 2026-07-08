@@ -77,6 +77,8 @@ function getImageObjectName(type, entityId) {
   if (type === 'thumbnail') return `dramas/${entityId}/thumbnail.${ext}`;
   if (type === 'banner') return `dramas/${entityId}/banner.${ext}`;
   if (type === 'collection') return `collections/${entityId}/cover.${ext}`;
+  if (type === 'package_thumbnail') return `packages/${entityId}/thumbnail.${ext}`;
+  if (type === 'package_banner') return `packages/${entityId}/banner.${ext}`;
 
   throw new AppError('Invalid upload type', 400);
 }
@@ -87,6 +89,9 @@ async function uploadImageFile(type, entityId, file) {
   if (type === 'thumbnail' || type === 'banner') {
     const show = await prisma.show.findUnique({ where: { id: entityId } });
     if (!show) throw new AppError('Show not found', 404);
+  } else if (type === 'package_thumbnail' || type === 'package_banner') {
+    const pkg = await prisma.package.findUnique({ where: { id: entityId } });
+    if (!pkg) throw new AppError('Package not found', 404);
   }
 
   const objectName = getImageObjectName(type, entityId);
@@ -148,6 +153,10 @@ async function confirmImageUpload(type, entityId, objectName) {
     return prisma.show.update({ where: { id: entityId }, data: { thumbnail_url: publicUrl } });
   } else if (type === 'banner') {
     return prisma.show.update({ where: { id: entityId }, data: { banner_url: publicUrl } });
+  } else if (type === 'package_thumbnail') {
+    return prisma.package.update({ where: { id: entityId }, data: { thumbnail_url: publicUrl } });
+  } else if (type === 'package_banner') {
+    return prisma.package.update({ where: { id: entityId }, data: { banner_url: publicUrl } });
   }
 
   return { updated: true, url: publicUrl };

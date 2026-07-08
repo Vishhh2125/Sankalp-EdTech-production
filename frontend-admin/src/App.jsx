@@ -25,6 +25,7 @@ import Roles         from './pages/Roles.jsx'
 import LiveStreaming from './pages/LiveStreaming.jsx'
 import CMS           from './pages/CMS.jsx'
 import Submissions   from './pages/Submissions.jsx'
+import Packages      from './pages/Packages.jsx'
 
 const ROUTES = {
   dashboard:     Dashboard,
@@ -42,6 +43,7 @@ const ROUTES = {
   cms:           CMS,
   live:          LiveStreaming,
   submissions:   Submissions,
+  packages:      Packages,
 }
 
 function AccessDenied() {

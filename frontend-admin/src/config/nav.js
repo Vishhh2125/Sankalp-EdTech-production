@@ -24,6 +24,7 @@ export const NAV_CONFIG = [
       { id: 'membership', label: 'Membership Plans', badge: null },
       { id: 'topup',      label: 'Top-Up Plans',     badge: null },
       { id: 'coins',      label: 'Coins & Wallet',   badge: null },
+      { id: 'packages',   label: 'Packages',         badge: null },
     ],
   },
   {
@@ -50,6 +51,7 @@ export const PAGE_META = {
   membership:    { title: 'Membership Plans',     subtitle: 'Plans and billing' },
   topup:         { title: 'Top-Up Plans',         subtitle: 'Coin package management' },
   coins:         { title: 'Coins & Wallet',       subtitle: 'Virtual currency management' },
+  packages:      { title: 'Packages',             subtitle: 'Manage bundled show packages' },
   notifications: { title: 'Notifications',        subtitle: 'Push messages & alerts' },
   analytics:     { title: 'Analytics & Reports',  subtitle: 'Growth & performance reports' },
   roles:         { title: 'Roles & Permissions',  subtitle: 'Admin access control' },

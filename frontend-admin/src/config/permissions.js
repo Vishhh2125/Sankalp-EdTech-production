@@ -15,6 +15,7 @@ export const ADMIN_SECTIONS = [
   'cms',
   'live',
   'submissions',
+  'packages',
 ]
 
 export const SECTION_LABELS = {
@@ -33,6 +34,7 @@ export const SECTION_LABELS = {
   cms: 'CMS Pages',
   live: 'Live Streaming',
   submissions: 'Submissions',
+  packages: 'Packages',
 }
 
 /** Sub-admin assignable sections (roles management is main-admin only) */
