@@ -39,7 +39,7 @@ import {
   selectIsBookmarked,
   selectBookmarksLoaded,
 } from '../../redux/slices/myListSlice';
-import { unlockEpisode } from '../../redux/slices/showPlayerSlice';
+import { unlockEpisode, unlockShow, fetchShowPlayerPage } from '../../redux/slices/showPlayerSlice';
 import { usePlaybackSpeed } from '../../context/PlaybackSpeedContext';
 import { usePlaybackVolume } from '../../context/PlaybackVolumeContext';
 import { useVideoQuality } from '../../context/VideoQualityContext';
@@ -1162,11 +1162,15 @@ function LockOverlay({ item, accessToken, navigation, dispatch, walletReturnPara
   const { openSignUp } = useGuestAuth();
   const isAuthenticated = !!accessToken;
   const coins = useSelector((s) => s.auth?.coins) ?? 0;
-  const coinCost = item.coin_cost || 0;
+  
+  const isShowLock = item.lock_reason === 'show_only';
+  const showCoinCost = item.show_coin_cost || 0;
+  const coinCost = isShowLock ? showCoinCost : (item.coin_cost || 0);
   const canUnlock = coins >= coinCost;
+  
   const isCoinLock =
     isAuthenticated &&
-    (item.lock_reason === 'coins_or_membership' || !item.lock_reason);
+    (item.lock_reason === 'coins_or_membership' || !item.lock_reason || isShowLock);
 
   const [unlocking, setUnlocking] = useState(false);
   const [error, setError] = useState(null);
@@ -1185,13 +1189,23 @@ function LockOverlay({ item, accessToken, navigation, dispatch, walletReturnPara
   const episodeId = item.episode_id || item.id;
 
   const handleUnlock = useCallback(async () => {
-    if (!episodeId || unlocking) return;
+    if (unlocking) return;
     setError(null);
     setUnlocking(true);
     try {
-      const result = await dispatch(unlockEpisode(episodeId)).unwrap();
-      if (result?.is_locked) {
-        setError('Could not unlock this episode');
+      if (isShowLock) {
+        if (!item.show_id) {
+          setError('Show ID missing');
+          return;
+        }
+        await dispatch(unlockShow(item.show_id)).unwrap();
+        dispatch(fetchShowPlayerPage({ showId: item.show_id, fromEp: 1 }));
+      } else {
+        if (!episodeId) return;
+        const result = await dispatch(unlockEpisode(episodeId)).unwrap();
+        if (result?.is_locked) {
+          setError('Could not unlock this episode');
+        }
       }
     } catch (err) {
       const msg = err?.message || 'Unlock failed';
@@ -1199,7 +1213,7 @@ function LockOverlay({ item, accessToken, navigation, dispatch, walletReturnPara
     } finally {
       setUnlocking(false);
     }
-  }, [dispatch, episodeId, unlocking]);
+  }, [dispatch, episodeId, item.show_id, isShowLock, unlocking]);
 
   if (!isAuthenticated) {
     return (
@@ -1231,7 +1245,14 @@ function LockOverlay({ item, accessToken, navigation, dispatch, walletReturnPara
       <View style={styles.lockIconWrap}>
         <Ionicons name="lock-closed" size={32} color="#fff" />
       </View>
-      <Text style={styles.lockTitle}>Unlock · {coinCost} coins</Text>
+      <Text style={styles.lockTitle}>
+        {isShowLock ? `Unlock Show · ${coinCost} coins` : `Unlock · ${coinCost} coins`}
+      </Text>
+      {isShowLock && (
+        <Text style={{ color: '#ccc', fontSize: 12, marginBottom: 8, textAlign: 'center', paddingHorizontal: 20 }}>
+          This episode requires purchasing the parent show. Unlocking the show grants access to all episodes.
+        </Text>
+      )}
       <Text style={styles.lockBalance}>Your coins: {coins}</Text>
       {error ? <Text style={styles.lockError}>{error}</Text> : null}
       <TouchableOpacity
@@ -1246,7 +1267,7 @@ function LockOverlay({ item, accessToken, navigation, dispatch, walletReturnPara
           <ActivityIndicator color="#fff" />
         ) : (
           <Text style={styles.lockButtonText}>
-            {canUnlock ? 'Unlock' : 'Not enough coins'}
+            {canUnlock ? (isShowLock ? 'Buy Full Show' : 'Unlock') : 'Not enough coins'}
           </Text>
         )}
       </TouchableOpacity>

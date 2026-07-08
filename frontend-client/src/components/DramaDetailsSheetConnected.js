@@ -19,6 +19,10 @@ import { courseworkApi } from '../services/courseworkApi';
 import AssignmentsTab from './coursework/AssignmentsTab';
 import MaterialsTab from './coursework/MaterialsTab';
 import QuizTab from './coursework/QuizTab';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
+import { unlockShow } from '../redux/slices/showPlayerSlice';
+import { ROUTES } from '../constants/routes';
 
 // Debug log for thumbnails
 const debugThumbnail = (source, details_tn, item_tn, details_id, item_id) => {
@@ -265,6 +269,59 @@ export default function DramaDetailsSheetConnected({
     };
   }, [visible, item?.show_id]);
 
+  const showIsLocked = useMemo(() => {
+    const showDetails = details?.show_id === item?.show_id ? details : null;
+    return showDetails?.is_locked === true;
+  }, [details, item]);
+
+  // Reset coursework flags and data when the show lock status changes
+  useEffect(() => {
+    setAssignmentsFetched(false);
+    setMaterialsFetched(false);
+    setQuizzesFetched(false);
+    setAssignments([]);
+    setMaterials([]);
+    setQuizzes([]);
+  }, [showIsLocked]);
+
+  const dispatch = useDispatch();
+  const navigation = useNavigation();
+  const coins = useSelector((s) => s.auth?.coins) ?? 0;
+  const [unlockingShow, setUnlockingShow] = useState(false);
+  const [unlockError, setUnlockError] = useState(null);
+
+  const handleBuyShow = useCallback(async () => {
+    const showDetails = details?.show_id === item?.show_id ? details : null;
+    if (!showDetails?.show_id || unlockingShow) return;
+    setUnlockError(null);
+    
+    const cost = showDetails.show_coin_cost || 0;
+    if (coins < cost) {
+      setUnlockError('Not enough coins to purchase the show!');
+      return;
+    }
+
+    setUnlockingShow(true);
+    try {
+      await dispatch(unlockShow(showDetails.show_id)).unwrap();
+      if (onRangeChange) {
+        onRangeChange(activeRangeStart);
+      }
+      alert('Show purchased successfully!');
+    } catch (err) {
+      setUnlockError(err?.message || 'Failed to purchase show');
+    } finally {
+      setUnlockingShow(false);
+    }
+  }, [dispatch, details, item, coins, activeRangeStart, onRangeChange, unlockingShow]);
+
+  const goToTopUp = useCallback(() => {
+    onClose && onClose();
+    navigation.navigate(ROUTES.TOP_UP, {
+      returnToShowPlayer: false,
+    });
+  }, [navigation, onClose]);
+
   // Move useMemo BEFORE the early return
   const posterSource = useMemo(() => {
     if (!item) return null;
@@ -298,6 +355,7 @@ export default function DramaDetailsSheetConnected({
   if (!item) return null;
 
   const showDetails = details?.show_id === item.show_id ? details : null;
+  const showIsPaid = showDetails?.show_is_free === false;
   const title = showDetails?.show_title || item.show_title || item.title || 'Untitled drama';
   const synopsisText = showDetails?.synopsis || item.synopsis || 'Synopsis not available yet.';
   const tags = showDetails?.tags || item.tags || [];
@@ -416,6 +474,40 @@ export default function DramaDetailsSheetConnected({
                         ))}
                       </View>
                     ) : null}
+
+                    {showIsPaid && showIsLocked && (
+                      <View style={styles.buyShowContainer}>
+                        <Pressable
+                          style={({ pressed }) => [
+                            styles.buyShowBtn,
+                            pressed && styles.buyShowBtnPressed,
+                            unlockingShow && styles.buyShowBtnDisabled,
+                          ]}
+                          onPress={handleBuyShow}
+                          disabled={unlockingShow}
+                        >
+                          {unlockingShow ? (
+                            <ActivityIndicator color={theme.white} size="small" />
+                          ) : (
+                            <>
+                              <Ionicons name="cart" size={18} color={theme.white} />
+                              <Text style={styles.buyShowText}>
+                                Buy Full Show · {showDetails?.show_coin_cost} Coins
+                              </Text>
+                            </>
+                          )}
+                        </Pressable>
+                        <Text style={styles.buyShowCoinsText}>Your balance: {coins} coins</Text>
+                        {unlockError ? (
+                          <Text style={styles.buyShowErrorText}>{unlockError}</Text>
+                        ) : null}
+                        {coins < (showDetails?.show_coin_cost || 0) && (
+                          <Pressable onPress={goToTopUp} style={styles.getCoinsBtn}>
+                            <Text style={styles.getCoinsText}>Get Coins</Text>
+                          </Pressable>
+                        )}
+                      </View>
+                    )}
 
                     <Pressable
                       style={({ pressed }) => [
@@ -804,5 +896,59 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 6,
     lineHeight: 16,
+  },
+  buyShowContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+    width: '100%',
+    padding: 16,
+    borderRadius: 8,
+    backgroundColor: theme.surface,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  buyShowBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: theme.crimson,
+    borderRadius: 8,
+    width: '100%',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    marginBottom: 8,
+  },
+  buyShowBtnPressed: {
+    opacity: 0.88,
+  },
+  buyShowBtnDisabled: {
+    opacity: 0.6,
+  },
+  buyShowText: {
+    color: theme.white,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  buyShowCoinsText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 13,
+  },
+  buyShowErrorText: {
+    color: theme.crimson,
+    fontSize: 13,
+    marginTop: 6,
+    textAlign: 'center',
+  },
+  getCoinsBtn: {
+    marginTop: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  getCoinsText: {
+    color: theme.crimson,
+    fontWeight: '600',
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
 });

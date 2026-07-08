@@ -59,6 +59,7 @@ model User {
   coin_transactions      CoinTransaction[]
   watch_history          WatchHistory[]
   episode_access         EpisodeAccess[]
+  show_access            ShowAccess[]
   daily_checkins         DailyCheckin[]
   bookmarks              Bookmark[]
   playlists              Playlist[]
@@ -255,6 +256,8 @@ model Show {
   rating_count        Int      @default(0)
   feed_position       Int      @default(0)
   is_active           Boolean  @default(true)
+  is_free             Boolean  @default(true)
+  coin_cost           Int      @default(0)
   created_at          DateTime @default(now())
 
   category          Category         @relation(fields: [category_id], references: [id])
@@ -270,6 +273,7 @@ model Show {
   assignments       Assignment[]
   materials         Material[]
   quizzes           Quiz[]
+  show_access       ShowAccess[]
 
   @@index([category_id, is_active], name: "idx_shows_category")
   @@index([feed_position, is_active], name: "idx_shows_feed_position")
@@ -298,6 +302,7 @@ model Episode {
   title              String          @db.VarChar(255)
   is_free            Boolean         @default(false)
   coin_cost          Int             @default(0)
+  is_show_only       Boolean         @default(false)
   hls_master_url     String?         @db.VarChar(500)
   duration_sec       Int             @default(0)
   status             String          @default("processing") @db.VarChar(20)
@@ -798,4 +803,23 @@ model QuizAnswer {
   selected_option QuizOption   @relation(fields: [selected_option_id], references: [id], onDelete: Cascade)
 
   @@map("quiz_answers")
+}
+
+// ──────────────────────────────────────
+// SHOW ACCESS (SHOW PURCHASE RECORD)
+// ──────────────────────────────────────
+
+model ShowAccess {
+  id           String   @id @default(uuid()) @db.Uuid
+  user_id      String   @db.Uuid
+  show_id      String   @db.Uuid
+  coins_spent  Int
+  purchased_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  show Show @relation(fields: [show_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, show_id], name: "idx_sa_user_show")
+  @@index([show_id], name: "idx_sa_show_id")
+  @@map("show_access")
 }

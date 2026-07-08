@@ -220,6 +220,8 @@ async function getAllShows({
       thumbnail_url: s.thumbnail_url,
       banner_url: s.banner_url,
       episode_count: s._count.episodes,
+      is_free: s.is_free,
+      coin_cost: s.coin_cost,
       created_at: s.created_at,
     };
   });
@@ -332,6 +334,8 @@ async function createShow(data, adminId) {
       category_id: showData.category_id,
       feed_position: showData.feed_position || 0,
       is_active,
+      is_free: showData.is_free !== undefined ? showData.is_free : true,
+      coin_cost: showData.coin_cost !== undefined ? showData.coin_cost : 0,
       thumbnail_url: showData.thumbnail_url || null,
       banner_url: showData.banner_url || null,
       manual_view_count: showData.manual_view_count || 0,
@@ -393,6 +397,15 @@ async function updateShow(id, data) {
           data: { feed_position: { decrement: 1 } },
         });
       }
+    }
+  }
+
+  if (showData.is_free === true) {
+    const showOnlyEpisodes = await prisma.episode.count({
+      where: { show_id: id, is_show_only: true },
+    });
+    if (showOnlyEpisodes > 0) {
+      throw new AppError('Cannot make show free while it contains show-only episodes', 400);
     }
   }
 
@@ -517,6 +530,10 @@ async function createEpisode(data) {
   const show = await prisma.show.findUnique({ where: { id: data.show_id } });
   if (!show) throw new AppError('Show not found', 404);
 
+  if (data.is_show_only === true && show.is_free) {
+    throw new AppError('Show-only episodes are not allowed on free shows', 400);
+  }
+
   // Auto-assign episode number if not provided or if it conflicts
   if (!data.episode_num) {
     const lastEp = await prisma.episode.findFirst({
@@ -551,6 +568,13 @@ async function updateEpisode(id, data) {
   if (!ep) throw new AppError('Episode not found', 404);
 
   const updateData = { ...data };
+
+  if (updateData.is_show_only === true) {
+    const show = await prisma.show.findUnique({ where: { id: ep.show_id } });
+    if (show && show.is_free) {
+      throw new AppError('Show-only episodes are not allowed on free shows', 400);
+    }
+  }
   
   if (updateData.video_source === 'YOUTUBE' || (updateData.youtube_video_id && ep.video_source === 'YOUTUBE')) {
     const youtubeId = extractYoutubeVideoId(updateData.youtube_video_id || ep.youtube_video_id);

@@ -2,7 +2,7 @@ import express from 'express';
 import { prisma } from '../../prisma/client.js';
 import { requireAuth } from '../../middleware/auth.middleware.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
-import { unlockEpisodeForUser } from './episode-unlock.service.js';
+import { unlockEpisodeForUser, unlockShowForUser } from './episode-unlock.service.js';
 import {
   getCheckinStatus,
   claimDailyCheckin,
@@ -563,6 +563,25 @@ router.post('/checkin', requireAuth, async (req, res, next) => {
 router.post('/episodes/:episodeId/unlock', requireAuth, async (req, res, next) => {
   try {
     const result = await unlockEpisodeForUser(req.user.id, req.params.episodeId);
+    if (!result.ok) {
+      return res
+        .status(result.status)
+        .json(new ApiResponse(result.status, result.data, result.message));
+    }
+    return res.json(new ApiResponse(200, result.data, result.message));
+  } catch (e) {
+    next(e);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────
+// SHOW UNLOCK (coins → show_access)
+// POST /api/user/shows/:showId/unlock
+// ─────────────────────────────────────────────────────────────────
+
+router.post('/shows/:showId/unlock', requireAuth, async (req, res, next) => {
+  try {
+    const result = await unlockShowForUser(req.user.id, req.params.showId);
     if (!result.ok) {
       return res
         .status(result.status)

@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { API_BASE_URL } from '../../constants/config';
 import { setCoins } from './authSlice';
-import { unlockEpisodeInForYou } from './reelsSlice';
+import { unlockEpisodeInForYou, unlockShowInForYou } from './reelsSlice';
 import * as authService from '../../services/authService';
 import { createAuthenticatedApi } from '../../services/api';
 
@@ -43,6 +43,39 @@ export const unlockEpisode = createAsyncThunk(
         err?.response?.data?.message ||
         err?.message ||
         'Failed to unlock episode';
+      return rejectWithValue({
+        message,
+        status: err?.response?.status,
+        coins: err?.response?.data?.data?.coins,
+      });
+    }
+  }
+);
+
+export const unlockShow = createAsyncThunk(
+  'showPlayer/unlockShow',
+  async (showId, { rejectWithValue, dispatch }) => {
+    try {
+      const res = await feedApi.post(`/api/user/shows/${showId}/unlock`);
+      const data = res.data?.data;
+      if (!data) {
+        return rejectWithValue({ message: 'Invalid unlock response', status: 500 });
+      }
+
+      if (typeof data.coins === 'number') {
+        dispatch(setCoins(data.coins));
+        await authService.patchUserDataInStore({ coins: data.coins });
+      }
+
+      dispatch(unlockShowLocal({ show_id: showId }));
+      dispatch(unlockShowInForYou({ show_id: showId }));
+
+      return data;
+    } catch (err) {
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to unlock show';
       return rejectWithValue({
         message,
         status: err?.response?.status,
@@ -128,6 +161,17 @@ const showPlayerSlice = createSlice({
           ? hls_url
           : `${API_BASE_URL}${hls_url}`;
       }
+    },
+
+    unlockShowLocal(state, action) {
+      const { show_id } = action.payload;
+      state.episodes = state.episodes.map((ep) => {
+        return {
+          ...ep,
+          is_locked: false,
+          lock_reason: null,
+        };
+      });
     },
 
     clearShowPlayer(state) {
@@ -229,6 +273,9 @@ function mapEpisode(ep, showId, showTitle, thumbnailUrl, streamBase, totalEpisod
     lock_reason: ep.lock_reason,
     is_free: ep.is_free,
     coin_cost: ep.coin_cost,
+    is_show_only: ep.is_show_only ?? false,
+    show_coin_cost: ep.show_coin_cost || 0,
+    show_is_free: ep.show_is_free ?? true,
     status: ep.status,
     video_source: ep.video_source || 'UPLOAD',
     youtube_video_id: ep.youtube_video_id || null,
@@ -240,7 +287,7 @@ function mapEpisode(ep, showId, showTitle, thumbnailUrl, streamBase, totalEpisod
   };
 }
 
-export const { initShowPlayer, clearShowPlayer, unlockEpisodeLocal } = showPlayerSlice.actions;
+export const { initShowPlayer, clearShowPlayer, unlockEpisodeLocal, unlockShowLocal } = showPlayerSlice.actions;
 export default showPlayerSlice.reducer;
 
 // Selectors
