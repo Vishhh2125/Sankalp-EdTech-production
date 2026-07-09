@@ -31,6 +31,7 @@ import { clearPendingHomeBanner } from '../redux/slices/promoFlowSlice';
 import { API_BASE_URL } from '../constants/config';
 import { createAuthenticatedApi } from '../services/api';
 import { initShowPlayer, fetchShowPlayerPage } from '../redux/slices/showPlayerSlice';
+import { packageApi } from '../services/packageApi';
 import {
   fetchBookmarks,
   fetchWatchHistory,
@@ -128,6 +129,26 @@ const DramaCard = ({ item, onPress }) => (
   </TouchableOpacity>
 );
 
+const PackageCard = ({ item, onPress }) => (
+  <TouchableOpacity style={styles.cardContainer} onPress={onPress} activeOpacity={0.85}>
+    <View style={styles.imageWrapper}>
+      {item.thumbnail_url ? (
+        <Image
+          style={styles.posterImage}
+          source={{ uri: item.thumbnail_url }}
+          resizeMode="cover"
+        />
+      ) : (
+        <View style={[styles.posterImage, { backgroundColor: '#1A0020' }]} />
+      )}
+    </View>
+    <Text style={styles.dramaTitle} numberOfLines={2}>{item.title}</Text>
+    <Text style={styles.dramaTagsText} numberOfLines={1}>
+      {item.shows_count} {item.shows_count === 1 ? 'Show' : 'Shows'}
+    </Text>
+  </TouchableOpacity>
+);
+
 export default function PopularScreen() {
   const dispatch = useDispatch();
   const accessToken = useSelector((state) => state.auth?.accessToken);
@@ -150,6 +171,7 @@ export default function PopularScreen() {
   const [tabs, setTabs] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
   const [shows, setShows] = useState([]);
+  const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showDetails, setShowDetails] = useState(null);
   const [showDetailsLoading, setShowDetailsLoading] = useState(false);
@@ -375,6 +397,14 @@ export default function PopularScreen() {
         dispatch(fetchBookmarks());
         dispatch(fetchWatchHistory());
       }
+      packageApi.getActivePackages()
+        .then((res) => {
+          setPackages(res.data?.data || res.data || []);
+        })
+        .catch((e) => {
+          console.error("Failed to load active packages:", e);
+          setPackages([]);
+        });
     }, [loadShows, accessToken, dispatch])
   );
 
@@ -390,7 +420,7 @@ export default function PopularScreen() {
       setSheetHistory([]);
       setSheetVisible(true);
       fetchShowDetails(selectedItem.show_id, 1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dispatch, reopenHomeSheet, homeSession])
   );
 
@@ -824,6 +854,20 @@ export default function PopularScreen() {
             emptyText="No dramas found."
           />
 
+          {packages.length > 0 && (
+            <HomeShowSection
+              title="Packages"
+              items={packages}
+              onItemPress={(item) => navigation.navigate(ROUTES.PACKAGE_DETAIL, { packageId: item.id })}
+              renderItem={(item) => (
+                <PackageCard
+                  item={item}
+                  onPress={() => navigation.navigate(ROUTES.PACKAGE_DETAIL, { packageId: item.id })}
+                />
+              )}
+            />
+          )}
+
           <HomeShowSection
             title="Trending"
             items={trendingShowsPreview}
@@ -1085,11 +1129,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-  
+
     backgroundColor: 'rgba(0,0,0,0.55)',
-  
+
     zIndex: 100,
-  
+
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1195,7 +1239,7 @@ const styles = StyleSheet.create({
   },
   loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyText: { color: '#666', textAlign: 'center', marginTop: 50, fontSize: 16 },
-  
+
   tapHintText: {
     color: '#FFFFFF',
     fontSize: 16,
@@ -1203,7 +1247,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 24,
-  
+
     overflow: 'hidden',
   },
 });

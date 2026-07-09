@@ -383,3 +383,12 @@ export const courseworkApi = {
   getSubmissions: (params) => api.get('/content/admin/submissions', { params }),
   gradeSubmission: (id, data) => api.post(`/content/admin/submissions/${id}/grade`, data),
 };
+
+// ── Packages API ──
+export const packagesApi = {
+  list: () => api.get('/content/admin/packages'),
+  getById: (id) => api.get(`/content/admin/packages/${id}`),
+  create: (data) => api.post('/content/admin/packages', data),
+  update: (id, data) => api.put(`/content/admin/packages/${id}`, data),
+  delete: (id) => api.delete(`/content/admin/packages/${id}`),
+};

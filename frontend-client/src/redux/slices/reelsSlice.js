@@ -2,9 +2,6 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { API_BASE_URL } from '../../constants/config';
 import { createAuthenticatedApi } from '../../services/api';
 
-// Feed API uses /api/feed/... (no /v1 prefix)
-// Auth API uses /api/v1/auth/... (with /v1)
-// So we create a separate instance for feed calls
 const feedApi = createAuthenticatedApi({
   baseURL: API_BASE_URL,
   timeout: 15000,
@@ -124,6 +121,22 @@ const reelsSlice = createSlice({
         state.showMode.episodes.forEach(patchItem);
       }
     },
+    unlockShowInForYou(state, action) {
+      const { show_id } = action.payload;
+      const patchItem = (item) => {
+        if (item.show_id !== show_id) return;
+        item.is_locked = false;
+        item.lock_reason = null;
+      };
+      state.forYouItems.forEach(patchItem);
+      if (state.showMode?.show_id === show_id) {
+        state.showMode.is_locked = false;
+        state.showMode.lock_reason = null;
+      }
+      if (state.showMode?.episodes) {
+        state.showMode.episodes.forEach(patchItem);
+      }
+    },
   },
   extraReducers: (builder) => {
     // For You feed
@@ -174,6 +187,7 @@ const reelsSlice = createSlice({
 export const {
   clearShowMode,
   unlockEpisodeInForYou,
+  unlockShowInForYou,
   setForYouDramaSheetSession,
   clearForYouDramaSheetSession,
   setForYouReopenSheetAfterPlayer,
@@ -181,6 +195,7 @@ export const {
   clearHomeDramaSheetSession,
   setHomeReopenSheetAfterPlayer,
 } = reelsSlice.actions;
+
 export default reelsSlice.reducer;
 
 // Selectors

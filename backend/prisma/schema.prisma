@@ -61,6 +61,7 @@ model User {
   coin_transactions      CoinTransaction[]
   watch_history          WatchHistory[]
   episode_access         EpisodeAccess[]
+  show_access            ShowAccess[]
   daily_checkins         DailyCheckin[]
   bookmarks              Bookmark[]
   playlists              Playlist[]
@@ -73,6 +74,7 @@ model User {
   assignment_submissions AssignmentSubmission[] @relation("UserSubmissions")
   graded_submissions     AssignmentSubmission[] @relation("GradedSubmissions")
   quiz_attempts          QuizAttempt[]
+  package_purchases      PackagePurchase[]
 
   @@map("users")
 }
@@ -257,6 +259,8 @@ model Show {
   rating_count        Int      @default(0)
   feed_position       Int      @default(0)
   is_active           Boolean  @default(true)
+  is_free             Boolean  @default(true)
+  coin_cost           Int      @default(0)
   created_at          DateTime @default(now())
 
   category          Category         @relation(fields: [category_id], references: [id])
@@ -272,6 +276,8 @@ model Show {
   assignments       Assignment[]
   materials         Material[]
   quizzes           Quiz[]
+  show_access       ShowAccess[]
+  package_shows     PackageShow[]
 
   @@index([category_id, is_active], name: "idx_shows_category")
   @@index([feed_position, is_active], name: "idx_shows_feed_position")
@@ -300,6 +306,7 @@ model Episode {
   title              String          @db.VarChar(255)
   is_free            Boolean         @default(false)
   coin_cost          Int             @default(0)
+  is_show_only       Boolean         @default(false)
   hls_master_url     String?         @db.VarChar(500)
   duration_sec       Int             @default(0)
   status             String          @default("processing") @db.VarChar(20)
@@ -800,4 +807,73 @@ model QuizAnswer {
   selected_option QuizOption   @relation(fields: [selected_option_id], references: [id], onDelete: Cascade)
 
   @@map("quiz_answers")
+}
+
+// ──────────────────────────────────────
+// SHOW ACCESS (SHOW PURCHASE RECORD)
+// ──────────────────────────────────────
+
+model ShowAccess {
+  id           String   @id @default(uuid()) @db.Uuid
+  user_id      String   @db.Uuid
+  show_id      String   @db.Uuid
+  coins_spent  Int
+  purchased_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  show Show @relation(fields: [show_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, show_id], name: "idx_sa_user_show")
+  @@index([show_id], name: "idx_sa_show_id")
+  @@map("show_access")
+}
+
+// ──────────────────────────────────────
+// PACKAGES (BUNDLED MONETIZABLE SHOWS)
+// ──────────────────────────────────────
+
+model Package {
+  id            String   @id @default(uuid()) @db.Uuid
+  title         String   @db.VarChar(255)
+  synopsis      String   @db.Text
+  thumbnail_url String?  @db.VarChar(500)
+  banner_url    String?  @db.VarChar(500)
+  coin_price    Int
+  is_active     Boolean  @default(true)
+  created_by    String?  @db.Uuid
+  display_order Int      @default(0)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  package_shows     PackageShow[]
+  package_purchases PackagePurchase[]
+
+  @@map("packages")
+}
+
+model PackageShow {
+  id            String @id @default(uuid()) @db.Uuid
+  package_id    String @db.Uuid
+  show_id       String @db.Uuid
+  display_order Int    @default(0)
+
+  package Package @relation(fields: [package_id], references: [id], onDelete: Cascade)
+  show    Show    @relation(fields: [show_id], references: [id], onDelete: Cascade)
+
+  @@unique([package_id, show_id], name: "idx_ps_package_show")
+  @@map("package_shows")
+}
+
+model PackagePurchase {
+  id           String   @id @default(uuid()) @db.Uuid
+  user_id      String   @db.Uuid
+  package_id   String   @db.Uuid
+  coins_spent  Int
+  purchased_at DateTime @default(now())
+
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  package Package @relation(fields: [package_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, package_id], name: "idx_pp_user_package")
+  @@map("package_purchases")
 }

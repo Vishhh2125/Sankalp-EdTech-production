@@ -3,7 +3,7 @@ import { prisma } from '../../prisma/client.js';
 import { allowGuest, requireAuth } from '../../middleware/auth.middleware.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 import { unlockEpisodeForUser } from '../user/episode-unlock.service.js';
-import { checkEpisodeAccess } from '../user/episode-access.service.js';
+import { checkEpisodeAccess, checkShowAccess } from '../user/episode-access.service.js';
 import { displayedViewCount } from '../user/view-count.service.js';
 import { getSignedEpisodeHlsPath } from '../../utils/hls-signed-url.js';
 
@@ -129,6 +129,9 @@ router.get('/for-you', allowGuest, async (req, res, next) => {
         // Lock info for frontend
         is_free: ep1.is_free,
         coin_cost: ep1.coin_cost,
+        is_show_only: ep1.is_show_only,
+        show_is_free: show.is_free,
+        show_coin_cost: show.coin_cost,
         is_locked,
         lock_reason,
       });
@@ -164,6 +167,10 @@ router.get('/show/:showId', allowGuest, async (req, res, next) => {
       return res.status(404).json({ error: 'Show not found' });
     }
 
+    const { is_locked: isShowLocked, lock_reason: showLockReason } = await checkShowAccess(
+      userId, isGuest, showId
+    );
+
     const episodes = await prisma.episode.findMany({
       where: { show_id: showId, episode_num: { gte: fromEp } },
       orderBy: { episode_num: 'asc' },
@@ -183,6 +190,9 @@ router.get('/show/:showId', allowGuest, async (req, res, next) => {
         title: ep.title,
         is_free: ep.is_free,
         coin_cost: ep.coin_cost,
+        is_show_only: ep.is_show_only,
+        show_is_free: show.is_free,
+        show_coin_cost: show.coin_cost,
         duration_sec: ep.duration_sec,
         status: ep.status,
         video_source: ep.video_source || 'UPLOAD',
@@ -202,6 +212,10 @@ router.get('/show/:showId', allowGuest, async (req, res, next) => {
       rating_avg: show.rating_avg,
       rating_count: show.rating_count,
       tags: show.show_tags.map(st => st.tag.name),
+      show_is_free: show.is_free,
+      show_coin_cost: show.coin_cost,
+      is_locked: isShowLocked,
+      lock_reason: showLockReason,
       total_episodes: totalEpisodes,
       episodes: items,
       has_more: fromEp + limit - 1 < totalEpisodes,

@@ -29,6 +29,8 @@ const createShowSchema = Joi.object({
   tag_ids: Joi.array().items(Joi.string().uuid()).default([]),
   feed_position: Joi.number().integer().min(0).default(0),
   is_active: Joi.boolean().default(true),
+  is_free: Joi.boolean().default(true),
+  coin_cost: Joi.number().integer().min(0).default(0),
   thumbnail_url: Joi.string().max(500).allow('', null),
   banner_url: Joi.string().max(500).allow('', null),
 });
@@ -40,6 +42,8 @@ const updateShowSchema = Joi.object({
   tag_ids: Joi.array().items(Joi.string().uuid()),
   feed_position: Joi.number().integer().min(0),
   is_active: Joi.boolean(),
+  is_free: Joi.boolean(),
+  coin_cost: Joi.number().integer().min(0),
   thumbnail_url: Joi.string().max(500).allow('', null),
   banner_url: Joi.string().max(500).allow('', null),
 }).min(1);
@@ -50,6 +54,7 @@ const createEpisodeSchema = Joi.object({
   title: Joi.string().min(1).max(255).required(),
   is_free: Joi.boolean().default(false),
   coin_cost: Joi.number().integer().min(0).default(0),
+  is_show_only: Joi.boolean().default(false),
   duration_sec: Joi.number().integer().min(0).default(0),
   video_source: Joi.string().valid('UPLOAD', 'YOUTUBE').default('UPLOAD'),
   youtube_video_id: Joi.string().max(20).allow('', null).when('video_source', {
@@ -63,6 +68,7 @@ const updateEpisodeSchema = Joi.object({
   episode_num: Joi.number().integer().min(1),
   is_free: Joi.boolean(),
   coin_cost: Joi.number().integer().min(0),
+  is_show_only: Joi.boolean(),
   duration_sec: Joi.number().integer().min(0),
   video_source: Joi.string().valid('UPLOAD', 'YOUTUBE'),
   youtube_video_id: Joi.string().max(20).allow('', null).when('video_source', {

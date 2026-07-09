@@ -39,7 +39,7 @@ import {
   selectIsBookmarked,
   selectBookmarksLoaded,
 } from '../../redux/slices/myListSlice';
-import { unlockEpisode } from '../../redux/slices/showPlayerSlice';
+import { unlockEpisode, unlockShow, fetchShowPlayerPage } from '../../redux/slices/showPlayerSlice';
 import { usePlaybackSpeed } from '../../context/PlaybackSpeedContext';
 import { usePlaybackVolume } from '../../context/PlaybackVolumeContext';
 import { useVideoQuality } from '../../context/VideoQualityContext';
@@ -113,7 +113,7 @@ export default function ShortVideoReelItem({
   const [videoError, setVideoError] = useState(null);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [controlsInteractionTick, setControlsInteractionTick] = useState(0);
-  
+
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
   const [synopsisTruncated, setSynopsisTruncated] = useState(false);
 
@@ -168,15 +168,15 @@ export default function ShortVideoReelItem({
       navigation.navigate(ROUTES.LOGIN);
       return;
     }
-    
+
     if (downloadState === 'downloaded') {
       Alert.alert(
         'Remove Download',
         'Do you want to remove this episode from your device?',
         [
           { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Remove', 
+          {
+            text: 'Remove',
             style: 'destructive',
             onPress: async () => {
               console.log(`[Download] Removing downloaded episode: ${item.episode_id}`);
@@ -205,7 +205,7 @@ export default function ShortVideoReelItem({
       }
     }
   };
-  
+
   /*useEffect(() => {
     CaptureProtection.prevent({
       screenshot: true,
@@ -223,7 +223,7 @@ export default function ShortVideoReelItem({
   useEffect(() => {
     //console.log(`📺 ShortVideoReelItem mounted - Episode: ${item.episode_num}, Locked: ${isLocked}, URL: ${streamUrl?.substring(0, 80)}...`);
   }, [item.episode_num, isLocked, streamUrl]);
-  
+
   // Track if we've already seeked for this item to avoid multiple seeks
   const hasSeekRef = useRef(false);
 
@@ -263,9 +263,9 @@ export default function ShortVideoReelItem({
   });
   const shouldRenderVideo = Boolean(
     (isActive || (shouldPreload && !isLandscape))
-      && isFocused
-      && !isLocked
-      && (streamUrl || hasYouTubeVideo)
+    && isFocused
+    && !isLocked
+    && (streamUrl || hasYouTubeVideo)
   );
   const videoIsVisible = isActive && shouldRenderVideo && firstFrameReady;
   const showActiveBuffering = isActive && shouldRenderVideo && !firstFrameReady;
@@ -292,9 +292,9 @@ export default function ShortVideoReelItem({
   const youtubeFrameStyle = isLandscapeActive
     ? [StyleSheet.absoluteFill, { backgroundColor: '#000' }]
     : [
-        styles.youtubeVideoFrame,
-        { top: youtubePortraitTop, height: youtubePortraitHeight },
-      ];
+      styles.youtubeVideoFrame,
+      { top: youtubePortraitTop, height: youtubePortraitHeight },
+    ];
 
   useEffect(() => {
     if (isBeingRecorded) {
@@ -322,7 +322,7 @@ export default function ShortVideoReelItem({
   const wrappedOnLoad = useCallback((data) => {
     //console.log(`✅ Video loaded - Episode: ${item.episode_num}, Duration: ${data.duration}s`);
     originalOnLoad(data);
-    
+
     // Seek to initial position immediately after metadata loads
     // Only seek once per item change to avoid state oscillation
     if (initialSeekSec > 0 && videoRef.current && !hasSeekRef.current) {
@@ -331,7 +331,7 @@ export default function ShortVideoReelItem({
       videoRef.current.seek(initialSeekSec);
     }
   }, [originalOnLoad, initialSeekSec, item.episode_num]);
-  
+
   useEffect(() => {
     hasSeekRef.current = false;
     setVideoError(null);
@@ -553,9 +553,9 @@ export default function ShortVideoReelItem({
       isLandscapeActive
         ? { width: landscapeWidth, height: landscapeHeight, backgroundColor: '#000' }
         : [
-            { width: windowWidth },
-            itemHeight ? { height: itemHeight } : { height: layoutHeight },
-          ],
+          { width: windowWidth },
+          itemHeight ? { height: itemHeight } : { height: layoutHeight },
+        ],
     ]}>
       {/* Thumbnail / blurred placeholder */}
       {item.thumbnail_url ? (
@@ -662,9 +662,9 @@ export default function ShortVideoReelItem({
                   isLandscapeActive
                     ? [StyleSheet.absoluteFill, { backgroundColor: '#000' }]
                     : [
-                        styles.dramaVideoFrame,
-                        { top: dramaVideoTop, height: dramaVideoHeight },
-                      ]
+                      styles.dramaVideoFrame,
+                      { top: dramaVideoTop, height: dramaVideoHeight },
+                    ]
                 }
               >
                 <Video
@@ -869,41 +869,41 @@ export default function ShortVideoReelItem({
       ) : null}
 
       {showPlaybackSpeedControl ? (
-          <Modal
-            visible={speedModalVisible}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setSpeedModalVisible(false)}
-          >
-            <Pressable style={styles.speedModalBackdrop} onPress={() => setSpeedModalVisible(false)}>
-              <Pressable style={styles.speedModalCard} onPress={(e) => e.stopPropagation()}>
-                <Text style={styles.speedModalTitle}>Playback speed</Text>
-                {speedOptions.map((opt) => (
-                  <Pressable
-                    key={String(opt)}
-                    style={[
-                      styles.speedRow,
-                      playbackRate === opt && styles.speedRowActive,
-                    ]}
-                    onPress={() => {
-                      setSpeed(opt);
-                      setSpeedModalVisible(false);
-                    }}
-                  >
-                    <Text style={[
-                      styles.speedRowText,
-                      playbackRate === opt && styles.speedRowTextActive,
-                    ]}>
-                      {opt === 1 ? 'Normal (1x)' : `${opt}x`}
-                    </Text>
-                    {playbackRate === opt ? (
-                      <Ionicons name="checkmark" size={20} color={shortVideoTheme.crimson} />
-                    ) : null}
-                  </Pressable>
-                ))}
-              </Pressable>
+        <Modal
+          visible={speedModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setSpeedModalVisible(false)}
+        >
+          <Pressable style={styles.speedModalBackdrop} onPress={() => setSpeedModalVisible(false)}>
+            <Pressable style={styles.speedModalCard} onPress={(e) => e.stopPropagation()}>
+              <Text style={styles.speedModalTitle}>Playback speed</Text>
+              {speedOptions.map((opt) => (
+                <Pressable
+                  key={String(opt)}
+                  style={[
+                    styles.speedRow,
+                    playbackRate === opt && styles.speedRowActive,
+                  ]}
+                  onPress={() => {
+                    setSpeed(opt);
+                    setSpeedModalVisible(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.speedRowText,
+                    playbackRate === opt && styles.speedRowTextActive,
+                  ]}>
+                    {opt === 1 ? 'Normal (1x)' : `${opt}x`}
+                  </Text>
+                  {playbackRate === opt ? (
+                    <Ionicons name="checkmark" size={20} color={shortVideoTheme.crimson} />
+                  ) : null}
+                </Pressable>
+              ))}
             </Pressable>
-          </Modal>
+          </Pressable>
+        </Modal>
       ) : null}
 
       <Modal
@@ -948,7 +948,7 @@ export default function ShortVideoReelItem({
       </Modal>
 
       {showPortraitChrome ? (
-      <Animated.View
+        <Animated.View
           style={[
             styles.uiOverlay,
             { paddingBottom: bottomControlsPadding },
@@ -972,7 +972,7 @@ export default function ShortVideoReelItem({
               <SideAction
                 icon={
                   downloadState === 'downloaded' ? 'checkmark-circle' :
-                  downloadState === 'downloading' ? 'cloud-download' : 'download-outline'
+                    downloadState === 'downloading' ? 'cloud-download' : 'download-outline'
                 }
                 label={downloadState === 'downloading' ? `${Math.round(downloadProgress * 100)}%` : 'Download'}
                 color={downloadState === 'downloaded' ? shortVideoTheme.crimson : '#fff'}
@@ -991,61 +991,61 @@ export default function ShortVideoReelItem({
           <View style={styles.textContent}>
             <View style={styles.bottomMetaRow}>
               <View style={styles.bottomMetaTextCol}>
-            <TouchableOpacity
-              style={styles.titleRow}
-              activeOpacity={0.8}
-              onPress={handleTitlePress}
-            >
-              <Text style={styles.reelTitle} numberOfLines={1}>{item.show_title}</Text>
-              <Ionicons name="chevron-forward" size={18} color="#fff" />
-            </TouchableOpacity>
-
-            <View style={styles.epBadge}>
-              <Ionicons name="videocam" size={12} color={shortVideoTheme.crimson} />
-              <Text style={styles.epBadgeText}>EP.{item.episode_num}</Text>
-            </View>
-
-            <View style={styles.tagsRow}>
-              {(item.tags || []).slice(0, 4).map((tag) => (
-                <View key={tag} style={styles.tagPill}>
-                  <Text style={styles.tagText}>{tag}</Text>
-                </View>
-              ))}
-            </View>
-
-            {item.synopsis ? (
-              <View style={styles.synopsisContainer}>
-                {!synopsisTruncated && (
-                  <Text
-                    style={[styles.descText, { position: 'absolute', opacity: 0, zIndex: -1000 }]}
-                    onTextLayout={(e) => {
-                      if (e.nativeEvent.lines.length > 2) {
-                        setSynopsisTruncated(true);
-                      }
-                    }}
-                  >
-                    {item.synopsis}
-                  </Text>
-                )}
-                <Text
-                  style={[styles.descText, synopsisTruncated && { marginBottom: 2 }]}
-                  numberOfLines={synopsisExpanded ? undefined : 2}
+                <TouchableOpacity
+                  style={styles.titleRow}
+                  activeOpacity={0.8}
+                  onPress={handleTitlePress}
                 >
-                  {item.synopsis}
-                </Text>
-                {synopsisTruncated && (
-                  <TouchableOpacity
-                    onPress={() => setSynopsisExpanded(!synopsisExpanded)}
-                    style={styles.moreLessButton}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Text style={styles.moreLessText}>
-                      {synopsisExpanded ? 'less' : 'more'}
+                  <Text style={styles.reelTitle} numberOfLines={1}>{item.show_title}</Text>
+                  <Ionicons name="chevron-forward" size={18} color="#fff" />
+                </TouchableOpacity>
+
+                <View style={styles.epBadge}>
+                  <Ionicons name="videocam" size={12} color={shortVideoTheme.crimson} />
+                  <Text style={styles.epBadgeText}>EP.{item.episode_num}</Text>
+                </View>
+
+                <View style={styles.tagsRow}>
+                  {(item.tags || []).slice(0, 4).map((tag) => (
+                    <View key={tag} style={styles.tagPill}>
+                      <Text style={styles.tagText}>{tag}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                {item.synopsis ? (
+                  <View style={styles.synopsisContainer}>
+                    {!synopsisTruncated && (
+                      <Text
+                        style={[styles.descText, { position: 'absolute', opacity: 0, zIndex: -1000 }]}
+                        onTextLayout={(e) => {
+                          if (e.nativeEvent.lines.length > 2) {
+                            setSynopsisTruncated(true);
+                          }
+                        }}
+                      >
+                        {item.synopsis}
+                      </Text>
+                    )}
+                    <Text
+                      style={[styles.descText, synopsisTruncated && { marginBottom: 2 }]}
+                      numberOfLines={synopsisExpanded ? undefined : 2}
+                    >
+                      {item.synopsis}
                     </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            ) : null}
+                    {synopsisTruncated && (
+                      <TouchableOpacity
+                        onPress={() => setSynopsisExpanded(!synopsisExpanded)}
+                        style={styles.moreLessButton}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Text style={styles.moreLessText}>
+                          {synopsisExpanded ? 'less' : 'more'}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                ) : null}
               </View>
 
               {showLandscapeToggle ? (
@@ -1094,7 +1094,7 @@ export default function ShortVideoReelItem({
               </TouchableOpacity>
             ) : null}
           </View>
-      </Animated.View>
+        </Animated.View>
       ) : null}
 
       {/* iOS screen recording overlay */}
@@ -1162,11 +1162,15 @@ function LockOverlay({ item, accessToken, navigation, dispatch, walletReturnPara
   const { openSignUp } = useGuestAuth();
   const isAuthenticated = !!accessToken;
   const coins = useSelector((s) => s.auth?.coins) ?? 0;
-  const coinCost = item.coin_cost || 0;
+
+  const isShowLock = item.lock_reason === 'show_only';
+  const showCoinCost = item.show_coin_cost || 0;
+  const coinCost = isShowLock ? showCoinCost : (item.coin_cost || 0);
   const canUnlock = coins >= coinCost;
+
   const isCoinLock =
     isAuthenticated &&
-    (item.lock_reason === 'coins_or_membership' || !item.lock_reason);
+    (item.lock_reason === 'coins_or_membership' || !item.lock_reason || isShowLock);
 
   const [unlocking, setUnlocking] = useState(false);
   const [error, setError] = useState(null);
@@ -1185,13 +1189,23 @@ function LockOverlay({ item, accessToken, navigation, dispatch, walletReturnPara
   const episodeId = item.episode_id || item.id;
 
   const handleUnlock = useCallback(async () => {
-    if (!episodeId || unlocking) return;
+    if (unlocking) return;
     setError(null);
     setUnlocking(true);
     try {
-      const result = await dispatch(unlockEpisode(episodeId)).unwrap();
-      if (result?.is_locked) {
-        setError('Could not unlock this episode');
+      if (isShowLock) {
+        if (!item.show_id) {
+          setError('Show ID missing');
+          return;
+        }
+        await dispatch(unlockShow(item.show_id)).unwrap();
+        dispatch(fetchShowPlayerPage({ showId: item.show_id, fromEp: 1 }));
+      } else {
+        if (!episodeId) return;
+        const result = await dispatch(unlockEpisode(episodeId)).unwrap();
+        if (result?.is_locked) {
+          setError('Could not unlock this episode');
+        }
       }
     } catch (err) {
       const msg = err?.message || 'Unlock failed';
@@ -1199,7 +1213,7 @@ function LockOverlay({ item, accessToken, navigation, dispatch, walletReturnPara
     } finally {
       setUnlocking(false);
     }
-  }, [dispatch, episodeId, unlocking]);
+  }, [dispatch, episodeId, item.show_id, isShowLock, unlocking]);
 
   if (!isAuthenticated) {
     return (
@@ -1231,7 +1245,14 @@ function LockOverlay({ item, accessToken, navigation, dispatch, walletReturnPara
       <View style={styles.lockIconWrap}>
         <Ionicons name="lock-closed" size={32} color="#fff" />
       </View>
-      <Text style={styles.lockTitle}>Unlock · {coinCost} coins</Text>
+      <Text style={styles.lockTitle}>
+        {isShowLock ? `Unlock Show · ${coinCost} coins` : `Unlock · ${coinCost} coins`}
+      </Text>
+      {isShowLock && (
+        <Text style={{ color: '#ccc', fontSize: 12, marginBottom: 8, textAlign: 'center', paddingHorizontal: 20 }}>
+          This episode requires purchasing the parent show. Unlocking the show grants access to all episodes.
+        </Text>
+      )}
       <Text style={styles.lockBalance}>Your coins: {coins}</Text>
       {error ? <Text style={styles.lockError}>{error}</Text> : null}
       <TouchableOpacity
@@ -1246,7 +1267,7 @@ function LockOverlay({ item, accessToken, navigation, dispatch, walletReturnPara
           <ActivityIndicator color="#fff" />
         ) : (
           <Text style={styles.lockButtonText}>
-            {canUnlock ? 'Unlock' : 'Not enough coins'}
+            {canUnlock ? (isShowLock ? 'Buy Full Show' : 'Unlock') : 'Not enough coins'}
           </Text>
         )}
       </TouchableOpacity>

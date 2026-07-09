@@ -19,6 +19,7 @@ export const ADMIN_SECTIONS = [
   'live',
   'coursework',
   'submissions',
+  'packages',
 ];
 
 export const SECTION_LABELS = {
@@ -38,6 +39,7 @@ export const SECTION_LABELS = {
   live: 'Live Streaming',
   coursework: 'Coursework Management',
   submissions: 'Submissions',
+  packages: 'Packages',
 };
 
 export function isValidSection(section) {

@@ -86,8 +86,8 @@ function VideoDropzone({ file, onFileChange, uploadProgress }) {
 const ALL_TAGS = ['Romance', 'CEO', 'Revenge', 'Comedy', 'School', 'Thriller', 'Trending', 'Action', 'Fantasy', 'Slice of Life', 'Strong Heroine', 'Werewolf', 'Hidden Identity', 'Billionaire', 'Family Bonds', 'Forced Love']
 
 const tagColor = { Romance:'badge-pink', Trending:'badge-amber', CEO:'badge-blue', Revenge:'badge-red', Comedy:'badge-green', School:'badge-blue', Thriller:'badge-red', Action:'badge-amber', Billionaire:'badge-purple', 'Strong Heroine':'badge-pink', 'Hidden Identity':'badge-blue', Fantasy:'badge-purple' }
-const emptyDrama = { title:'', synopsis:'', category:'', status:'Published', tags:[], episodes:[], feed_position:0, manual_view_count:0 }
-const emptyEp = { title:'', duration:'', is_free:true, coin_cost:0, videoFile:null, uploadProgress:0, video_source:'UPLOAD', youtube_video_id:null, raw_youtube_url:'' }
+const emptyDrama = { title:'', synopsis:'', category:'', status:'Published', tags:[], episodes:[], feed_position:0, manual_view_count:0, is_free:true, coin_cost:0 }
+const emptyEp = { title:'', duration:'', is_free:true, coin_cost:0, is_show_only:false, videoFile:null, uploadProgress:0, video_source:'UPLOAD', youtube_video_id:null, raw_youtube_url:'' }
 
 function extractYoutubeVideoId(urlOrId) {
   if (!urlOrId) return null;
@@ -114,6 +114,8 @@ function DramaModal({ open, onClose, onSave, initial, initialStep = 0, autoAddEp
       setForm({
         ...base,
         category: base.category || firstCategoryName,
+        is_free: base.is_free ?? true,
+        coin_cost: base.coin_cost ?? 0,
       })
       setEpisodes(initial?.episodes || [])
       setStep(initialStep)
@@ -231,6 +233,19 @@ function DramaModal({ open, onClose, onSave, initial, initialStep = 0, autoAddEp
                 {categories.map(c => <option key={c.id}>{c.name}</option>)}
               </select>
             </FormGroup>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
+              <FormGroup label="Show Price Model">
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button type="button" className={`chip ${form.is_free ? 'chip-active' : ''}`} style={{ flex: 1 }} onClick={() => setForm(p => ({ ...p, is_free: true, coin_cost: 0 }))}>Free Show</button>
+                  <button type="button" className={`chip ${!form.is_free ? 'chip-active' : ''}`} style={{ flex: 1 }} onClick={() => upd('is_free', false)}>Paid Show</button>
+                </div>
+              </FormGroup>
+              {!form.is_free && (
+                <FormGroup label="Show Coin Cost *">
+                  <input className="input" type="number" min="0" style={{ width: '100%' }} placeholder="200" value={form.coin_cost || ''} onChange={e => upd('coin_cost', parseInt(e.target.value) || 0)} />
+                </FormGroup>
+              )}
+            </div>
           </ModalSection>
           <ModalSection title="Media uploads">
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
@@ -362,13 +377,32 @@ function DramaModal({ open, onClose, onSave, initial, initialStep = 0, autoAddEp
                 </FormGroup>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12 }}>
-                <FormGroup label="Access">
-                  <div style={{ display:'flex', gap:8 }}>
-                    <button className={`chip${newEp.is_free?' chip-active':''}`} onClick={() => setNewEp(p=>({...p,is_free:true,coin_cost:0}))}>Free</button>
-                    <button className={`chip${!newEp.is_free?' chip-active':''}`} onClick={() => setNewEp(p=>({...p,is_free:false,coin_cost:30}))}>Paid</button>
-                  </div>
+                <FormGroup label="Access Type">
+                  <select 
+                    className="select"
+                    style={{ width: '100%' }}
+                    value={newEp.is_free ? 'free' : newEp.is_show_only ? 'show_only' : 'paid'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (val === 'free') {
+                        setNewEp(p => ({ ...p, is_free: true, is_show_only: false, coin_cost: 0 }));
+                      } else if (val === 'paid') {
+                        setNewEp(p => ({ ...p, is_free: false, is_show_only: false, coin_cost: 30 }));
+                      } else if (val === 'show_only') {
+                        if (form.is_free) {
+                          alert('Show-only episodes are not allowed on free shows!');
+                          return;
+                        }
+                        setNewEp(p => ({ ...p, is_free: false, is_show_only: true, coin_cost: 0 }));
+                      }
+                    }}
+                  >
+                    <option value="free">Free</option>
+                    <option value="paid">Paid (coin unlock)</option>
+                    <option value="show_only">Unlock via Show Purchase only</option>
+                  </select>
                 </FormGroup>
-                {!newEp.is_free && (
+                {!newEp.is_free && !newEp.is_show_only && (
                   <FormGroup label="Coin cost">
                     <input className="input" type="number" placeholder="30" value={newEp.coin_cost} onChange={e => setNewEp(p=>({...p,coin_cost:parseInt(e.target.value)||0}))}/>
                   </FormGroup>
@@ -574,6 +608,7 @@ function EditEpisodeModal({ open, onClose, drama, onSave }) {
         title: drama.selectedEpisode.title || '',
         duration: drama.selectedEpisode.duration || '',
         is_free: drama.selectedEpisode.is_free ?? true,
+        is_show_only: drama.selectedEpisode.is_show_only ?? false,
         coin_cost: drama.selectedEpisode.coin_cost || 0,
       })
     }
@@ -623,15 +658,29 @@ function EditEpisodeModal({ open, onClose, drama, onSave }) {
           <FormGroup label="Type">
             <select 
               className="select"
-              value={form.is_free ? 'free' : 'paid'}
-              onChange={e => upd('is_free', e.target.value === 'free')}
+              value={form.is_free ? 'free' : form.is_show_only ? 'show_only' : 'paid'}
+              onChange={e => {
+                const val = e.target.value;
+                if (val === 'free') {
+                  setForm(p => ({ ...p, is_free: true, is_show_only: false, coin_cost: 0 }));
+                } else if (val === 'paid') {
+                  setForm(p => ({ ...p, is_free: false, is_show_only: false, coin_cost: p.coin_cost || 30 }));
+                } else if (val === 'show_only') {
+                  if (drama?.is_free) {
+                    alert('Show-only episodes are not allowed on free shows!');
+                    return;
+                  }
+                  setForm(p => ({ ...p, is_free: false, is_show_only: true, coin_cost: 0 }));
+                }
+              }}
             >
               <option value="free">Free</option>
-              <option value="paid">Paid</option>
+              <option value="paid">Paid (coin unlock)</option>
+              <option value="show_only">Unlock via Show Purchase only</option>
             </select>
           </FormGroup>
         </div>
-        {!form.is_free && (
+        {!form.is_free && !form.is_show_only && (
           <FormGroup label="Coin Cost">
             <input 
               className="input" 
@@ -1307,12 +1356,12 @@ export default function Dramas() {
       {/* Edit Episode Modal */}
       <EditEpisodeModal open={modal==='edit-ep'} onClose={() => setModal(null)} drama={selected} onSave={async (episodeData) => {
         try {
-          // Call episodesApi.update directly with the correct data structure
           await episodesApi.update(episodeData.id, {
             title: episodeData.title,
             episode_num: episodeData.ep,
             is_free: episodeData.is_free,
             coin_cost: episodeData.coin_cost,
+            is_show_only: episodeData.is_show_only,
             duration_sec: durationToSeconds(episodeData.duration),
           })
           alert('Episode updated successfully!')

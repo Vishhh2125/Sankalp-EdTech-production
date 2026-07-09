@@ -18,7 +18,7 @@ function buildUnlockResponse(episode, coins) {
 }
 
 /**
- * Unlock a paid episode for a user (coins, membership, or idempotent access).
+ * Unlock a paid episode for a user (coins, membership, show purchase, or idempotent access).
  * @returns {{ ok: true, data: object, message: string } | { ok: false, status: number, data: object|null, message: string }}
  */
 export async function unlockEpisodeForUser(userId, episodeId) {
@@ -31,6 +31,7 @@ export async function unlockEpisodeForUser(userId, episodeId) {
       title: true,
       is_free: true,
       coin_cost: true,
+      is_show_only: true,
       status: true,
       hls_master_url: true,
       show: { select: { title: true, category_id: true } },
@@ -43,12 +44,39 @@ export async function unlockEpisodeForUser(userId, episodeId) {
   if (episode.is_free) {
     return { ok: false, status: 400, data: null, message: 'Episode is free' };
   }
+
+  // If episode is show-only, block individual unlock
+  if (episode.is_show_only) {
+    return {
+      ok: false,
+      status: 400,
+      data: null,
+      message: 'This episode can only be unlocked by purchasing the show',
+    };
+  }
+
   if (!episode.coin_cost || episode.coin_cost <= 0) {
     return { ok: false, status: 400, data: null, message: 'Episode has no coin cost' };
   }
 
   const categoryId = episode.show?.category_id;
   const now = new Date();
+
+  // Check if show is purchased
+  const showPurchase = await prisma.showAccess.findUnique({
+    where: { idx_sa_user_show: { user_id: userId, show_id: episode.show_id } },
+  });
+  if (showPurchase) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { coins: true },
+    });
+    return {
+      ok: true,
+      data: buildUnlockResponse(episode, user?.coins ?? 0),
+      message: 'Unlocked via show purchase',
+    };
+  }
 
   const existingAccess = await prisma.episodeAccess.findUnique({
     where: { idx_ea_user_ep: { user_id: userId, episode_id: episodeId } },
@@ -156,5 +184,122 @@ export async function unlockEpisodeForUser(userId, episodeId) {
     ok: true,
     data: buildUnlockResponse(episode, txResult.coins),
     message: 'Episode unlocked',
+  };
+}
+
+/**
+ * Unlock a paid show for a user (coins, membership, or idempotent access).
+ * @returns {{ ok: true, data: object, message: string } | { ok: false, status: number, data: object|null, message: string }}
+ */
+export async function unlockShowForUser(userId, showId) {
+  const show = await prisma.show.findUnique({
+    where: { id: showId },
+    select: {
+      id: true,
+      title: true,
+      is_free: true,
+      coin_cost: true,
+    },
+  });
+
+  if (!show) {
+    return { ok: false, status: 404, data: null, message: 'Show not found' };
+  }
+  if (show.is_free) {
+    return { ok: false, status: 400, data: null, message: 'Show is free' };
+  }
+  if (!show.coin_cost || show.coin_cost <= 0) {
+    return { ok: false, status: 400, data: null, message: 'Show has no coin cost' };
+  }
+
+  const existingAccess = await prisma.showAccess.findUnique({
+    where: { idx_sa_user_show: { user_id: userId, show_id: showId } },
+  });
+  if (existingAccess) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { coins: true },
+    });
+    return {
+      ok: true,
+      data: {
+        coins: user?.coins ?? 0,
+        show_id: showId,
+        is_locked: false,
+      },
+      message: 'Already purchased',
+    };
+  }
+
+  const txResult = await prisma.$transaction(async (tx) => {
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: { id: true, coins: true },
+    });
+    if (!user) return { error: 'USER_NOT_FOUND' };
+
+    const accessAgain = await tx.showAccess.findUnique({
+      where: { idx_sa_user_show: { user_id: userId, show_id: showId } },
+    });
+    if (accessAgain) {
+      return { coins: user.coins ?? 0, idempotent: true };
+    }
+
+    const balance = user.coins ?? 0;
+    if (balance < show.coin_cost) {
+      return { error: 'INSUFFICIENT', coins: balance };
+    }
+
+    const nextCoins = balance - show.coin_cost;
+
+    await tx.user.update({
+      where: { id: userId },
+      data: { coins: nextCoins },
+    });
+
+    await tx.showAccess.create({
+      data: {
+        user_id: userId,
+        show_id: showId,
+        coins_spent: show.coin_cost,
+      },
+    });
+
+    await tx.coinTransaction.create({
+      data: {
+        user_id: userId,
+        type: 'debit',
+        amount: show.coin_cost,
+        reason: 'show_unlock',
+        ref_id: showId,
+        title: 'Show purchase',
+        description: show.title,
+        status: 'completed',
+      },
+    });
+
+    return { coins: nextCoins };
+  });
+
+  if (txResult.error === 'USER_NOT_FOUND') {
+    return { ok: false, status: 404, data: null, message: 'User not found' };
+  }
+  if (txResult.error === 'INSUFFICIENT') {
+    return {
+      ok: false,
+      status: 402,
+      data: { coins: txResult.coins },
+      message: 'Insufficient coins',
+    };
+  }
+
+  return {
+    ok: true,
+    data: {
+      coins: txResult.coins,
+      show_id: showId,
+      is_locked: false,
+    },
+    message: 'Show purchased successfully',
   };
 }

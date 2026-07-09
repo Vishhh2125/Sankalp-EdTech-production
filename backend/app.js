@@ -28,6 +28,7 @@ import mediaRouter from './modules/media/media.router.js';
 import userRouter from './modules/user/user.router.js'; // NEW
 import notificationRouter from './modules/notifications/notification.router.js'; // NEW
 import liveRouter from './modules/live/live.router.js';
+import packageRouter from './modules/content/package.router.js';
 import helmet from 'helmet';
 
 import morgan from 'morgan';
@@ -175,6 +176,7 @@ app.use('/api/v1/subscription', subscriptionRouter);
 app.use('/api/v1/wallet', walletRouter);
 app.use('/api/content', contentRouter);
 app.use('/api/content', courseworkRouter);
+app.use('/api/content', packageRouter);
 app.use('/api/feed', feedRouter);
 app.use('/api/media', mediaRouter);
 app.use('/api/user', userRouter); // NEW

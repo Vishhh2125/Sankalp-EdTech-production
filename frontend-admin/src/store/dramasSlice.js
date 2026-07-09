@@ -49,6 +49,7 @@ async function createNewEpisodes(showId, episodes, existingEpisodeIds) {
         title: ep.title,
         is_free: ep.is_free ?? true,
         coin_cost: ep.coin_cost || 0,
+        is_show_only: ep.is_show_only ?? false,
         duration_sec: parseDuration(ep.duration),
         video_source: ep.video_source || 'UPLOAD',
         youtube_video_id: ep.youtube_video_id || null,
@@ -107,6 +108,8 @@ export const loadDramas = createAsyncThunk(
             const epRes = await episodesApi.getByShow(show.id)
             return {
               ...show,
+              is_free: show.is_free,
+              coin_cost: show.coin_cost,
               view_count: show.view_count || 0,
               views: show.view_count || 0,           // displayed aggregate (organic + manual)
               unlocks: show.unlock_count || 0,
@@ -121,6 +124,7 @@ export const loadDramas = createAsyncThunk(
                   : '—',
                 is_free: ep.is_free,
                 coin_cost: ep.coin_cost,
+                is_show_only: ep.is_show_only,
                 status: ep.status,
                 video_source: ep.video_source,
                 youtube_video_id: ep.youtube_video_id,
@@ -162,6 +166,8 @@ export const createDrama = createAsyncThunk(
         feed_position: parseInt(formData.feed_position) || 0,
         manual_view_count: parseInt(formData.manual_view_count) || 0,
         is_active: true,
+        is_free: formData.is_free !== undefined ? formData.is_free : true,
+        coin_cost: formData.coin_cost !== undefined ? formData.coin_cost : 0,
       })
 
       const show = showRes.data
@@ -217,6 +223,8 @@ export const updateDrama = createAsyncThunk(
         feed_position: parseInt(formData.feed_position) || 0,
         manual_view_count: parseInt(formData.manual_view_count) || 0,
         is_active: true,
+        is_free: formData.is_free !== undefined ? formData.is_free : true,
+        coin_cost: formData.coin_cost !== undefined ? formData.coin_cost : 0,
       })
 
       if (formData.thumbnailFile) {
