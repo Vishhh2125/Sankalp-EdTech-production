@@ -121,7 +121,7 @@ export default function DramaDetailsSheet({
     } else {
       // 30 episodes / 6 columns = 5 full rows.
       // Each row is approx 65px (cell height + gap)
-      scrollRef.current?.scrollTo({ y: 320, animated: true }); 
+      scrollRef.current?.scrollTo({ y: 320, animated: true });
     }
   };
 
@@ -170,7 +170,7 @@ export default function DramaDetailsSheet({
             </Pressable>
           </View>
 
-          <ScrollView 
+          <ScrollView
             ref={scrollRef}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.content}

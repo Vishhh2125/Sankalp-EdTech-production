@@ -36,14 +36,16 @@ export async function createPackage(data, actorId) {
 
     // 2. Link shows if provided
     if (Array.isArray(shows) && shows.length > 0) {
+      // Deduplicate show IDs
+      const uniqueShows = [...new Set(shows)];
       // Validate shows exist
       const existingShows = await tx.show.findMany({
-        where: { id: { in: shows } },
+        where: { id: { in: uniqueShows } },
         select: { id: true },
       });
 
       const existingShowIds = new Set(existingShows.map((s) => s.id));
-      const validShows = shows.filter((id) => existingShowIds.has(id));
+      const validShows = uniqueShows.filter((id) => existingShowIds.has(id));
 
       if (validShows.length > 0) {
         await tx.packageShow.createMany({
@@ -101,13 +103,15 @@ export async function updatePackage(id, data, actorId) {
       await tx.packageShow.deleteMany({ where: { package_id: id } });
 
       if (Array.isArray(data.shows) && data.shows.length > 0) {
+        // Deduplicate show IDs
+        const uniqueShows = [...new Set(data.shows)];
         const existingShows = await tx.show.findMany({
-          where: { id: { in: data.shows } },
+          where: { id: { in: uniqueShows } },
           select: { id: true },
         });
 
         const existingShowIds = new Set(existingShows.map((s) => s.id));
-        const validShows = data.shows.filter((showId) => existingShowIds.has(showId));
+        const validShows = uniqueShows.filter((showId) => existingShowIds.has(showId));
 
         if (validShows.length > 0) {
           await tx.packageShow.createMany({
@@ -326,6 +330,9 @@ export async function getPackageDetailUser(id, userId = null) {
 
   let is_owned = false;
   let is_membership_covered = false;
+  let ownedShowIds = new Set();
+  let hasGlobal = false;
+  let activeCategoryIds = new Set();
 
   if (userId) {
     // 1. Check if purchased directly
@@ -333,19 +340,34 @@ export async function getPackageDetailUser(id, userId = null) {
       where: { user_id: userId, package_id: id },
     });
 
+    // 2. Fetch all owned shows
+    const ownedShows = await prisma.showAccess.findMany({
+      where: {
+        user_id: userId,
+        show_id: { in: shows.map((s) => s.id) },
+      },
+      select: { show_id: true },
+    });
+    ownedShowIds = new Set(ownedShows.map((o) => o.show_id));
+
+    const showIds = shows.map((s) => s.id);
+    const showsWithPaidEpisodes = await prisma.episode.findMany({
+      where: {
+        show_id: { in: showIds },
+        is_free: false,
+      },
+      select: { show_id: true },
+    });
+    const showsWithPaidEpIds = new Set(showsWithPaidEpisodes.map((e) => e.show_id));
+
     if (purchase) {
       is_owned = true;
     } else {
-      // 2. Check if all shows are owned individually
-      const ownedShows = await prisma.showAccess.findMany({
-        where: {
-          user_id: userId,
-          show_id: { in: shows.map((s) => s.id) },
-        },
-        select: { show_id: true },
+      const allOwned = shows.every((s) => {
+        if (ownedShowIds.has(s.id)) return true;
+        return s.is_free && !showsWithPaidEpIds.has(s.id);
       });
-      const ownedShowIds = new Set(ownedShows.map((o) => o.show_id));
-      const allOwned = shows.every((s) => s.is_free || ownedShowIds.has(s.id));
+
       if (allOwned && shows.length > 0) {
         is_owned = true;
       }
@@ -364,8 +386,8 @@ export async function getPackageDetailUser(id, userId = null) {
     });
 
     if (activeMemberships.length > 0) {
-      const hasGlobal = activeMemberships.some((m) => m.plan.category_id === null);
-      const activeCategoryIds = new Set(
+      hasGlobal = activeMemberships.some((m) => m.plan.category_id === null);
+      activeCategoryIds = new Set(
         activeMemberships.map((m) => m.plan.category_id).filter(Boolean)
       );
 
@@ -391,6 +413,7 @@ export async function getPackageDetailUser(id, userId = null) {
       thumbnail_url: s.thumbnail_url,
       coin_cost: s.coin_cost,
       is_free: s.is_free,
+      has_access: s.is_free || is_owned || is_membership_covered || ownedShowIds.has(s.id) || hasGlobal || (s.category_id ? activeCategoryIds.has(s.category_id) : false),
     })),
     is_owned,
     is_membership_covered,
@@ -455,7 +478,22 @@ export async function purchasePackage(id, userId) {
       select: { show_id: true },
     });
     const ownedShowIds = new Set(ownedShows.map((o) => o.show_id));
-    const allOwned = shows.every((s) => s.is_free || ownedShowIds.has(s.id));
+
+    const showIds = shows.map((s) => s.id);
+    const showsWithPaidEpisodes = await tx.episode.findMany({
+      where: {
+        show_id: { in: showIds },
+        is_free: false,
+      },
+      select: { show_id: true },
+    });
+    const showsWithPaidEpIds = new Set(showsWithPaidEpisodes.map((e) => e.show_id));
+
+    const allOwned = shows.every((s) => {
+      if (ownedShowIds.has(s.id)) return true;
+      return s.is_free && !showsWithPaidEpIds.has(s.id);
+    });
+
     if (allOwned) {
       // Record purchase mapping so state is fully synchronized
       await tx.packagePurchase.create({
@@ -491,8 +529,8 @@ export async function purchasePackage(id, userId) {
       },
     });
 
-    // 7. Grant individual show access for all non-owned, non-free shows
-    const showsToUnlock = shows.filter((s) => !s.is_free && !ownedShowIds.has(s.id));
+    // 7. Grant individual show access for all non-owned shows (even if free on show-level, to unlock paid episodes)
+    const showsToUnlock = shows.filter((s) => !ownedShowIds.has(s.id));
 
     if (showsToUnlock.length > 0) {
       await tx.showAccess.createMany({

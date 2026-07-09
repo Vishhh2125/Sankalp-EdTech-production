@@ -19,4 +19,5 @@ export const ROUTES = {
   LIVE_VIEWER: 'LiveViewer',
   ASSIGNMENT_DETAIL: 'AssignmentDetail',
   QUIZ_TAKING: 'QuizTaking',
+  PACKAGE_DETAIL: 'PackageDetail',
 };

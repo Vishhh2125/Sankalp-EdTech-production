@@ -61,15 +61,16 @@ export default function TopUpScreen() {
   }, [navigation]);
 
   useLayoutEffect(() => {
-    if (!returnToShowPlayer && !returnToForYou) return;
-    navigation.setOptions({
-      headerLeft: () => (
-        <Pressable onPress={handleReturnBack} hitSlop={12} style={{ paddingLeft: 4 }}>
-          <Ionicons name="chevron-back" size={26} color={theme.white} />
-        </Pressable>
-      ),
-    });
-  }, [navigation, returnToShowPlayer, returnToForYou, handleReturnBack]);
+    if (navigation.canGoBack()) {
+      navigation.setOptions({
+        headerLeft: () => (
+          <Pressable onPress={handleReturnBack} hitSlop={12} style={{ paddingLeft: 4 }}>
+            <Ionicons name="chevron-back" size={26} color={theme.white} />
+          </Pressable>
+        ),
+      });
+    }
+  }, [navigation, handleReturnBack]);
 
   const [packs, setPacks] = useState([]);
   const [loadingPacks, setLoadingPacks] = useState(true);

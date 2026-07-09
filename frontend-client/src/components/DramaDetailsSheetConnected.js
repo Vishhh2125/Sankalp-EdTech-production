@@ -294,7 +294,7 @@ export default function DramaDetailsSheetConnected({
     const showDetails = details?.show_id === item?.show_id ? details : null;
     if (!showDetails?.show_id || unlockingShow) return;
     setUnlockError(null);
-    
+
     const cost = showDetails.show_coin_cost || 0;
     if (coins < cost) {
       setUnlockError('Not enough coins to purchase the show!');
@@ -316,11 +316,10 @@ export default function DramaDetailsSheetConnected({
   }, [dispatch, details, item, coins, activeRangeStart, onRangeChange, unlockingShow]);
 
   const goToTopUp = useCallback(() => {
-    onClose && onClose();
     navigation.navigate(ROUTES.TOP_UP, {
       returnToShowPlayer: false,
     });
-  }, [navigation, onClose]);
+  }, [navigation]);
 
   // Move useMemo BEFORE the early return
   const posterSource = useMemo(() => {

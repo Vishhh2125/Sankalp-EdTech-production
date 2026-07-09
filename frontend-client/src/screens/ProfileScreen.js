@@ -26,7 +26,7 @@ const FEATURE_ICONS = [
   { icon: 'lock-open-outline', label: 'Unlock Episodes' },
 ];
 
-const MENU_ITEMS = [ 
+const MENU_ITEMS = [
   { icon: 'wallet-outline', label: 'Top Up', right: null },
   { icon: 'card-outline', label: 'My Wallet', right: null },
   { icon: 'gift-outline', label: 'Earn Rewards', badge: null },

@@ -30,6 +30,8 @@ export async function setupMinioBuckets() {
             `arn:aws:s3:::${bucket}/raw/*`,
             `arn:aws:s3:::${bucket}/materials/*`,
             `arn:aws:s3:::${bucket}/assignments/*`,
+            `arn:aws:s3:::${bucket}/packages/*`,
+            `arn:aws:s3:::${bucket}/collections/*`,
           ],
         },
       ],
