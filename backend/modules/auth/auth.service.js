@@ -12,8 +12,11 @@ import {
 } from '../../utils/otp.js';
 import { sendOtpEmail } from '../../config/email.js';
 import config from '../../config/index.js'; // FIX: import shared config
+import { OAuth2Client } from 'google-auth-library';
+import crypto from 'crypto';
 
 const prisma = getPrismaClient();
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // FIX: JWT_CONFIG now reads from the same config/index.js that auth.middleware.js uses.
 // Previously this file had its own hardcoded fallback secrets that differed from
@@ -864,5 +867,73 @@ export const verifyForgotOtpAndResetPassword = async ({ sessionId, otp, newPassw
       throw error;
     }
     throw new ApiError(500, 'Failed to reset password', [error.message]);
+  }
+};
+
+/**
+ * Verify Google ID token and upsert user, then return your standard tokens.
+ * @param {string} idToken - ID token received from the mobile app
+ * @returns {{ user, accessToken, refreshToken }}
+ */
+export const googleOAuthLogin = async (idToken) => {
+  try {
+    // 1. Verify the ID token with Google
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    // payload: { sub, email, name, picture, email_verified }
+
+    if (!payload.email_verified) {
+      throw new ApiError(400, 'Google account email is not verified');
+    }
+
+    const { sub: googleId, email, name, picture } = payload;
+
+    // 2. Upsert user (link existing account OR create new one)
+    //    For new OAuth users: store a random unguessable password hash
+    const randomPasswordHash = await hashPassword(crypto.randomBytes(32).toString('hex'));
+
+    const user = await prisma.user.upsert({
+      where: { email },
+      update: { google_id: googleId, avatar_url: picture },   // link Google to existing account
+      create: {
+        email,
+        name,
+        password: randomPasswordHash,
+        role: 'USER',
+        plan: 'FREE',
+        coins: 0,
+        isBlocked: false,
+        google_id: googleId,
+        avatar_url: picture,
+      },
+    });
+
+    if (user.isBlocked) {
+      throw new ApiError(403, 'Your account has been blocked');
+    }
+
+    // 3. Generate your standard tokens
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+    const refreshTokenHash = await hashRefreshToken(refreshToken);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { refreshToken: refreshTokenHash },
+    });
+
+    logger.info('Google OAuth login successful', { userId: user.id, email: user.email });
+
+    const { password: _, refreshToken: __, ...userWithoutSensitive } = user;
+    return { user: userWithoutSensitive, accessToken, refreshToken };
+  } catch (error) {
+    logger.error('Google OAuth login failed', { error: error.message });
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(500, 'Failed to authenticate with Google', [error.message]);
   }
 };

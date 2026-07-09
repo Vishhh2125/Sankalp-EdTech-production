@@ -14,7 +14,9 @@ import { ROUTES } from '../constants/routes';
 
 // ✅ REDUX IMPORTS
 import { useDispatch, useSelector } from 'react-redux';
-import { clearAuthError, loginUser } from '../redux/slices/authSlice'; // adjust path if needed
+import { clearAuthError, loginUser } from '../redux/slices/authSlice';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
+import OrDivider from '../components/OrDivider';
 
 export default function LoginScreen({ navigation, route, onGuestAccess }) {
   const [email, setEmail] = useState('');
@@ -25,6 +27,8 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
   // ✅ REDUX HOOKS
   const dispatch = useDispatch();
   const { isLoading, error, status, accessToken } = useSelector((state) => state.auth);
+
+  const { promptAsync, loading: googleLoading, googleError } = useGoogleAuth();
 
   useEffect(() => {
     // Navigate after redux marks login as succeeded.
@@ -134,6 +138,31 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
           {isLoading ? 'Signing in...' : 'Sign in'}
         </Text>
       </Pressable>
+
+      <OrDivider />
+
+      {/* Continue with Google */}
+      <Pressable
+        disabled={googleLoading || isLoading}
+        style={({ pressed }) => [
+          styles.googleBtn,
+          pressed && styles.actionBtnPressed,
+          (googleLoading || isLoading) && { opacity: 0.6 },
+        ]}
+        onPress={() => promptAsync()}
+      >
+        <View style={styles.googleBtnContent}>
+          <Ionicons name="logo-google" size={20} color={theme.white} style={{ marginRight: 8 }} />
+          <Text style={styles.googleBtnText}>
+            {googleLoading ? 'Connecting...' : 'Continue with Google'}
+          </Text>
+        </View>
+      </Pressable>
+
+      {/* Google error */}
+      {googleError && (
+        <Text style={styles.errorText}>{googleError}</Text>
+      )}
 
       {/* ✅ ERROR DISPLAY */}
       {passwordResetSuccess && (
@@ -270,6 +299,23 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   actionBtnText: {
+    color: theme.white,
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  googleBtn: {
+    backgroundColor: '#4285F4',
+    borderRadius: 30,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  googleBtnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  googleBtnText: {
     color: theme.white,
     fontSize: 17,
     fontWeight: '700',

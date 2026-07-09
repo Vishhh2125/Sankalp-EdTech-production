@@ -11,6 +11,7 @@ import {
   forgotPassword,
   resendForgotOtpController,
   resetPassword,
+  googleLogin,
 } from './auth.controller.js';
 import { requireAuth } from '../../middleware/auth.middleware.js';
 
@@ -29,6 +30,13 @@ router.post('/register', register);
  * Body: { email, password }
  */
 router.post('/login', login);
+
+/**
+ * POST /auth/google
+ * Verify Google ID token and return our accessToken + refreshToken
+ * Body: { idToken }
+ */
+router.post('/google', googleLogin);
 
 /**
  * POST /auth/verify-otp

@@ -102,6 +102,25 @@ export const loginUser = createAsyncThunk(
     }
   }
 );
+
+export const googleLogin = createAsyncThunk(
+  'auth/googleLogin',
+  async ({ idToken }, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/auth/google', { idToken });
+      const { accessToken, refreshToken, user } = response.data.data;
+
+      // Reuse existing token storage (same as loginUser)
+      await authService.saveTokens(accessToken, refreshToken);
+      await authService.saveUserData(user);
+
+      return { user, accessToken };
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Google sign-in failed';
+      return rejectWithValue(message);
+    }
+  }
+);
 export const registerUser = createAsyncThunk(
   'auth/registerUser',
   async ({ name, email, password }, { rejectWithValue }) => {
@@ -615,6 +634,31 @@ const authSlice = createSlice({
       .addCase(loginUser.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload || 'Login failed';
+        state.isLoading = false;
+        state.isAuthenticated = false;
+      })
+      // GOOGLE LOGIN FLOW
+      .addCase(googleLogin.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+        state.isLoading = true;
+      })
+      .addCase(googleLogin.fulfilled, (state, action) => {
+        state.accessToken = action.payload.accessToken;
+        state.userId = action.payload.user?.id ?? null;
+        // refreshToken is in SecureStore only (never in Redux)
+        state.name = action.payload.user.name;
+        state.email = action.payload.user.email;
+        state.role = action.payload.user.role;
+        state.plan = action.payload.user.plan;
+        state.coins = action.payload.user.coins;
+        state.membership = action.payload.user.membership ?? null;
+        state.status = 'succeeded';
+        state.isLoading = false;
+      })
+      .addCase(googleLogin.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload || 'Google Login failed';
         state.isLoading = false;
         state.isAuthenticated = false;
       })

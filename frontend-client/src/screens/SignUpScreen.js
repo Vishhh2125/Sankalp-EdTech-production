@@ -18,6 +18,8 @@ import {
   registerUser,
 } from '../redux/slices/authSlice';
 import { API_BASE_URL } from '../constants/config';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
+import OrDivider from '../components/OrDivider';
 
 function getPasswordStrength(password) {
   if (!password) return { level: 0, label: '', color: theme.border };
@@ -48,6 +50,8 @@ export default function SignUpScreen({ navigation, onGuestAccess }) {
 
   const strength = useMemo(() => getPasswordStrength(password), [password]);
   const pendingLoginRef = useRef(null);
+
+  const { promptAsync, loading: googleLoading, googleError } = useGoogleAuth();
 
   useEffect(() => {
     if (registerStatus === 'succeeded' && registerData?.sessionId) {
@@ -196,6 +200,31 @@ export default function SignUpScreen({ navigation, onGuestAccess }) {
             ? `Network Error: cannot reach backend.\nCurrent API_BASE_URL: ${API_BASE_URL}\n\nTips:\n- If backend is on your laptop, keep phone + laptop on same Wi-Fi.\n- If needed, set EXPO_PUBLIC_API_BASE_URL to your laptop IP (example: http://192.168.x.x:5000/api/v1).`
             : registerError}
         </Text>
+      )}
+
+      <OrDivider />
+
+      {/* Continue with Google */}
+      <Pressable
+        disabled={googleLoading || registerStatus === 'loading'}
+        style={({ pressed }) => [
+          styles.googleBtn,
+          pressed && styles.googleBtnPressed,
+          (googleLoading || registerStatus === 'loading') && { opacity: 0.6 },
+        ]}
+        onPress={() => promptAsync()}
+      >
+        <View style={styles.googleBtnContent}>
+          <Ionicons name="logo-google" size={20} color={theme.white} style={{ marginRight: 8 }} />
+          <Text style={styles.googleBtnText}>
+            {googleLoading ? 'Connecting...' : 'Continue with Google'}
+          </Text>
+        </View>
+      </Pressable>
+
+      {/* Google error */}
+      {googleError && (
+        <Text style={styles.errorText}>{googleError}</Text>
       )}
 
       {onGuestAccess ? (
@@ -353,6 +382,25 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   actionBtnText: {
+    color: theme.white,
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  googleBtn: {
+    backgroundColor: '#4285F4',
+    borderRadius: 30,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  googleBtnPressed: {
+    opacity: 0.85,
+  },
+  googleBtnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  googleBtnText: {
     color: theme.white,
     fontSize: 17,
     fontWeight: '700',

@@ -53,7 +53,8 @@ function isAuthEndpoint(url = '') {
     url.includes('/auth/reset-password') ||
     url.includes('/auth/resend-otp') ||
     url.includes('/auth/resend-forgot-otp') ||
-    url.includes('/auth/refresh-token');
+    url.includes('/auth/refresh-token') ||
+    url.includes('/auth/google');
 }
 
 function hasAuthorizationHeader(headers) {

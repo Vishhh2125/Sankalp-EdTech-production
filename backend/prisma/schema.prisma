@@ -50,6 +50,8 @@ model User {
   coins        Int?     @default(0)
   refreshToken String?
   fcm_token    String?  @db.VarChar(500)
+  google_id    String?  @unique @db.VarChar(255)
+  avatar_url   String?  @db.VarChar(500)
   isBlocked    Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

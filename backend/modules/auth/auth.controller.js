@@ -14,6 +14,7 @@ import {
   requestForgotPassword,
   resendForgotOtp,
   verifyForgotOtpAndResetPassword,
+  googleOAuthLogin,
 } from './auth.service.js';
 import {
   validateRegister,
@@ -530,4 +531,30 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
     }
     throw new ApiError(500, 'Failed to fetch user profile');
   }
+});
+
+/**
+ * POST /auth/google
+ * Body: { idToken: string }
+ * Header: x-client-type: mobile
+ */
+export const googleLogin = asyncHandler(async (req, res) => {
+  const { idToken } = req.body;
+
+  if (!idToken || typeof idToken !== 'string') {
+    throw new ApiError(400, 'idToken is required');
+  }
+
+  const result = await googleOAuthLogin(idToken);
+
+  // Follows the exact same response shape as /auth/login for mobile clients
+  const responseData = {
+    user: result.user,
+    accessToken: result.accessToken,
+    refreshToken: result.refreshToken,   // mobile gets refreshToken in body
+  };
+
+  return res.status(200).json(
+    new ApiResponse(200, responseData, 'Google login successful')
+  );
 });
