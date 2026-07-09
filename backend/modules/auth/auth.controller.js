@@ -540,6 +540,7 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
  */
 export const googleLogin = asyncHandler(async (req, res) => {
   const { idToken } = req.body;
+  const clientType = req.headers['x-client-type'] || 'web'; // fallback to web
 
   if (!idToken || typeof idToken !== 'string') {
     throw new ApiError(400, 'idToken is required');
@@ -547,12 +548,25 @@ export const googleLogin = asyncHandler(async (req, res) => {
 
   const result = await googleOAuthLogin(idToken);
 
-  // Follows the exact same response shape as /auth/login for mobile clients
+  // For web clients: set refresh token as secure http-only cookie
+  if (clientType === 'web') {
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+  }
+
   const responseData = {
     user: result.user,
     accessToken: result.accessToken,
-    refreshToken: result.refreshToken,   // mobile gets refreshToken in body
   };
+
+  // For mobile clients: include refresh token in response body
+  if (clientType !== 'web') {
+    responseData.refreshToken = result.refreshToken;
+  }
 
   return res.status(200).json(
     new ApiResponse(200, responseData, 'Google login successful')
