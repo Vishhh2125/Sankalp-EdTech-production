@@ -17,7 +17,7 @@ export default function AssignmentsTab({ assignments, loading, showId, onSubmiss
   if (loading) {
     return (
       <View style={styles.stateBlock}>
-        <ActivityIndicator size="small" color={theme.crimson} />
+        <ActivityIndicator size="small" color={theme.primary} />
         <Text style={styles.stateText}>Loading assignments...</Text>
       </View>
     );
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   },
   accentBar: {
     width: 4,
-    backgroundColor: theme.crimson,
+    backgroundColor: theme.primary,
   },
   accentBarLocked: {
     backgroundColor: theme.darkGray,
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(142,142,147,0.1)',
   },
   badgeText: {
-    color: theme.crimson,
+    color: theme.primary,
     fontSize: 10,
     fontWeight: '700',
   },

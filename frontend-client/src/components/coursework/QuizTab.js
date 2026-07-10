@@ -17,7 +17,7 @@ export default function QuizTab({ quizzes, loading, showId, onAttemptCompleted }
   if (loading) {
     return (
       <View style={styles.stateBlock}>
-        <ActivityIndicator size="small" color={theme.crimson} />
+        <ActivityIndicator size="small" color={theme.primary} />
         <Text style={styles.stateText}>Loading quizzes...</Text>
       </View>
     );
@@ -85,7 +85,7 @@ export default function QuizTab({ quizzes, loading, showId, onAttemptCompleted }
                   {isLocked ? (
                     <Ionicons name="lock-closed" size={14} color={theme.gray} />
                   ) : !isCompleted ? (
-                    <Ionicons name="chevron-forward" size={16} color={theme.crimson} />
+                    <Ionicons name="chevron-forward" size={16} color={theme.primary} />
                   ) : null}
                 </View>
               </Pressable>
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(142,142,147,0.1)',
   },
   badgeText: {
-    color: theme.crimson,
+    color: theme.primary,
     fontSize: 10,
     fontWeight: '700',
   },
@@ -228,12 +228,12 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     borderWidth: 3,
-    borderColor: theme.crimson,
+    borderColor: theme.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   progressPct: {
-    color: theme.crimson,
+    color: theme.primary,
     fontSize: 15,
     fontWeight: '900',
   },

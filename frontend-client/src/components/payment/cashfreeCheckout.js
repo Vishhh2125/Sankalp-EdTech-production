@@ -209,7 +209,7 @@ export function CashfreeCheckoutModal({
         </View>
         {loading ? (
           <View style={styles.loader}>
-            <ActivityIndicator size="large" color={theme.crimson} />
+            <ActivityIndicator size="large" color={theme.primary} />
           </View>
         ) : null}
         <WebView

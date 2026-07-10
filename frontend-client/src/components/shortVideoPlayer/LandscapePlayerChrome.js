@@ -126,7 +126,7 @@ export default function LandscapePlayerChrome({
       >
         <Text style={styles.landscapeTitle} numberOfLines={1}>
           {item.show_title}
-          <Text style={styles.landscapeEpText}> · LEC.{item.episode_num}</Text>
+          <Text style={styles.landscapeEpText}> · EP.{item.episode_num}</Text>
         </Text>
         <ProgressBar
           currentTime={currentTime}

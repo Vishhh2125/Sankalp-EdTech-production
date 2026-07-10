@@ -20,6 +20,7 @@ import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/nativ
 
 import GuestAccessPrompt from '../components/GuestAccessPrompt';
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 import { API_BASE_URL } from '../constants/config';
 import {
@@ -83,7 +84,7 @@ const pStyles = StyleSheet.create({
   },
   fill: {
     height: '100%',
-    backgroundColor: theme.crimson,
+    backgroundColor: theme.primary,
     borderRadius: 2,
   },
 });
@@ -115,7 +116,7 @@ function ShowCard({ item, onPress, onLongPress, selectionMode, selected, onDelet
           <Ionicons
             name={selected ? "checkmark-circle" : "ellipse-outline"}
             size={24}
-            color={selected ? theme.crimson : theme.white}
+            color={selected ? theme.primary : theme.white}
           />
         </View>
       )}
@@ -302,6 +303,7 @@ export default function MyListScreen() {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const route = useRoute();
+  const { theme: appTheme } = useTheme();
 
   const accessToken = useSelector((state) => state.auth?.accessToken);
   const bookmarks = useSelector(selectBookmarks);
@@ -515,7 +517,7 @@ export default function MyListScreen() {
 
   if (!accessToken) {
     return (
-      <View style={[styles.screen, { paddingTop: insets.top }]}>
+      <View style={[styles.screen, { paddingTop: insets.top, backgroundColor: appTheme.screenBg }]}>
         <GuestScreen />
       </View>
     );
@@ -525,7 +527,7 @@ export default function MyListScreen() {
     (watchHistoryLoading && !watchHistoryLoaded);
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top + 12 }]}>
+    <View style={[styles.screen, { paddingTop: insets.top + 12, backgroundColor: appTheme.screenBg }]}>
       {/* ── Header ── */}
       {selectionMode ? (
         <View style={styles.selectionHeader}>
@@ -589,7 +591,7 @@ export default function MyListScreen() {
       {/* ── Content ── */}
       {isLoading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color={theme.crimson} />
+          <ActivityIndicator size="large" color={theme.primary} />
         </View>
       ) : activeTab === TAB_SAVED ? (
         // ── Saved / Bookmarks tab ──────────────────────────────
@@ -809,7 +811,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   tabActive: {
-    backgroundColor: theme.crimson,
+    backgroundColor: theme.primary,
   },
   tabText: {
     color: theme.gray,
@@ -849,7 +851,7 @@ const styles = StyleSheet.create({
   },
   deleteActionBtn: {
     padding: 8,
-    backgroundColor: theme.crimson,
+    backgroundColor: theme.primary,
     borderRadius: 8,
   },
   deleteActionText: {
@@ -905,7 +907,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 24,
-    backgroundColor: theme.crimson,
+    backgroundColor: theme.primary,
     alignItems: 'center',
   },
   modalBtnDeleteText: {

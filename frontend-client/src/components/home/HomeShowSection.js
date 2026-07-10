@@ -13,7 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { API_BASE_URL } from '../../constants/config';
 
-const CARD_WIDTH = 108;
+// Wider card to match reference image (Udemy-style)
+const CARD_WIDTH = 110;
 
 function ThumbnailProgressBar({ progressSec, durationSec }) {
   if (!durationSec || durationSec === 0) return null;
@@ -33,37 +34,62 @@ function resolveThumbnailUrl(url) {
   return `${API_BASE_URL}${url}`;
 }
 
-function SectionCard({ item, onPress, compact }) {
+function SectionCard({ item, onPress }) {
   const uri = resolveThumbnailUrl(item.thumbnail_url);
+  const categoryLabel = item.tags?.length > 0
+    ? item.tags[0]
+    : (item.category_name || item.category || '');
+
   return (
     <TouchableOpacity
-      style={[styles.card, compact && styles.cardCompact]}
+      style={styles.card}
       onPress={onPress}
       activeOpacity={0.85}
     >
+      {/* Poster image — tall, portrait ratio */}
       <View style={styles.posterWrap}>
         {uri ? (
           <Image source={{ uri }} style={styles.poster} resizeMode="cover" />
         ) : (
           <View style={[styles.poster, styles.posterFallback]} />
         )}
+
+        {/* Tag badge top-right */}
+        {item.tag ? (
+          <View style={[
+            styles.tagBadge,
+            { backgroundColor: item.tag === 'Hot' ? '#FF2D55' : '#7B2FFF' }
+          ]}>
+            <Text style={styles.tagBadgeText}>{item.tag}</Text>
+          </View>
+        ) : null}
+
+        {/* View count */}
         <View style={styles.viewBadge}>
           <Ionicons name="eye-outline" size={10} color="#fff" />
           <Text style={styles.viewText}>
             {formatViews(item.view_count)}
           </Text>
         </View>
+
+        {/* Progress bar */}
         <ThumbnailProgressBar
           progressSec={item.progress_sec || 0}
           durationSec={item.duration_sec || 0}
         />
       </View>
+
+      {/* Title */}
       <Text style={styles.cardTitle} numberOfLines={2}>
         {item.title}
       </Text>
-      <Text style={styles.cardTags} numberOfLines={1}>
-        {item.tags?.length > 0 ? item.tags[0] : (item.category_name || item.category || '')}
-      </Text>
+
+      {/* Category / tag label */}
+      {categoryLabel ? (
+        <Text style={styles.cardCategory} numberOfLines={1}>
+          {categoryLabel}
+        </Text>
+      ) : null}
     </TouchableOpacity>
   );
 }
@@ -164,9 +190,10 @@ export default function HomeShowSection({
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   section: {
-    marginBottom: 22,
+    marginBottom: 24,
   },
 
   header: {
@@ -187,31 +214,31 @@ const styles = StyleSheet.create({
   categoryTabContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     paddingRight: 6,
   },
 
-  // Updated Category Tab Style
-  categoryTabText: {
-    color: '#999',
-    fontSize: 15,
-    fontWeight: '700',
-
+  categoryTab: {
     paddingHorizontal: 14,
-    paddingVertical: 7,
-
+    paddingVertical: 6,
+    borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: '#555',
-    borderRadius: 18,
-
-    overflow: 'hidden',
   },
 
-  // Updated Active Category Tab Style
-  categoryTabTextActive: {
-    color: theme.white,
+  categoryTabActive: {
     borderColor: theme.white,
     backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+
+  categoryTabText: {
+    color: '#999',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  categoryTabTextActive: {
+    color: theme.white,
   },
 
   expandBtn: {
@@ -221,27 +248,24 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingHorizontal: 4,
-    gap: 10,
+    gap: 12,
   },
 
   cardSlot: {
     marginRight: 0,
   },
 
+  // Wider card — matches Udemy-style reference image
   card: {
     width: CARD_WIDTH,
   },
 
-  cardCompact: {
-    width: 140,
-  },
-
   posterWrap: {
     width: '100%',
-    aspectRatio: 0.7,
-    borderRadius: 8,
+    aspectRatio: 2 / 3,          // Taller portrait ratio
+    borderRadius: 10,
     overflow: 'hidden',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#1C1C1E',
     position: 'relative',
   },
 
@@ -254,14 +278,29 @@ const styles = StyleSheet.create({
     backgroundColor: theme.surface,
   },
 
+  tagBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderBottomLeftRadius: 6,
+  },
+
+  tagBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+
   viewBadge: {
     position: 'absolute',
-    bottom: 5,
-    right: 5,
+    bottom: 6,
+    right: 6,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: 'rgba(0,0,0,0.55)',
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderRadius: 10,
@@ -275,24 +314,17 @@ const styles = StyleSheet.create({
 
   cardTitle: {
     color: theme.white,
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 6,
-    lineHeight: 16,
-  },
-
-  cardTags: {
-    color: '#E0E0E0',
-    fontSize: 10,
-    fontWeight: '400',
-    marginTop: 3,
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 8,
+    lineHeight: 18,
   },
 
   cardCategory: {
-    color: '#E0E0E0',
-    fontSize: 10,
-    fontWeight: '400',
-    marginTop: 3,
+    color: theme.gray,
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 4,
   },
 
   progressBarTrack: {
@@ -306,7 +338,7 @@ const styles = StyleSheet.create({
 
   progressBarFill: {
     height: '100%',
-    backgroundColor: theme.crimson,
+    backgroundColor: theme.primary,
     borderRadius: 2,
   },
 

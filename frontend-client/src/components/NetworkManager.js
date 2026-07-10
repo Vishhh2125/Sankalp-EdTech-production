@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     left: 16,
     right: 16,
     borderRadius: 8,
-    backgroundColor: theme.crimson,
+    backgroundColor: theme.primary,
     paddingVertical: 12,
     paddingHorizontal: 16,
     flexDirection: 'row',

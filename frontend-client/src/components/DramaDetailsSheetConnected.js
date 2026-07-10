@@ -106,7 +106,7 @@ function RelatedDramaCard({ drama, onPress, style }) {
   );
 }
 
-function EpisodeCell({ episode, isCurrentEpisode, onPress }) {
+function EpisodeRow({ episode, isCurrentEpisode, onPress }) {
   if (!episode) return null;
 
   const locked = episode.is_locked;
@@ -115,22 +115,46 @@ function EpisodeCell({ episode, isCurrentEpisode, onPress }) {
   return (
     <Pressable
       style={[
-        styles.episodeCell,
-        locked && styles.episodeCellLocked,
-        isCurrentEpisode && styles.episodeCellActive,
-        !isReady && styles.episodeCellPending,
+        styles.episodeRow,
+        !isReady && styles.episodeRowPending,
       ]}
       onPress={() => onPress && onPress(episode)}
       disabled={!onPress}
     >
-      <Text style={styles.episodeNumber}>{episode.episode_num}</Text>
-      {locked ? (
+      {/* Play / Lock icon circle */}
+      <View style={[
+        styles.episodeIconCircle,
+        isCurrentEpisode && styles.episodeIconCircleActive,
+        locked && styles.episodeIconCircleLocked,
+      ]}>
         <Ionicons
-          name="lock-closed"
-          size={15}
-          color="rgba(255,255,255,0.6)"
-          style={styles.lockIcon}
+          name={locked ? 'lock-closed' : 'play'}
+          size={16}
+          color={locked ? 'rgba(255,255,255,0.5)' : '#fff'}
         />
+      </View>
+
+      {/* Text */}
+      <View style={styles.episodeRowText}>
+        <Text
+          style={[
+            styles.episodeRowTitle,
+            isCurrentEpisode && styles.episodeRowTitleActive,
+          ]}
+          numberOfLines={1}
+        >
+          Episode {episode.episode_num}
+          {episode.episode_title ? `  •  ${episode.episode_title}` : ''}
+        </Text>
+        <Text style={styles.episodeRowMeta} numberOfLines={1}>
+          Ep {episode.episode_num}
+          {episode.duration_sec ? `  •  ${Math.round(episode.duration_sec / 60)} min` : ''}
+        </Text>
+      </View>
+
+      {/* Active indicator */}
+      {isCurrentEpisode ? (
+        <View style={styles.episodeRowActiveBar} />
       ) : null}
     </Pressable>
   );
@@ -551,9 +575,9 @@ export default function DramaDetailsSheetConnected({
                         </Pressable>
                       </View>
                     ) : currentEpisodes.length > 0 ? (
-                      <View style={styles.episodesGrid}>
+                      <View style={styles.episodesList}>
                         {currentEpisodes.map((episode) => (
-                          <EpisodeCell
+                          <EpisodeRow
                             key={episode.episode_id}
                             episode={episode}
                             isCurrentEpisode={episode.episode_num === currentEpisode}
@@ -680,60 +704,41 @@ const styles = StyleSheet.create({
   },
   tabsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    gap: 24,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
-    paddingTop: 4,
-    paddingBottom: 10,
-    paddingRight: 8,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
   },
   tabsScroll: {
     flexGrow: 0,
-    height: 58,
     marginHorizontal: -2,
   },
   tabBtn: {
-    minWidth: 70,
-    height: 40,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 12,
   },
   tabBtnActive: {
-    backgroundColor: 'rgba(255,45,85,0.14)',
-    borderColor: 'rgba(255,45,85,0.5)',
   },
   tabText: {
     color: theme.gray,
-    fontSize: 13,
-    lineHeight: 16,
-    fontWeight: '800',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    fontSize: 16,
+    fontWeight: '700',
   },
   tabTextActive: {
     color: theme.white,
   },
   tabUnderline: {
     position: 'absolute',
-    bottom: 0,
-    left: 12,
-    right: 12,
+    bottom: -1,
+    left: 0,
+    right: 0,
     height: 3,
-    backgroundColor: theme.crimson,
-    borderTopLeftRadius: 2,
-    borderTopRightRadius: 2,
+    backgroundColor: theme.white,
+    borderRadius: 2,
   },
   bodyScroll: {
     flex: 1,
   },
   content: {
-    paddingTop: 20,
+    paddingTop: 18,
     paddingBottom: 50,
   },
   sectionTitle: {
@@ -803,43 +808,70 @@ const styles = StyleSheet.create({
     backgroundColor: theme.white,
     width: '100%',
   },
-  episodesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: EPISODE_GAP,
+  // Episode list rows (replacing the old grid)
+  episodesList: {
+    gap: 0,
   },
-  episodeCell: {
-    width: '15.2%',
-    aspectRatio: 1,
-    borderRadius: 8,
+  episodeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.07)',
+    gap: 14,
+    position: 'relative',
+  },
+  episodeRowPending: {
+    opacity: 0.5,
+  },
+  episodeIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  episodeIconCircleActive: {
+    backgroundColor: theme.primary,
+    shadowColor: theme.primary,
+    shadowOpacity: 0.45,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  episodeIconCircleLocked: {
     backgroundColor: theme.surface,
     borderWidth: 1,
     borderColor: theme.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 2,
   },
-  episodeCellLocked: {
-    backgroundColor: '#23002A',
+  episodeRowText: {
+    flex: 1,
   },
-  episodeCellActive: {
-    borderColor: theme.crimson,
-    shadowColor: theme.crimson,
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-  },
-  episodeCellPending: {
-    opacity: 0.65,
-  },
-  episodeNumber: {
+  episodeRowTitle: {
     color: theme.white,
-    fontWeight: '900',
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 20,
   },
-  lockIcon: {
+  episodeRowTitleActive: {
+    color: theme.primary,
+  },
+  episodeRowMeta: {
+    color: theme.gray,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  episodeRowActiveBar: {
+    width: 4,
+    height: 28,
+    backgroundColor: theme.primary,
+    borderRadius: 2,
     position: 'absolute',
-    top: 4,
-    right: 4,
+    left: -4,
+    top: '50%',
+    marginTop: -14,
   },
   stateBlock: {
     alignItems: 'center',

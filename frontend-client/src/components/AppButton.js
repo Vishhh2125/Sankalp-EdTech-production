@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   primary: {
-    backgroundColor: theme.crimson,
+    backgroundColor: theme.primary,
   },
   secondary: {
     backgroundColor: theme.border,

@@ -10,6 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 
 // ✅ REDUX IMPORTS
@@ -24,11 +25,11 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const passwordResetSuccess = !!route?.params?.passwordResetSuccess;
 
-  // ✅ REDUX HOOKS
   const dispatch = useDispatch();
   const { isLoading, error, status, accessToken } = useSelector((state) => state.auth);
 
   const { promptAsync, loading: googleLoading, googleError } = useGoogleAuth();
+  const { theme: appTheme } = useTheme();
 
   useEffect(() => {
     // Navigate after redux marks login as succeeded.
@@ -47,7 +48,6 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
     }
   }, [dispatch, passwordResetSuccess]);
 
-  // ✅ UPDATED LOGIN FUNCTION (NO NAVIGATION)
   const handleSignIn = async () => {
     try {
       if (passwordResetSuccess) {
@@ -55,14 +55,13 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
       }
       await dispatch(loginUser({ email, password })).unwrap();
     } catch (err) {
-      // ❌ error already handled in redux
       console.log(err);
     }
   };
 
   return (
     <ScrollView
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[styles.container, { backgroundColor: appTheme.screenBg }]}
       keyboardShouldPersistTaps="always"
     >
       {/* Logo */}
@@ -71,7 +70,7 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
           <Ionicons name="play" size={16} color={theme.white} />
         </View>
         <Text style={styles.logoText}>
-          7<Text style={styles.logoCrimson}>K</Text>
+          7<Text style={styles.logoPrimary}>K</Text>
         </Text>
       </View>
 
@@ -164,7 +163,7 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
         <Text style={styles.errorText}>{googleError}</Text>
       )}
 
-      {/* ✅ ERROR DISPLAY */}
+      {/* ERROR DISPLAY */}
       {passwordResetSuccess && (
         <Text style={styles.successText}>
           Your password has been reset. Please sign in.
@@ -208,7 +207,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flexGrow: 1,
-    backgroundColor: theme.deepBlack,
     paddingHorizontal: 24,
     paddingTop: 56,
     paddingBottom: 40,
@@ -216,35 +214,36 @@ const styles = StyleSheet.create({
   logoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 36,
+    marginBottom: 40,
   },
   logoIcon: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: theme.crimson,
+    backgroundColor: theme.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
   logoText: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '800',
     color: theme.white,
   },
-  logoCrimson: {
-    color: theme.crimson,
+  logoPrimary: {
+    color: theme.primary,
+    fontWeight: '800',
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
     color: theme.white,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
     color: theme.gray,
-    marginBottom: 36,
+    marginBottom: 32,
   },
   label: {
     fontSize: 12,
@@ -255,16 +254,17 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: theme.surface,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: theme.white,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: theme.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: theme.white,
-    fontSize: 15,
   },
   inputActive: {
-    borderColor: theme.crimson,
+    borderColor: theme.primary,
   },
   passwordWrap: {
     position: 'relative',
@@ -282,18 +282,19 @@ const styles = StyleSheet.create({
   forgotRow: {
     alignSelf: 'flex-end',
     marginTop: 12,
+    marginBottom: 24,
   },
   forgotText: {
-    color: theme.crimson,
+    color: theme.primary,
     fontSize: 13,
     fontWeight: '600',
   },
   actionBtn: {
-    backgroundColor: theme.crimson,
+    backgroundColor: theme.primary,
     borderRadius: 30,
     paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 32,
+    marginBottom: 20,
   },
   actionBtnPressed: {
     opacity: 0.85,
@@ -308,7 +309,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 16,
+    marginBottom: 20,
   },
   googleBtnContent: {
     flexDirection: 'row',
@@ -333,14 +334,15 @@ const styles = StyleSheet.create({
   bottomRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 32,
+    alignItems: 'center',
+    marginTop: 'auto',
   },
   bottomText: {
     color: theme.gray,
     fontSize: 14,
   },
   bottomLink: {
-    color: theme.crimson,
+    color: theme.primary,
     fontWeight: '700',
     fontSize: 14,
   },

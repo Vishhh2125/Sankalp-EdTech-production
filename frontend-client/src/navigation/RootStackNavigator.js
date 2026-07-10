@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -7,7 +7,8 @@ import AuthWrapper from '../components/AuthWrapper';
 import { ROUTES } from '../constants/routes';
 import { API_BASE_URL } from '../constants/config';
 import { useUserDataSync } from '../hooks/useUserDataSync';
-import { theme } from '../constants/theme';
+import { theme as staticTheme } from '../constants/theme';
+import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import NetworkManager from '../components/NetworkManager';
 import {
   clearShowPlayer,
@@ -15,15 +16,6 @@ import {
   initShowPlayer,
 } from '../redux/slices/showPlayerSlice';
 
-// FIX: override NavigationContainer's default white background at the root level
-// so no white flash appears during cold start or screen transitions
-const NAV_THEME = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    background: theme.deepBlack,
-  },
-};
 
 const LINKING = {
   prefixes: ['https://ott.ventagenie.com', '7k://'],
@@ -41,7 +33,7 @@ const LINKING = {
   },
 };
 
-export default function RootStackNavigator() {
+function AppNavigator() {
   const dispatch = useDispatch();
   const accessToken = useSelector((state) => state.auth?.accessToken);
   const navigationRef = useRef(null);
@@ -49,6 +41,20 @@ export default function RootStackNavigator() {
   const [navReady, setNavReady] = useState(false);
 
   useUserDataSync();
+
+  const { theme, isDarkMode } = useTheme();
+
+  const navTheme = {
+    ...(isDarkMode ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDarkMode ? DarkTheme.colors : DefaultTheme.colors),
+      background: theme.screenBg,
+      card: theme.tabBarBg || theme.surface,
+      text: theme.white,
+      border: theme.border,
+      primary: theme.primary,
+    },
+  };
 
   const processDeepLink = useCallback(
     (showId, episodeNum) => {
@@ -156,7 +162,7 @@ export default function RootStackNavigator() {
       <NavigationContainer
         ref={navigationRef}
         linking={LINKING}
-        theme={NAV_THEME}
+        theme={navTheme}
         onReady={() => {
           console.log('✅ Navigation ready');
           setNavReady(true);
@@ -167,5 +173,13 @@ export default function RootStackNavigator() {
         <AuthWrapper onDeepLink={handleDeepLink} />
       </NavigationContainer>
     </SafeAreaProvider>
+  );
+}
+
+export default function RootStackNavigator() {
+  return (
+    <ThemeProvider>
+      <AppNavigator />
+    </ThemeProvider>
   );
 }

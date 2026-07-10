@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     borderColor: theme.border,
   },
   pillSelected: {
-    borderColor: theme.crimson,
+    borderColor: theme.primary,
     backgroundColor: theme.border,
   },
   pillPressed: {

@@ -149,7 +149,7 @@ export default function LiveProgressBar({
           style={[
             styles.dot,
             {
-              backgroundColor: isAtLiveEdge ? theme.crimson : '#888',
+              backgroundColor: isAtLiveEdge ? theme.primary : '#888',
               opacity: isAtLiveEdge ? pulseAnim : 1,
             },
           ]}
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   },
   barFill: {
     height: '100%',
-    backgroundColor: theme.crimson,
+    backgroundColor: theme.primary,
     borderRadius: 1,
   },
   playhead: {
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: theme.crimson,
+    backgroundColor: theme.primary,
     marginLeft: -4,
   },
   playheadActive: {

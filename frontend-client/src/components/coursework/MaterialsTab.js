@@ -16,7 +16,7 @@ export default function MaterialsTab({ materials, loading, hasAccess }) {
   if (loading) {
     return (
       <View style={styles.stateBlock}>
-        <ActivityIndicator size="small" color={theme.crimson} />
+        <ActivityIndicator size="small" color={theme.primary} />
         <Text style={styles.stateText}>Loading materials...</Text>
       </View>
     );
@@ -55,7 +55,7 @@ export default function MaterialsTab({ materials, loading, hasAccess }) {
             }}
           >
             <View style={styles.iconWrap}>
-              <Ionicons name="document-text" size={22} color={theme.crimson} />
+              <Ionicons name="document-text" size={22} color={theme.primary} />
             </View>
             <View style={styles.cardBody}>
               <Text style={styles.cardTitle} numberOfLines={1}>{m.title}</Text>

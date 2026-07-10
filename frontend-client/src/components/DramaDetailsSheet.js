@@ -164,7 +164,7 @@ export default function DramaDetailsSheet({
             </Pressable>
             <Pressable onPress={() => setTab('episodes')} style={styles.tabBtn}>
               <Text style={[styles.tabText, tab === 'episodes' && styles.tabTextActive]}>
-                Lectures
+                Episodes
               </Text>
               {tab === 'episodes' && <View style={styles.tabUnderline} />}
             </Pressable>

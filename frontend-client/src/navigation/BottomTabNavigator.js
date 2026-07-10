@@ -1,4 +1,5 @@
 import React from 'react';
+import { View, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,7 +10,7 @@ import LiveScreen from '../screens/LiveScreen';
 import MyListScreen from '../screens/MyListScreen';
 import ProfileStackNavigator from './ProfileStackNavigator';
 import { ROUTES } from '../constants/routes';
-import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { useLandscapePlaybackContext } from '../context/LandscapePlaybackContext';
 
 const Tab = createBottomTabNavigator();
@@ -25,29 +26,31 @@ const TAB_ICONS = {
 export default function BottomTabNavigator() {
   const insets = useSafeAreaInsets();
   const { isLandscape } = useLandscapePlaybackContext();
+  const { theme } = useTheme();
 
   return (
     <Tab.Navigator
       initialRouteName={ROUTES.HOME}
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: theme.crimson,
+        tabBarActiveTintColor: theme.primary,
         tabBarInactiveTintColor: theme.gray,
         tabBarStyle: isLandscape
           ? { display: 'none' }
           : {
-          backgroundColor: theme.surface,
-          borderTopColor: theme.border,
-          borderTopWidth: 1,
-          height: 60 + insets.bottom,
-          paddingBottom: insets.bottom + 6,
-          paddingTop: 8,
-        },
+              backgroundColor: theme.tabBarBg,
+              borderTopWidth: 0,           // Remove top border line
+              elevation: 0,               // Remove Android shadow
+              shadowOpacity: 0,           // Remove iOS shadow
+              height: 60 + insets.bottom,
+              paddingBottom: insets.bottom + 4,
+              paddingTop: 6,
+            },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '700',
+          fontWeight: '600',
         },
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ focused, color }) => {
           const icons = TAB_ICONS[route.name];
           const iconName = focused ? icons.active : icons.inactive;
           return <Ionicons name={iconName} size={24} color={color} />;
@@ -80,7 +83,6 @@ export default function BottomTabNavigator() {
         options={{ tabBarLabel: 'Profile' }}
         listeners={({ navigation }) => ({
           tabPress: () => {
-            // Always open Profile root when user taps Profile tab.
             navigation.navigate(ROUTES.PROFILE, { screen: ROUTES.PROFILE });
           },
         })}
