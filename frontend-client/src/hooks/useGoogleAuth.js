@@ -11,23 +11,22 @@ export function useGoogleAuth() {
   const dispatch = useDispatch();
   const [googleError, setGoogleError] = useState(null);
 
+  // androidClientId uses the custom URI scheme flow:
+  // com.googleusercontent.apps.982027727139-urdpt7ckau4iv14ahmvm17augrgjeit6:/oauth2redirect/google
+  // This requires "Enable custom URI scheme" to be checked in Google Cloud Console
+  // under the Android OAuth client's Advanced Settings.
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    // Force the token to be issued against the web client ID so the backend
-    // can verify it with google-auth-library using GOOGLE_CLIENT_ID (= web client ID).
-    // Without this, the ID token audience may be the Android client ID,
-    // which the backend does not recognise.
-    selectAccount: true,
     redirectUri: AuthSession.makeRedirectUri({
       native: 'com.googleusercontent.apps.982027727139-urdpt7ckau4iv14ahmvm17augrgjeit6:/oauth2redirect/google',
     }),
   });
 
-  // Log the redirect URI on mount so you can register it in Google Cloud Console
   useEffect(() => {
-    const redirectUri = AuthSession.makeRedirectUri({ useProxy: false });
+    const redirectUri = AuthSession.makeRedirectUri({
+      native: 'com.googleusercontent.apps.982027727139-urdpt7ckau4iv14ahmvm17augrgjeit6:/oauth2redirect/google',
+    });
     console.log('[GoogleAuth] redirectUri:', redirectUri);
     console.log('[GoogleAuth] Android Client ID:', process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID);
     console.log('[GoogleAuth] Web Client ID:', process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
@@ -52,7 +51,6 @@ export function useGoogleAuth() {
         'Google sign-in failed. Please try again.'
       );
     } else if (response?.type === 'dismiss' || response?.type === 'cancel') {
-      // silently ignored — user chose not to proceed
       console.log('[GoogleAuth] user dismissed/cancelled');
     }
   }, [response, dispatch]);
