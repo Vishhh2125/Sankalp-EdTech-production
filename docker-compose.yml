@@ -117,6 +117,8 @@ services:
       - LIVE_PUBLIC_BASE_URL=http://${LOCAL_IP}:8080
       - CLAMAV_HOST=clamav
       - CLAMAV_PORT=3310
+      - GOOGLE_CLIENT_ID=982027727139-7te83cjkb5dvlrdac73grt7o3jpkr6b3.apps.googleusercontent.com
+      - GOOGLE_ANDROID_CLIENT_ID=982027727139-urdpt7ckau4iv14ahmvm17augrgjeit6.apps.googleusercontent.com
 
     depends_on:
       - postgres

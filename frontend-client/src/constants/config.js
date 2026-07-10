@@ -42,8 +42,11 @@ const DEFAULT_LOCAL_API_BASE_URL = (() => {
   return `http://localhost:${API_GATEWAY_PORT}`;
 })();
 
+// DEV OVERRIDE: force correct local IP (update this when your IP changes)
+const DEV_IP_OVERRIDE = __DEV__ ? 'http://10.21.239.61:8080' : null;
+
 export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL || DEFAULT_LOCAL_API_BASE_URL;
+  DEV_IP_OVERRIDE || process.env.EXPO_PUBLIC_API_BASE_URL || DEFAULT_LOCAL_API_BASE_URL;
 
 console.log('API_BASE_URL', API_BASE_URL);
 

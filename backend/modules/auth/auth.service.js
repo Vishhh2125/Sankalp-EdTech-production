@@ -16,6 +16,8 @@ import { OAuth2Client } from 'google-auth-library';
 import crypto from 'crypto';
 
 const prisma = getPrismaClient();
+// OAuth2Client is initialized with the Web Client ID (used as the token issuer/audience).
+// The Android Client ID is added as an additional valid audience in googleOAuthLogin.
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // FIX: JWT_CONFIG now reads from the same config/index.js that auth.middleware.js uses.
@@ -878,9 +880,17 @@ export const verifyForgotOtpAndResetPassword = async ({ sessionId, otp, newPassw
 export const googleOAuthLogin = async (idToken) => {
   try {
     // 1. Verify the ID token with Google
+    // Accept both the Web client ID and the Android client ID as valid audiences.
+    // Expo's useIdTokenAuthRequest on Android may issue the token with the Android
+    // client ID as the audience, while the webClientId is the one we use for the
+    // backend verification. Passing an array lets google-auth-library accept either.
+    const validAudiences = [process.env.GOOGLE_CLIENT_ID];
+    if (process.env.GOOGLE_ANDROID_CLIENT_ID) {
+      validAudiences.push(process.env.GOOGLE_ANDROID_CLIENT_ID);
+    }
     const ticket = await googleClient.verifyIdToken({
       idToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: validAudiences,
     });
     const payload = ticket.getPayload();
     // payload: { sub, email, name, picture, email_verified }

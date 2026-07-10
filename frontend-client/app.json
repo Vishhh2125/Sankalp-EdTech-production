@@ -2,7 +2,10 @@
   "expo": {
     "name": "7K",
     "slug": "7K",
-    "scheme": "7K",
+    "scheme": [
+      "7K",
+      "com.googleusercontent.apps.982027727139-urdpt7ckau4iv14ahmvm17augrgjeit6"
+    ],
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
@@ -37,6 +40,19 @@
               "scheme": "https",
               "host": "ott.ventagenie.com",
               "pathPrefix": "/show"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "com.googleusercontent.apps.982027727139-urdpt7ckau4iv14ahmvm17augrgjeit6",
+              "path": "/oauth2redirect/google"
             }
           ],
           "category": [
