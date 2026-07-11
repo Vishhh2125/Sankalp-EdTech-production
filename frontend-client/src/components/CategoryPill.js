@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 
 export default function CategoryPill({ label, selected = false, onPress }) {
   return (

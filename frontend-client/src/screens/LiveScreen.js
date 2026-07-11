@@ -133,7 +133,7 @@ export default function LiveScreen() {
         }
         renderItem={({ item }) => {
           const isLive = item.is_live || item.status === 'LIVE';
-          const badgeBg = isLive ? 'rgba(255,76,0,0.15)' : 'rgba(255,214,10,0.15)';
+          const badgeBg = isLive ? 'rgba(255,76,0,0.15)' : 'rgba(212,166,0,0.15)'; // primary/accent alpha
           const badgeDot = isLive ? theme.crimson : theme.gold;
           const badgeText = isLive ? 'LIVE' : 'SCHEDULED';
           const linkText = isLive ? 'Watch now' : '';
@@ -163,7 +163,7 @@ export default function LiveScreen() {
                     resizeMode="cover"
                   />
                 ) : (
-                  <View style={[styles.thumbnail, styles.centered, { backgroundColor: '#2C2C2E' }]}>
+                  <View style={[styles.thumbnail, styles.centered, { backgroundColor: appTheme.elevatedSurface }]}>
                     <Ionicons name="film-outline" size={28} color={theme.gray} />
                   </View>
                 )}
@@ -225,20 +225,20 @@ function resolveThumbnailUrl(url) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.background,
   },
   centered: { justifyContent: 'center', alignItems: 'center' },
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 16 },
   headerTitle: {
-    color: '#FFF',
+    color: theme.textPrimary,
     fontSize: 28,
     fontWeight: '800',
   },
   headerSub: { color: theme.gray, fontSize: 13, marginTop: 4, marginBottom: 16 },
-  list: { paddingHorizontal: 16, paddingBottom: 16, gap: 14 },
+  list: { paddingHorizontal: 16, paddingBottom: 100, gap: 14 },
   emptyWrap: { flexGrow: 1, justifyContent: 'center' },
   empty: { alignItems: 'center', paddingHorizontal: 32 },
-  emptyTitle: { color: theme.white, fontSize: 17, fontWeight: '700', marginTop: 12 },
+  emptyTitle: { color: theme.textPrimary, fontSize: 17, fontWeight: '700', marginTop: 12 },
   emptySub: { color: theme.gray, fontSize: 13, textAlign: 'center', marginTop: 8, lineHeight: 20 },
   card: {
     flexDirection: 'row',
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   thumbnailWrap: {
     width: 95,
     height: '100%',
-    backgroundColor: '#1C1C1E',
+    backgroundColor: theme.surface,
   },
   thumbnail: {
     width: '100%',
@@ -280,12 +280,12 @@ const styles = StyleSheet.create({
   liveDot: { width: 8, height: 8, borderRadius: 4 },
   liveBadgeText: { fontSize: 11, fontWeight: '800' },
   cardCourse: { color: theme.lightGray, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
-  cardTitle: { color: theme.white, fontSize: 15, fontWeight: '700', marginTop: 2 },
+  cardTitle: { color: theme.textPrimary, fontSize: 15, fontWeight: '700', marginTop: 2 },
   cardSub: { color: theme.gray, fontSize: 12, marginTop: 2 },
   watchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
   watchText: { fontWeight: '700', fontSize: 13 },
   errorBox: { padding: 16, alignItems: 'center' },
-  errorText: { color: theme.white, fontSize: 14, textAlign: 'center' },
+  errorText: { color: theme.textPrimary, fontSize: 14, textAlign: 'center' },
   retryBtn: {
     marginTop: 10,
     backgroundColor: theme.primary,
@@ -293,5 +293,5 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
   },
-  retryText: { color: theme.white, fontWeight: '600' },
+  retryText: { color: theme.textPrimary, fontWeight: '600' },
 });

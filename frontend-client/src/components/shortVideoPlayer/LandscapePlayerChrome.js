@@ -1,3 +1,4 @@
+import { useTheme } from '../../context/ThemeContext';
 import React from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';

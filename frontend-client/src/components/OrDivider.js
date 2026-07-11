@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 
 /**
  * A horizontal "─── OR ───" divider used between the primary

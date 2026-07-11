@@ -1,3 +1,4 @@
+import { useTheme } from '../../context/ThemeContext';
 import React, { useRef, useState } from 'react';
 import {
   Modal,
@@ -23,6 +24,9 @@ export default function DramaBannerPopup({
   onClose,
   onStartWatching,
 }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
+
   const listRef = useRef(null);
   const [index, setIndex] = useState(0);
 
@@ -37,7 +41,7 @@ export default function DramaBannerPopup({
   const renderBanner = ({ item }) => (
     <View style={[styles.card, { width: CARD_WIDTH, marginHorizontal: CARD_SPACING / 2 }]}>
       <Pressable style={styles.closeBtn} onPress={onClose} hitSlop={12}>
-        <Ionicons name="close" size={22} color={theme.white} />
+        <Ionicons name="close" size={22} color={appTheme.white} />
       </Pressable>
 
       <View style={styles.imageWrap}>
@@ -104,7 +108,7 @@ export default function DramaBannerPopup({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.82)',
@@ -155,7 +159,7 @@ const styles = StyleSheet.create({
     bottom: 16,
     left: 16,
     right: 16,
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 26,
     fontWeight: '800',
     fontStyle: 'italic',
@@ -171,7 +175,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headline: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 22,
     fontWeight: '800',
     marginBottom: 6,
@@ -186,7 +190,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.white,
+    backgroundColor: appTheme.white,
     borderRadius: 28,
     paddingVertical: 14,
     paddingHorizontal: 28,
@@ -211,7 +215,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.35)',
   },
   dotActive: {
-    backgroundColor: theme.white,
+    backgroundColor: appTheme.white,
     width: 20,
   },
 });

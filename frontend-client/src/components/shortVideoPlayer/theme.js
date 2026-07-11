@@ -1,3 +1,4 @@
+import { useTheme } from '../../context/ThemeContext';
 export const shortVideoTheme = {
   crimson: '#FF2D55',
   white: '#FFFFFF',

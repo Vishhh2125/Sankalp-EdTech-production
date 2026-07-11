@@ -27,6 +27,7 @@ import HomeShowSection from '../components/home/HomeShowSection';
 import { fetchHeroBanners } from '../components/home/homePromoApi';
 import { ROUTES } from '../constants/routes';
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { clearPendingHomeBanner } from '../redux/slices/promoFlowSlice';
 import { API_BASE_URL } from '../constants/config';
 import { createAuthenticatedApi } from '../services/api';

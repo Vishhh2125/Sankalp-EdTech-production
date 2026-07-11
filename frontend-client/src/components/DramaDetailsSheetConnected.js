@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { formatCount } from './shortVideoPlayer/utils';
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { API_BASE_URL } from '../constants/config';
 import { courseworkApi } from '../services/courseworkApi';
 import AssignmentsTab from './coursework/AssignmentsTab';
@@ -51,6 +52,8 @@ function resolveThumbnailUrl(url) {
 }
 
 function Tag({ label }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   return (
     <View style={styles.tag}>
       <Text style={styles.tagText}>{label}</Text>
@@ -79,6 +82,8 @@ function buildRanges(totalEpisodes) {
 }
 
 function RelatedDramaCard({ drama, onPress, style }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const uri = resolveThumbnailUrl(drama.thumbnail_url);
 
   return (
@@ -107,6 +112,8 @@ function RelatedDramaCard({ drama, onPress, style }) {
 }
 
 function EpisodeRow({ episode, isCurrentEpisode, onPress }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   if (!episode) return null;
 
   const locked = episode.is_locked;
@@ -173,6 +180,9 @@ export default function DramaDetailsSheetConnected({
   onRelatedPress,
   onStartWatching,
 }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
+
   // All hooks must be called unconditionally, before any returns
   const [tab, setTab] = useState(initialTab);
   const [activeRangeStart, setActiveRangeStart] = useState(1);
@@ -420,7 +430,7 @@ export default function DramaDetailsSheetConnected({
         <View style={styles.sheet}>
           {loading && !details ? (
             <View style={[styles.stateBlock, { height: SHEET_HEIGHT * 0.8 }]}>
-              <ActivityIndicator size="large" color={theme.crimson} />
+              <ActivityIndicator size="large" color={appTheme.primary} />
             </View>
           ) : (
             <>
@@ -447,7 +457,7 @@ export default function DramaDetailsSheetConnected({
                   </View>
                 </View>
                 <Pressable onPress={onClose} hitSlop={15}>
-                  <Ionicons name="close" size={26} color={theme.white} />
+                  <Ionicons name="close" size={26} color={appTheme.white} />
                 </Pressable>
               </View>
 
@@ -510,10 +520,10 @@ export default function DramaDetailsSheetConnected({
                           disabled={unlockingShow}
                         >
                           {unlockingShow ? (
-                            <ActivityIndicator color={theme.white} size="small" />
+                            <ActivityIndicator color={appTheme.white} size="small" />
                           ) : (
                             <>
-                              <Ionicons name="cart" size={18} color={theme.white} />
+                              <Ionicons name="cart" size={18} color={appTheme.white} />
                               <Text style={styles.buyShowText}>
                                 Buy Full Show · {showDetails?.show_coin_cost} Coins
                               </Text>
@@ -539,7 +549,7 @@ export default function DramaDetailsSheetConnected({
                       ]}
                       onPress={() => onStartWatching && onStartWatching()}
                     >
-                      <Ionicons name="play" size={18} color={theme.white} />
+                      <Ionicons name="play" size={18} color={appTheme.white} />
                       <Text style={styles.startWatchingText}>Start Watching</Text>
                     </Pressable>
                   </View>
@@ -564,7 +574,7 @@ export default function DramaDetailsSheetConnected({
 
                     {loading ? (
                       <View style={styles.stateBlock}>
-                        <ActivityIndicator size="small" color={theme.white} />
+                        <ActivityIndicator size="small" color={appTheme.white} />
                         <Text style={styles.stateText}>Loading lectures...</Text>
                       </View>
                     ) : error ? (
@@ -617,7 +627,7 @@ export default function DramaDetailsSheetConnected({
                   <View style={styles.relatedSection}>
                     <Text style={styles.sectionTitle}>Recommendations</Text>
                     {relatedLoading ? (
-                      <ActivityIndicator size="small" color={theme.white} style={styles.relatedLoader} />
+                      <ActivityIndicator size="small" color={appTheme.white} style={styles.relatedLoader} />
                     ) : (
                       <View style={styles.relatedGrid}>
                         {relatedShows.map((drama, index) => {
@@ -647,7 +657,7 @@ export default function DramaDetailsSheetConnected({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   backdropWrap: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -658,11 +668,11 @@ const styles = StyleSheet.create({
   },
   sheet: {
     height: SHEET_HEIGHT,
-    backgroundColor: theme.deepBlack,
+    backgroundColor: appTheme.deepBlack,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     paddingHorizontal: 16,
     paddingTop: 16,
   },
@@ -681,23 +691,23 @@ const styles = StyleSheet.create({
     width: 90,
     height: 110,
     borderRadius: 10,
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
   },
   posterFallback: {
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
   },
   posterMeta: {
     flex: 1,
     justifyContent: 'flex-start',
   },
   title: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 21,
     fontWeight: '800',
   },
   metaText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 13,
     fontWeight: '600',
     marginTop: 4,
@@ -718,12 +728,12 @@ const styles = StyleSheet.create({
   tabBtnActive: {
   },
   tabText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 16,
     fontWeight: '700',
   },
   tabTextActive: {
-    color: theme.white,
+    color: appTheme.white,
   },
   tabUnderline: {
     position: 'absolute',
@@ -731,7 +741,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: theme.white,
+    backgroundColor: appTheme.white,
     borderRadius: 2,
   },
   bodyScroll: {
@@ -742,7 +752,7 @@ const styles = StyleSheet.create({
     paddingBottom: 50,
   },
   sectionTitle: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 17,
     fontWeight: '800',
     marginBottom: 10,
@@ -764,7 +774,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     marginTop: 20,
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.primary,
     borderRadius: 8,
     paddingVertical: 14,
     paddingHorizontal: 20,
@@ -773,7 +783,7 @@ const styles = StyleSheet.create({
     opacity: 0.88,
   },
   startWatchingText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 16,
     fontWeight: '800',
   },
@@ -781,12 +791,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 6,
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
   },
   tagText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 11,
     fontWeight: '600',
   },
@@ -795,17 +805,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   rangeText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 14,
     fontWeight: '700',
   },
   rangeTextActive: {
-    color: theme.white,
+    color: appTheme.white,
   },
   rangeUnderline: {
     marginTop: 4,
     height: 2,
-    backgroundColor: theme.white,
+    backgroundColor: appTheme.white,
     width: '100%',
   },
   // Episode list rows (replacing the old grid)
@@ -829,44 +839,44 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: theme.primary,
+    backgroundColor: appTheme.primary,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
   episodeIconCircleActive: {
-    backgroundColor: theme.primary,
-    shadowColor: theme.primary,
+    backgroundColor: appTheme.primary,
+    shadowColor: appTheme.primary,
     shadowOpacity: 0.45,
     shadowRadius: 10,
     elevation: 5,
   },
   episodeIconCircleLocked: {
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
   },
   episodeRowText: {
     flex: 1,
   },
   episodeRowTitle: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 15,
     fontWeight: '600',
     lineHeight: 20,
   },
   episodeRowTitleActive: {
-    color: theme.primary,
+    color: appTheme.primary,
   },
   episodeRowMeta: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 12,
     marginTop: 2,
   },
   episodeRowActiveBar: {
     width: 4,
     height: 28,
-    backgroundColor: theme.primary,
+    backgroundColor: appTheme.primary,
     borderRadius: 2,
     position: 'absolute',
     left: -4,
@@ -880,7 +890,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   stateText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 14,
     textAlign: 'center',
   },
@@ -888,12 +898,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 10,
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
   },
   retryButtonText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -919,10 +929,10 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 3 / 4,
     borderRadius: 8,
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
   },
   relatedTitle: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 12,
     fontWeight: '600',
     marginTop: 6,
@@ -934,16 +944,16 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: 16,
     borderRadius: 8,
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
   },
   buyShowBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.primary,
     borderRadius: 8,
     width: '100%',
     paddingVertical: 14,
@@ -957,7 +967,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buyShowText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 16,
     fontWeight: '800',
   },
@@ -966,7 +976,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   buyShowErrorText: {
-    color: theme.crimson,
+    color: appTheme.primary,
     fontSize: 13,
     marginTop: 6,
     textAlign: 'center',
@@ -977,7 +987,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   getCoinsText: {
-    color: theme.crimson,
+    color: appTheme.primary,
     fontWeight: '600',
     fontSize: 14,
     textDecorationLine: 'underline',

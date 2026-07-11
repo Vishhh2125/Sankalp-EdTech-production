@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { courseworkApi, formatFileSize } from '../services/courseworkApi';
 import { downloadFile } from '../utils/fileDownloader';
 

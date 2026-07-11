@@ -350,25 +350,22 @@ export default function ShowPlayerScreen({ navigation }) {
 
   if (episodes.length === 0) {
     return (
-      <View style={styles.centered}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-        <ActivityIndicator size="large" color={shortVideoTheme.crimson} />
+      <View style={[styles.centered, { backgroundColor: appTheme.background }]}>
+        <ActivityIndicator size="large" color={appTheme.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.screen} onLayout={onScreenLayout}>
+    <View style={[styles.screen, { backgroundColor: appTheme.background }]} onLayout={onScreenLayout}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
       {!isLandscape ? (
-      <Pressable
-        style={[styles.backButton, { top: insets.top + 10 }]}
-        onPress={handleClose}
-        hitSlop={14}
-      >
-        <Ionicons name="chevron-back" size={28} color="#fff" />
-      </Pressable>
+      <TouchableOpacity style={[styles.backBtnWrapper, { top: insets.top + 10 }]} onPress={handleClose}>
+        <View style={[styles.backBtnInner, { backgroundColor: appTheme.elevatedSurface }]}>
+          <Ionicons name="chevron-back" size={28} color={appTheme.textPrimary} />
+        </View>
+      </TouchableOpacity>
       ) : null}
 
       <FlatList
@@ -440,7 +437,7 @@ export default function ShowPlayerScreen({ navigation }) {
         ListFooterComponent={
           loading ? (
             <View style={[styles.footer, { height: itemHeight }]}>
-              <ActivityIndicator size="small" color={shortVideoTheme.crimson} />
+              <ActivityIndicator size="small" color={appTheme.primary} />
             </View>
           ) : null
         }
@@ -450,21 +447,21 @@ export default function ShowPlayerScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#000' },
+  screen: { flex: 1 },
   centered: {
     flex: 1,
-    backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  backButton: {
+  backBtnWrapper: {
     position: 'absolute',
     left: 12,
     zIndex: 100,
+  },
+  backBtnInner: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
   },

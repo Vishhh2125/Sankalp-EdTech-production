@@ -30,6 +30,8 @@ setAuthActions({
 setFeedStore(store);
 setShowPlayerStore(store);
 
+import { ThemeProvider } from './src/context/ThemeContext';
+
 export default function App() {
   return (
     <NetworkProvider>
@@ -39,9 +41,9 @@ export default function App() {
           <PlaybackVolumeProvider>
             <VideoQualityProvider>
               <LandscapePlaybackProvider>
-              {/* "light" keeps status bar text/icons white on the dark app background */}
-              <StatusBar style="light" />
-              <RootStackNavigator />
+                <ThemeProvider>
+                  <RootStackNavigator />
+                </ThemeProvider>
               </LandscapePlaybackProvider>
             </VideoQualityProvider>
           </PlaybackVolumeProvider>

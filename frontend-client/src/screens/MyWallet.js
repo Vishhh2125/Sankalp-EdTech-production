@@ -1,3 +1,4 @@
+import { useTheme } from '../context/ThemeContext';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   StyleSheet,
@@ -330,10 +331,10 @@ const WalletScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: appTheme.background,
     paddingHorizontal: 20,
   },
 
@@ -354,7 +355,7 @@ const styles = StyleSheet.create({
   },
 
   balanceValue: {
-    color: '#FFF',
+    color: appTheme.textPrimary,
     fontSize: 34,
     fontWeight: '700',
   },
@@ -380,7 +381,7 @@ const styles = StyleSheet.create({
   },
 
   topUpText: {
-    color: '#FFF',
+    color: appTheme.textPrimary,
     fontSize: 18,
     fontWeight: '700',
     letterSpacing: 0.4,
@@ -398,7 +399,7 @@ const styles = StyleSheet.create({
   },
 
   listItemText: {
-    color: '#FFF',
+    color: appTheme.textPrimary,
     fontSize: 16,
     fontWeight: '500',
   },
@@ -426,7 +427,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#1A1A1A',
   },
   recentTxLabel: {
-    color: '#FFF',
+    color: appTheme.textPrimary,
     fontSize: 14,
     flex: 1,
     marginRight: 12,
@@ -464,7 +465,7 @@ const styles = StyleSheet.create({
   },
 
   modalTitle: {
-    color: '#fff',
+    color: appTheme.textPrimary,
     fontSize: 24,
     fontWeight: '700',
     letterSpacing: 0.3,
@@ -520,7 +521,7 @@ const styles = StyleSheet.create({
   },
 
   packTitle: {
-    color: '#fff',
+    color: appTheme.textPrimary,
     fontSize: 17,
     fontWeight: '700',
   },
@@ -545,7 +546,7 @@ const styles = StyleSheet.create({
   },
 
   popularTagText: {
-    color: '#fff',
+    color: appTheme.textPrimary,
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -573,7 +574,7 @@ const styles = StyleSheet.create({
   },
 
   confirmTitle: {
-    color: '#fff',
+    color: appTheme.textPrimary,
     fontSize: 22,
     fontWeight: '700',
     marginBottom: 18,
@@ -599,7 +600,7 @@ const styles = StyleSheet.create({
   },
 
   selectedPackText: {
-    color: '#fff',
+    color: appTheme.textPrimary,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -649,7 +650,7 @@ const styles = StyleSheet.create({
   },
 
   btnPrimaryText: {
-    color: '#fff',
+    color: appTheme.textPrimary,
     fontSize: 16,
     fontWeight: '700',
   },

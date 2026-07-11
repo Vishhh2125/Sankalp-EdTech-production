@@ -16,6 +16,7 @@ import {
   walletApiErrorMessage,
 } from '../components/wallet/topUpApi';
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 
 function formatInr(paise) {
   if (paise == null || Number.isNaN(paise)) return null;

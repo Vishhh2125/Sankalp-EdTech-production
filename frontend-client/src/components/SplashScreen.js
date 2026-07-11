@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 
 /**
  * SplashScreen Component

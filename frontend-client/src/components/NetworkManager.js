@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNetwork } from '../context/NetworkContext';
 import { ROUTES } from '../constants/routes';
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 
 export default function NetworkManager({ navigationRef, navReady }) {
   const { isOffline } = useNetwork();

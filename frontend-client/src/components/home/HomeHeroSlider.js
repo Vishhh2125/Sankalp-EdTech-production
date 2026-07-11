@@ -1,3 +1,4 @@
+import { useTheme } from '../../context/ThemeContext';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
@@ -25,6 +26,9 @@ function resolveImageUrl(url) {
 }
 
 export default function HomeHeroSlider({ banners = [], onBannerPress }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
+
   const listRef = useRef(null);
   const [index, setIndex] = useState(0);
 
@@ -126,7 +130,7 @@ export default function HomeHeroSlider({ banners = [], onBannerPress }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   wrap: {
     marginBottom: 20,
   },
@@ -147,7 +151,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   imageFallback: {
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -171,7 +175,7 @@ const styles = StyleSheet.create({
     width: 56,      // was 28
     height: 56,     // was 28
     borderRadius: 28,
-    backgroundColor: '#fff',
+    backgroundcolor: appTheme.textPrimary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -179,7 +183,7 @@ const styles = StyleSheet.create({
     marginLeft: 3,
   },
   heroShowName: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 30,
     lineHeight: 34,
     fontWeight: '900',
@@ -200,7 +204,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.25)',
   },
   dotActive: {
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.primary,
     width: 18,
   },
 });

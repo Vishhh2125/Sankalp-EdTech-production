@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 import {
   clearForgotPasswordState,

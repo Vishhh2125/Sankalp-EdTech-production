@@ -1,3 +1,4 @@
+import { useTheme } from '../../context/ThemeContext';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -129,7 +130,7 @@ export default function ShortVideoReelItem({
   const bottomControlsPadding = showOttOverlayControls
     ? (itemHeight ? 10 : insets.bottom)
     : itemHeight
-      ? Math.max(insets.bottom + 34, 44)
+      ? Math.max(insets.bottom + 90, 100)
       : Math.max(insets.bottom + 18, 24);
   const dramaVideoMaxHeight = Math.max(layoutHeight - insets.top - bottomControlsPadding - 24, 0);
   const dramaVideoHeight = Math.min(windowWidth * (16 / 9), dramaVideoMaxHeight);

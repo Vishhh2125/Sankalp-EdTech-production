@@ -425,6 +425,7 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 16,
+    paddingBottom: 100,
   },
   selectionHeader: {
     flexDirection: 'row',

@@ -1,3 +1,4 @@
+import { useTheme } from '../../context/ThemeContext';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Animated, PanResponder, Pressable } from 'react-native';
 import { theme } from '../../constants/theme';

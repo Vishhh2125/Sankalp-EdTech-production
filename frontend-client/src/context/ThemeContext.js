@@ -1,70 +1,91 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const THEME_KEY = '@app_theme_mode';
 
-/** Dark mode — rich dark greys, no purple */
+/** Semantic Dark Mode */
 const darkTheme = {
   isDark: true,
-  deepBlack: '#0A0A0A',
+  // Core Semantic Colors
+  background: '#0F1117',
+  surface: '#181B23',
+  elevatedSurface: '#21252F',
+  card: '#181B23',
+  textPrimary: '#F5F6F8',
+  textSecondary: '#A7ADBB',
+  textMuted: '#667085',
+  border: '#303541',
+  primary: '#FF5C1A',
+  primaryHover: '#FF713D',
+  primarySoft: '#3D1A0D',
+  accent: '#FFD60A',
+  success: '#22C55E',
+  warning: '#FBBF24',
+  error: '#EF4444',
+  info: '#60A5FA',
+  tabBarBackground: '#181B23',
+  inputBackground: '#21252F',
+  
+  // Specific Component Backwards Compatibility / Legacy Primitives
+  deepBlack: '#0F1117',
   black: '#000000',
-  surface: '#1C1C1E',
-  surfaceLight: '#2C2C2E',
-  border: '#3A3A3C',
-  primary: '#FF4C00',
-  crimson: '#FF4C00',
-  blush: '#FF6584',
-  white: '#F5F5F5',
-  gray: '#8E8E93',
-  darkGray: '#636366',
-  lightGray: '#AEAEB2',
+  white: '#F5F6F8',
+  gray: '#667085',
+  darkGray: '#A7ADBB',
+  lightGray: '#A7ADBB',
   gold: '#FFD60A',
-  orange: '#FF4C00',
-  green: '#34C759',
-  red: '#FF3B30',
-  text: '#F5F5F5',
-  textSecondary: '#C7C7CC',
-  textMuted: '#8E8E93',
-  screenBg: '#0A0A0A',
-  cardBg: '#1C1C1E',
-  modalBg: '#1C1C1E',
-  inputBg: '#2C2C2E',
-  tabBarBg: '#2C2C2E',
-  searchBarBg: '#2C2C2E',
-  lockedCellBg: '#2C2C2E',
-  episodeBg: '#1C1C1E',
+  orange: '#FF5C1A',
+  green: '#22C55E',
+  red: '#EF4444',
+  blush: '#FF6584',
+  lockedCellBg: '#21252F',
+  episodeBg: '#181B23',
+  // Old aliases (to be phased out where possible, but keeping for safety if missed)
+  text: '#F5F6F8',
+  screenBg: '#0F1117',
 };
 
-/** Light mode — true light: off-white backgrounds, dark text */
+/** Semantic Light Mode */
 const lightTheme = {
   isDark: false,
-  deepBlack: '#F2F2F7',
-  black: '#FFFFFF',
+  // Core Semantic Colors
+  background: '#F8F9FC',
   surface: '#FFFFFF',
-  surfaceLight: '#E5E5EA',
-  border: '#C6C6C8',
+  elevatedSurface: '#FFFFFF',
+  card: '#FFFFFF',
+  textPrimary: '#1A1D29',
+  textSecondary: '#667085',
+  textMuted: '#A7ADBB',
+  border: '#E5E7EB',
   primary: '#FF4C00',
-  crimson: '#FF4C00',
-  blush: '#FF6584',
-  white: '#1C1C1E',          // Inverted: text is dark in light mode
-  gray: '#636366',
-  darkGray: '#3A3A3C',
-  lightGray: '#8E8E93',
+  primaryHover: '#E64400',
+  primarySoft: '#FFF0E9',
+  accent: '#D4A600',
+  success: '#16A34A',
+  warning: '#F59E0B',
+  error: '#DC2626',
+  info: '#2563EB',
+  tabBarBackground: '#FFFFFF',
+  inputBackground: '#F8F9FC',
+  
+  // Specific Component Backwards Compatibility / Legacy Primitives
+  deepBlack: '#F8F9FC',
+  black: '#FFFFFF',
+  white: '#1A1D29',
+  gray: '#667085',
+  darkGray: '#1A1D29',
+  lightGray: '#A7ADBB',
   gold: '#D4A600',
   orange: '#FF4C00',
-  green: '#248A3D',
-  red: '#D70015',
-  text: '#1C1C1E',           // Dark text on light bg
-  textSecondary: '#3A3A3C',
-  textMuted: '#636366',
-  screenBg: '#F2F2F7',       // Light grey screen background
-  cardBg: '#FFFFFF',
-  modalBg: '#FFFFFF',
-  inputBg: '#E5E5EA',
-  tabBarBg: '#FFFFFF',
-  searchBarBg: '#E5E5EA',
-  lockedCellBg: '#D1D1D6',
+  green: '#16A34A',
+  red: '#DC2626',
+  blush: '#FF6584',
+  lockedCellBg: '#F8F9FC',
   episodeBg: '#FFFFFF',
+  // Old aliases (to be phased out where possible, but keeping for safety if missed)
+  text: '#1A1D29',
+  screenBg: '#F8F9FC',
 };
 
 const ThemeContext = createContext({
@@ -74,15 +95,18 @@ const ThemeContext = createContext({
 });
 
 export function ThemeProvider({ children }) {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const systemTheme = Appearance.getColorScheme();
+  const [isDarkMode, setIsDarkMode] = useState(systemTheme === 'dark');
 
   useEffect(() => {
     AsyncStorage.getItem(THEME_KEY).then((val) => {
       if (val !== null) {
         setIsDarkMode(val === 'dark');
+      } else if (systemTheme) {
+        setIsDarkMode(systemTheme === 'dark');
       }
     }).catch(() => {});
-  }, []);
+  }, [systemTheme]);
 
   const toggleTheme = useCallback(async () => {
     const next = !isDarkMode;

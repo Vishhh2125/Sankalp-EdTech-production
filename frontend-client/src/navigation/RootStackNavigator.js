@@ -2,8 +2,8 @@ import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
-
 import AuthWrapper from '../components/AuthWrapper';
+import { StatusBar } from 'expo-status-bar';
 import { ROUTES } from '../constants/routes';
 import { API_BASE_URL } from '../constants/config';
 import { useUserDataSync } from '../hooks/useUserDataSync';
@@ -48,9 +48,9 @@ function AppNavigator() {
     ...(isDarkMode ? DarkTheme : DefaultTheme),
     colors: {
       ...(isDarkMode ? DarkTheme.colors : DefaultTheme.colors),
-      background: theme.screenBg,
-      card: theme.tabBarBg || theme.surface,
-      text: theme.white,
+      background: theme.background,
+      card: theme.tabBarBackground || theme.surface,
+      text: theme.textPrimary,
       border: theme.border,
       primary: theme.primary,
     },
@@ -159,6 +159,7 @@ function AppNavigator() {
 
   return (
     <SafeAreaProvider>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       <NavigationContainer
         ref={navigationRef}
         linking={LINKING}

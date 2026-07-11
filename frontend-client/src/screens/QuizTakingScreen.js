@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { courseworkApi } from '../services/courseworkApi';
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];

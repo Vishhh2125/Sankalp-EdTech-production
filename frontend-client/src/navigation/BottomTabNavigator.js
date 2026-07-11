@@ -40,27 +40,34 @@ export default function BottomTabNavigator() {
           ? { display: 'none' }
           : {
               position: 'absolute',
-              bottom: Math.max(insets.bottom, 16),
-              left: 16,
-              right: 16,
-              height: 64,
-              borderRadius: 32,
+              bottom: Math.max(insets.bottom, 24),
+              left: 20,
+              right: 20,
+              height: 68,
+              borderRadius: 34,
               borderWidth: 1,
-              borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-              backgroundColor: 'transparent', // Let BlurView handle background
+              borderColor: isDarkMode ? 'rgba(255, 76, 0, 0.3)' : 'rgba(255, 76, 0, 0.2)', // Light orange border
+              backgroundColor: 'transparent',
               elevation: 0,
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.1,
-              shadowRadius: 10,
-              paddingBottom: 0, // Reset padding as we have explicit height and vertical centering
+              shadowOffset: { width: 0, height: 10 },
+              shadowOpacity: 0.15,
+              shadowRadius: 20,
+              paddingBottom: 0,
             },
         tabBarBackground: () => (
           <View style={StyleSheet.absoluteFill}>
             <BlurView
               tint={isDarkMode ? 'dark' : 'light'}
-              intensity={80}
-              style={[StyleSheet.absoluteFill, { borderRadius: 32, overflow: 'hidden', backgroundColor: isDarkMode ? 'rgba(44,44,46,0.6)' : 'rgba(255,255,255,0.6)' }]}
+              intensity={100}
+              style={[
+                StyleSheet.absoluteFill,
+                { 
+                  borderRadius: 34, 
+                  overflow: 'hidden', 
+                  backgroundColor: isDarkMode ? 'rgba(28, 28, 30, 0.4)' : 'rgba(255, 255, 255, 0.4)' 
+                }
+              ]}
             />
           </View>
         ),

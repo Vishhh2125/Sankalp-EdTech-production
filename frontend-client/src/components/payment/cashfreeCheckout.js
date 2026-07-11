@@ -1,3 +1,4 @@
+import { useTheme } from '../../context/ThemeContext';
 import { Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Modal, View, ActivityIndicator, StyleSheet, Pressable, Text } from 'react-native';

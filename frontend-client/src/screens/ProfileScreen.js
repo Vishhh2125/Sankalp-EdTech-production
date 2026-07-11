@@ -37,6 +37,7 @@ const MENU_ITEMS = [
 
 function MenuItem({ icon, label, right, rightComponent, badge, onPress, disabled, labelStyle }) {
   const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
@@ -118,6 +119,7 @@ export default function ProfileScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const { theme: appTheme, isDarkMode, toggleTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const accessToken = useSelector((state) => state.auth?.accessToken);
   const name = useSelector((state) => state.auth.name);
   const coins = useSelector((state) => state.auth.coins);
@@ -321,10 +323,10 @@ export default function ProfileScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: theme.background,
   },
   container: {
     paddingBottom: 20,
@@ -376,7 +378,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   loginText: {
-    color: theme.white,
+    color: theme.textPrimary,
     fontSize: 17,
     fontWeight: '700',
   },
@@ -391,7 +393,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   guestSubtext: {
-    color: theme.gray,
+    color: theme.textSecondary,
     fontSize: 12,
     marginTop: 4,
   },
@@ -423,7 +425,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 10,
   },
   discountText: {
-    color: theme.white,
+    color: theme.textPrimary,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -437,23 +439,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bannerTitle: {
-    color: theme.white,
+    color: theme.textPrimary,
     fontSize: 18,
     fontWeight: '800',
   },
   bannerSub: {
-    color: 'rgba(255,255,255,0.75)',
+    color: theme.textSecondary,
     fontSize: 12,
     marginTop: 2,
   },
   joinSmallBtn: {
-    backgroundColor: theme.white,
+    backgroundColor: theme.textPrimary,
     borderRadius: 20,
     paddingHorizontal: 20,
     paddingVertical: 8,
   },
   joinSmallText: {
-    color: theme.crimson,
+    color: theme.background,
     fontWeight: '700',
     fontSize: 14,
   },
@@ -466,7 +468,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   featureLabel: {
-    color: 'rgba(255,255,255,0.85)',
+    color: theme.textSecondary,
     fontSize: 10,
     fontWeight: '600',
   },
@@ -496,12 +498,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   menuLabel: {
-    color: theme.white,
+    color: theme.textPrimary,
     fontSize: 15,
     fontWeight: '500',
   },
   menuLabelDisabled: {
-    color: theme.darkGray,
+    color: theme.textMuted,
   },
   menuRight: {
     flexDirection: 'row',
@@ -509,7 +511,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   menuRightText: {
-    color: theme.gray,
+    color: theme.textSecondary,
     fontSize: 14,
   },
   badge: {
@@ -519,7 +521,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   badgeText: {
-    color: theme.white,
+    color: theme.textPrimary,
     fontSize: 11,
     fontWeight: '700',
   },

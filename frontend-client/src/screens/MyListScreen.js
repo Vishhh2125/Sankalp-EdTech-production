@@ -50,6 +50,8 @@ const TAB_CONTINUE = 'continue';
 // Progress bar shown on the thumbnail
 // ─────────────────────────────────────────────────────────────────
 function ThumbnailProgressBar({ progressSec, durationSec }) {
+  const { theme: appTheme } = useTheme();
+  const pStyles = usepStyles(appTheme);
   if (!durationSec || durationSec === 0) return null;
   const pct = Math.min((progressSec / durationSec) * 100, 100);
   if (pct <= 0) return null;
@@ -70,7 +72,7 @@ function resolveThumbnailUrl(url) {
   return `${API_BASE_URL}${url}`; // make it absolute
 }
 
-const pStyles = StyleSheet.create({
+const usepStyles = (appTheme) => StyleSheet.create({
   track: {
     position: 'absolute',
     bottom: 0,
@@ -81,7 +83,7 @@ const pStyles = StyleSheet.create({
   },
   fill: {
     height: '100%',
-    backgroundColor: theme.primary,
+    backgroundColor: appTheme.primary,
     borderRadius: 2,
   },
 });
@@ -113,7 +115,7 @@ function ShowCard({ item, onPress, onLongPress, selectionMode, selected, onDelet
           <Ionicons
             name={selected ? "checkmark-circle" : "ellipse-outline"}
             size={24}
-            color={selected ? theme.primary : theme.white}
+            color={selected ? appTheme.primary : appTheme.white}
           />
         </View>
       )}
@@ -127,13 +129,13 @@ function ShowCard({ item, onPress, onLongPress, selectionMode, selected, onDelet
             resizeMode="cover"
           />
         ) : (
-          <View style={[cardStyles.thumbnail, { backgroundColor: theme.surface }]} />
+          <View style={[cardStyles.thumbnail, { backgroundColor: appTheme.surface }]} />
         )}
 
         {/* Play icon overlay */}
         {!selectionMode && (
           <View style={cardStyles.playOverlay}>
-            <Ionicons name="play" size={18} color={theme.white} />
+            <Ionicons name="play" size={18} color={appTheme.white} />
           </View>
         )}
 
@@ -165,17 +167,17 @@ function ShowCard({ item, onPress, onLongPress, selectionMode, selected, onDelet
       {/* Delete button on top right of the card */}
       {!selectionMode && onDelete && (
         <TouchableOpacity style={cardStyles.deleteBtn} onPress={onDelete}>
-          <Ionicons name="trash-outline" size={16} color={theme.white} />
+          <Ionicons name="trash-outline" size={16} color={appTheme.white} />
         </TouchableOpacity>
       )}
     </Pressable>
   );
 }
 
-const cardStyles = StyleSheet.create({
+const usecardStyles = (appTheme) => StyleSheet.create({
   card: {
     flexDirection: 'row',
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 16,
     overflow: 'hidden',
     height: 110,
@@ -235,13 +237,13 @@ const cardStyles = StyleSheet.create({
     fontWeight: '400',
   },
   title: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 15,
     fontWeight: '700',
     lineHeight: 20,
   },
   epLine: {
-    color: theme.lightGray,
+    color: appTheme.lightGray,
     fontSize: 13,
     fontWeight: '500',
     marginTop: 2,
@@ -252,28 +254,30 @@ const cardStyles = StyleSheet.create({
 // Empty state component
 // ─────────────────────────────────────────────────────────────────
 function EmptyState({ icon, title, subtitle }) {
+  const { theme: appTheme } = useTheme();
+  const emptyStyles = useemptyStyles(appTheme);
   return (
     <View style={emptyStyles.wrap}>
-      <Ionicons name={icon} size={48} color={theme.border} />
+      <Ionicons name={icon} size={48} color={appTheme.border} />
       <Text style={emptyStyles.title}>{title}</Text>
       <Text style={emptyStyles.subtitle}>{subtitle}</Text>
     </View>
   );
 }
 
-const emptyStyles = StyleSheet.create({
+const useemptyStyles = (appTheme) => StyleSheet.create({
   wrap: {
     alignItems: 'center',
     paddingTop: 60,
     gap: 10,
   },
   title: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 16,
     fontWeight: '600',
   },
   subtitle: {
-    color: theme.darkGray,
+    color: appTheme.darkGray,
     fontSize: 13,
     textAlign: 'center',
     paddingHorizontal: 32,
@@ -296,6 +300,7 @@ function GuestScreen() {
 // Main screen
 // ─────────────────────────────────────────────────────────────────
 export default function MyListScreen() {
+  const styles = usestyles(appTheme);
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -560,7 +565,7 @@ export default function MyListScreen() {
       {/* ── Content ── */}
       {isLoading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color={theme.primary} />
+          <ActivityIndicator size="large" color={appTheme.primary} />
         </View>
       ) : activeTab === TAB_SAVED ? (
         // ── Saved / Bookmarks tab ──────────────────────────────
@@ -681,10 +686,10 @@ export default function MyListScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const usestyles = (appTheme) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: theme.deepBlack,
+    backgroundColor: appTheme.deepBlack,
     paddingHorizontal: 16,
   },
   header: {
@@ -693,7 +698,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 28,
     fontWeight: '800',
   },
@@ -704,11 +709,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   countText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 12,
   },
   subtitle: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 13,
     marginTop: 4,
     marginBottom: 16,
@@ -716,7 +721,7 @@ const styles = StyleSheet.create({
   // Tab bar
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 12,
     padding: 4,
     marginBottom: 20,
@@ -730,19 +735,19 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   tabActive: {
-    backgroundColor: theme.primary,
+    backgroundColor: appTheme.primary,
   },
   tabText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
   },
   tabTextActive: {
-    color: theme.white,
+    color: appTheme.white,
   },
   list: {
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   loadingWrap: {
     flex: 1,
@@ -757,7 +762,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   selectionTitle: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 18,
     fontWeight: '700',
   },
@@ -765,16 +770,16 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   cancelBtnText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 16,
   },
   deleteActionBtn: {
     padding: 8,
-    backgroundColor: theme.primary,
+    backgroundColor: appTheme.primary,
     borderRadius: 8,
   },
   deleteActionText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -785,20 +790,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     width: '80%',
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
   },
   modalTitle: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 12,
   },
   modalText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 24,
@@ -818,7 +823,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalBtnCancelText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -826,11 +831,11 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 24,
-    backgroundColor: theme.primary,
+    backgroundColor: appTheme.primary,
     alignItems: 'center',
   },
   modalBtnDeleteText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 16,
     fontWeight: '600',
   },

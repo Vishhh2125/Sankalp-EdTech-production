@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { useGuestAuth } from '../context/GuestAuthContext';
 
 /**

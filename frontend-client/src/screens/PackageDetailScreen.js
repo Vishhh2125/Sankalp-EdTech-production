@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ROUTES } from '../constants/routes';
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { API_BASE_URL } from '../constants/config';
 import { packageApi } from '../services/packageApi';
 import { setCoins } from '../redux/slices/authSlice';

@@ -1,3 +1,4 @@
+import { useTheme } from '../context/ThemeContext';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,

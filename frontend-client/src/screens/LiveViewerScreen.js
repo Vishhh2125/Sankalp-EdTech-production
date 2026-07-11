@@ -15,6 +15,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { fetchLivePlayUrl, joinStream, leaveStream } from '../components/live/liveApi';
 import LiveProgressBar from '../components/live/LiveProgressBar';
 import useLandscapePlayback from '../components/shortVideoPlayer/useLandscapePlayback';

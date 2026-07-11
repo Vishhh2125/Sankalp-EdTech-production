@@ -1,3 +1,4 @@
+import { useTheme } from '../../context/ThemeContext';
 import { StyleSheet } from 'react-native';
 
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from './constants';

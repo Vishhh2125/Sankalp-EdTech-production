@@ -10,6 +10,7 @@ import QuizTakingScreen from '../screens/QuizTakingScreen';
 import PackageDetailScreen from '../screens/PackageDetailScreen';
 import { ROUTES } from '../constants/routes';
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 
 const Stack = createNativeStackNavigator();
 
