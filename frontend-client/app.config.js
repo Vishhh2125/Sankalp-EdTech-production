@@ -28,7 +28,7 @@ const iosClientIdPrefix = iosClientId.split('.').shift() || '';
 
 module.exports = {
   expo: {
-    name: "7K",
+    name: "AplhaMinds",
     slug: "ott_7k",
     scheme: [
       "7k",
@@ -37,10 +37,10 @@ module.exports = {
     ].filter(Boolean),
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/logo.png",
+    icon: "./assets/AlphaMinds.png",
     userInterfaceStyle: "light",
     splash: {
-      image: "./assets/splash-icon.png",
+      image: "./assets/AlphaMinds.png",
       resizeMode: "contain",
       backgroundColor: "#ffffff"
     },
@@ -126,9 +126,9 @@ module.exports = {
     ],
     extra: {
       eas: {
-        projectId: "f9b1fb0c-aa11-4a05-b20b-f2c88d71fa2f"
+        projectId: "5dd61ee9-e865-46d2-bda6-9064e3107aa3"
       }
     },
-    owner: "sam0805s-organization"
+    owner: "prasen_10"
   }
 };
