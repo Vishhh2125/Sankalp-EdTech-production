@@ -278,6 +278,7 @@ model Show {
   quizzes           Quiz[]
   show_access       ShowAccess[]
   package_shows     PackageShow[]
+  live_streams      LiveStream[]
 
   @@index([category_id, is_active], name: "idx_shows_category")
   @@index([feed_position, is_active], name: "idx_shows_feed_position")
@@ -640,8 +641,11 @@ model LiveStream {
   scheduled_at     DateTime?
   started_at       DateTime?
   ended_at         DateTime?
+  show_id          String           @db.Uuid
+  is_public        Boolean          @default(true)
   created_at       DateTime         @default(now())
 
+  show    Show @relation(fields: [show_id], references: [id], onDelete: Cascade)
   creator User @relation(fields: [created_by], references: [id], onDelete: Cascade)
   viewerSessions LiveViewerSession[]
 

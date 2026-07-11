@@ -332,7 +332,7 @@ export const heroBannersApi = {
 // ── Live streaming ──
 export const liveApi = {
   create: (data) => api.post('/live/streams', data),
-  getAll: () => api.get('/live/streams', { params: { _t: Date.now() } }),
+  getAll: (endedPeriod = '7d') => api.get('/live/streams', { params: { _t: Date.now(), ended_period: endedPeriod } }),
   getById: (id) => api.get(`/live/streams/${id}`, { params: { _t: Date.now() } }),
   end: (id) => api.delete(`/live/streams/${id}`),
   goLive: (id) => api.post(`/live/streams/${id}/go-live`),
@@ -349,6 +349,7 @@ export const liveApi = {
   getActive: () => api.get('/live/active'),
   getPlayUrl: (id) => api.get(`/live/${id}/play`),
   getViewers: (id) => api.get(`/live/${id}/viewers`),
+  exportViewers: (id) => api.get(`/live/streams/${id}/export-viewers`),
 };
 
 // ── Coursework API ──

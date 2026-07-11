@@ -22,8 +22,8 @@ router.post('/auth-hook', ctrl.authHook);
 router.post('/webhook/on-live', validate(webhookSchema), ctrl.webhookOnLive);
 router.post('/webhook/on-ended', validate(webhookSchema), ctrl.webhookOnEnded);
 
-// Public viewer API
-router.get('/active', ctrl.getActiveStreams);
+// Active viewer API
+router.get('/active', optionalAuth, ctrl.getActiveStreams);
 
 // Admin (register before /:id/play to avoid shadowing)
 router.post('/streams', requireAuth, requireAdmin('live'), validate(createStreamSchema), ctrl.createStream);
@@ -31,17 +31,18 @@ router.post('/streams/:id/go-live', requireAuth, requireAdmin('live'), ctrl.goLi
 router.get('/streams', requireAuth, requireAdmin('live'), ctrl.listStreams);
 router.get('/streams/:id', requireAuth, requireAdmin('live'), ctrl.getStream);
 router.delete('/streams/:id', requireAuth, requireAdmin('live'), ctrl.forceEndStream);
+router.get('/streams/:id/export-viewers', requireAuth, requireAdmin('live'), ctrl.exportViewers);
 
 // Viewer tracking — leave uses sessionId, not streamId
 router.post('/session/:sessionId/leave', ctrl.leaveStream);
 
-// Viewer tracking — join (optionalAuth: user if token present, guest if not)
-router.post('/:id/join', optionalAuth, ctrl.joinStream);
+// Viewer tracking — join (requireAuth: only logged in users can join)
+router.post('/:id/join', requireAuth, ctrl.joinStream);
 
 // Viewer tracking — admin-only viewer list
 router.get('/:id/viewers', requireAuth, requireAdmin('live'), ctrl.getViewers);
 
-// Public playback — must be after /streams routes
-router.get('/:id/play', ctrl.getPlayUrl);
+// Playback (requireAuth: only logged in users can play)
+router.get('/:id/play', requireAuth, ctrl.getPlayUrl);
 
 export default router;

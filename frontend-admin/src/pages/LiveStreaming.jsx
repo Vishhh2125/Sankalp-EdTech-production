@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Plus, Copy, Radio, Monitor, Smartphone, RefreshCw, Square, Users, Eye } from 'lucide-react'
+import { Plus, Copy, Radio, Monitor, Smartphone, RefreshCw, Square, Users, Eye, Download } from 'lucide-react'
 import Modal, { FormGroup, ModalSection } from '../components/ui/Modal.jsx'
 import { ConfirmDialog } from '../components/ui/Controls.jsx'
-import { liveApi } from '../services/api.js'
+import { liveApi, showsApi } from '../services/api.js'
+import * as XLSX from 'xlsx'
 import { publishViaWhip, isWhipEnvironmentSupported } from '../utils/whipPublisher.js'
 
 const STATUS_BADGE = {
@@ -157,9 +158,16 @@ export default function LiveStreaming() {
   const whipRef = useRef(null)
   const whipSupported = isWhipEnvironmentSupported()
 
+  const [shows, setShows] = useState([])
+  const [showsLoading, setShowsLoading] = useState(true)
+  const [showId, setShowId] = useState('')
+  const [visibility, setVisibility] = useState('PUBLIC')
+  const [scheduledAt, setScheduledAt] = useState('')
+  const [endedPeriod, setEndedPeriod] = useState('7d')
+
   const loadStreams = useCallback(async () => {
     try {
-      const res = await liveApi.getAll()
+      const res = await liveApi.getAll(endedPeriod)
       const list = res.data?.data || []
       setStreams(list)
       if (selected?.id) {
@@ -171,41 +179,61 @@ export default function LiveStreaming() {
     } finally {
       setLoading(false)
     }
-  }, [selected?.id])
+  }, [selected?.id, endedPeriod])
+
+  const fetchShows = useCallback(async () => {
+    setShowsLoading(true)
+    try {
+      const res = await showsApi.getAll({ limit: 200 })
+      const raw = res.data?.items || res.data?.data?.shows || res.data?.shows || []
+      setShows(Array.isArray(raw) ? raw : [])
+    } catch {
+      setShows([])
+    } finally {
+      setShowsLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
     loadStreams()
-  }, [loadStreams])
+    fetchShows()
+  }, [loadStreams, fetchShows])
 
   useEffect(() => {
     if (!selected?.id || selected.status === 'ENDED') return undefined
-    const t = setInterval(async () => {
+
+    const fetchDetails = async () => {
       try {
         const promises = [liveApi.getById(selected.id)]
-        // Fetch viewers in parallel when stream is LIVE
         if (selected.status === 'LIVE') {
           promises.push(liveApi.getViewers(selected.id))
         }
         const results = await Promise.all(promises)
         if (results[0].data?.data) setSelected(results[0].data.data)
         if (results[1]?.data?.data) setViewers(results[1].data.data)
-      } catch { /* ignore poll errors */ }
-    }, 30000)
+      } catch { /* ignore fetch errors */ }
+    }
+
+    fetchDetails()
+
+    const t = setInterval(fetchDetails, 30000)
     return () => clearInterval(t)
   }, [selected?.id, selected?.status])
 
   // Reset viewers when selecting a different stream or when stream ends
   useEffect(() => {
-    if (!selected?.id || selected.status !== 'LIVE') {
-      setViewers({ viewer_count: 0, viewers: [] })
-    }
-  }, [selected?.id, selected?.status])
+    setViewers({ viewer_count: 0, viewers: [] })
+  }, [selected?.id])
 
   const createStream = async () => {
     if (!title.trim()) return
     const yid = extractYoutubeVideoId(youtubeUrl)
     if (!yid) {
       alert('Invalid YouTube URL or ID')
+      return
+    }
+    if (!showId) {
+      alert('Please select a linked show/course')
       return
     }
     setSaving(true)
@@ -216,11 +244,17 @@ export default function LiveStreaming() {
         title: title.trim(),
         youtube_video_id: yid,
         source_type: 'YOUTUBE',
+        show_id: showId,
+        is_public: visibility === 'PUBLIC',
+        scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
       })
       const data = res.data?.data
       setModalOpen(false)
       setTitle('')
       setYoutubeUrl('')
+      setShowId('')
+      setVisibility('PUBLIC')
+      setScheduledAt('')
       await loadStreams()
       if (data?.stream) {
         setSelected(data.stream)
@@ -229,6 +263,40 @@ export default function LiveStreaming() {
       setError(err.response?.data?.message || 'Failed to create stream')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleExportViewers = async () => {
+    if (!selected?.id) return
+    try {
+      const res = await liveApi.exportViewers(selected.id)
+      const exportData = res.data?.data
+      if (!exportData) {
+        alert('No data received from export API')
+        return
+      }
+
+      const data = [
+        ['Course Name', 'Live Stream Name', 'Date'],
+        [exportData.course_title, exportData.stream_title, exportData.date],
+        [],
+        ['Student Name', 'Joining Time']
+      ]
+
+      if (Array.isArray(exportData.sessions)) {
+        exportData.sessions.forEach((s) => {
+          data.push([s.student_name, s.joined_at])
+        })
+      }
+
+      const worksheet = XLSX.utils.aoa_to_sheet(data)
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Attendance')
+
+      const filename = `attendance_${selected.id}_${new Date().toISOString().split('T')[0]}.xlsx`
+      XLSX.writeFile(workbook, filename)
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to export viewers')
     }
   }
 
@@ -250,6 +318,8 @@ export default function LiveStreaming() {
   const selectStream = async (stream) => {
     setWhipError(null)
     setGoLiveError(null)
+    // Clear viewers immediately to avoid showing stale data from previous stream
+    setViewers({ viewer_count: 0, viewers: [] })
     setSelected(stream)
   }
 
@@ -481,7 +551,31 @@ export default function LiveStreaming() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 16 }}>
         <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 600, fontSize: 13 }}>Streams</div>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontWeight: 600, fontSize: 13 }}>Streams</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 11, color: 'var(--text3)' }}>Ended:</span>
+              <select
+                value={endedPeriod}
+                onChange={(e) => { setEndedPeriod(e.target.value); setSelected(null) }}
+                style={{
+                  fontSize: 11,
+                  padding: '3px 6px',
+                  background: 'var(--bg3)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 4,
+                  color: 'var(--text2)',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="7d">Past 7 days</option>
+                <option value="30d">Past 30 days</option>
+                <option value="90d">Past 3 months</option>
+                <option value="365d">Past year</option>
+                <option value="all">All time</option>
+              </select>
+            </div>
+          </div>
           {loading ? (
             <div style={{ padding: 24, textAlign: 'center', color: 'var(--text3)' }}>Loading…</div>
           ) : streams.length === 0 ? (
@@ -521,13 +615,39 @@ export default function LiveStreaming() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: 16 }}>{selected.title}</h3>
-                  <span className={`badge ${STATUS_BADGE[selected.status]}`} style={{ marginTop: 6 }}>{selected.status}</span>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 6, flexWrap: 'wrap' }}>
+                    <span className={`badge ${STATUS_BADGE[selected.status]}`}>{selected.status}</span>
+                    <span className={`badge ${selected.is_public ? 'badge-blue' : 'badge-amber'}`}>
+                      {selected.is_public ? 'Public' : 'Subscribers Only'}
+                    </span>
+                    {selected.show?.title && (
+                      <span style={{ fontSize: 12, color: 'var(--text2)' }}>
+                        Linked: <strong>{selected.show.title}</strong>
+                      </span>
+                    )}
+                    {selected.scheduled_at && (
+                      <span style={{ fontSize: 12, color: 'var(--text2)' }}>
+                        Scheduled: <strong>{new Date(selected.scheduled_at).toLocaleString()}</strong>
+                      </span>
+                    )}
+                  </div>
                 </div>
-                {selected.status !== 'ENDED' && (
-                  <button className="btn btn-danger btn-sm" onClick={() => setConfirmEnd(selected)}>
-                    <Square size={12} /> End stream
-                  </button>
-                )}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {(selected.status === 'LIVE' || selected.status === 'ENDED') && (
+                    <button
+                      className="btn btn-sm"
+                      style={{ backgroundColor: '#107c41', color: '#ffffff', border: '1px solid #0f753d' }}
+                      onClick={handleExportViewers}
+                    >
+                      <Download size={12} style={{ marginRight: 4 }} /> Export to Excel
+                    </button>
+                  )}
+                  {selected.status !== 'ENDED' && (
+                    <button className="btn btn-danger btn-sm" onClick={() => setConfirmEnd(selected)}>
+                      <Square size={12} /> End stream
+                    </button>
+                  )}
+                </div>
               </div>
 
               {selected.source_type === 'YOUTUBE' ? (
@@ -654,7 +774,7 @@ export default function LiveStreaming() {
         footer={
           <>
             <button className="btn btn-ghost" onClick={() => setModalOpen(false)} disabled={saving}>Cancel</button>
-            <button className="btn btn-primary" onClick={createStream} disabled={saving || !title.trim() || !extractYoutubeVideoId(youtubeUrl)}>
+            <button className="btn btn-primary" onClick={createStream} disabled={saving || !title.trim() || !extractYoutubeVideoId(youtubeUrl) || !showId}>
               {saving ? 'Creating…' : 'Create'}
             </button>
           </>
@@ -671,6 +791,46 @@ export default function LiveStreaming() {
               <img src={`https://img.youtube.com/vi/${extractYoutubeVideoId(youtubeUrl)}/hqdefault.jpg`} style={{ width: 160, height: 90, borderRadius: 6, objectFit: 'cover' }} />
             </div>
           )}
+        </FormGroup>
+        <FormGroup label="Scheduled Date & Time">
+          <input
+            type="datetime-local"
+            className="input"
+            value={scheduledAt}
+            onChange={(e) => setScheduledAt(e.target.value)}
+            disabled={saving}
+            style={{ width: '100%', padding: '8px 12px', background: 'var(--bg2)', color: 'var(--text1)', border: '1px solid var(--border)', borderRadius: 6 }}
+          />
+        </FormGroup>
+        <FormGroup label="Linked Course / Show *">
+          {showsLoading ? (
+            <div style={{ fontSize: 13, color: 'var(--text3)', padding: '8px 0' }}>Loading courses…</div>
+          ) : (
+            <select
+              className="select"
+              style={{ width: '100%', padding: '8px 12px', background: 'var(--bg2)', color: 'var(--text1)', border: '1px solid var(--border)', borderRadius: 6 }}
+              value={showId}
+              onChange={(e) => setShowId(e.target.value)}
+              disabled={saving}
+            >
+              <option value="">Select a course…</option>
+              {shows.map((s) => (
+                <option key={s.id} value={s.id}>{s.title}</option>
+              ))}
+            </select>
+          )}
+        </FormGroup>
+        <FormGroup label="Visibility *">
+          <select
+            className="select"
+            style={{ width: '100%', padding: '8px 12px', background: 'var(--bg2)', color: 'var(--text1)', border: '1px solid var(--border)', borderRadius: 6 }}
+            value={visibility}
+            onChange={(e) => setVisibility(e.target.value)}
+            disabled={saving}
+          >
+            <option value="PUBLIC">All Users (Public)</option>
+            <option value="SUBSCRIBERS_ONLY">Subscribers Only</option>
+          </select>
         </FormGroup>
       </Modal>
 

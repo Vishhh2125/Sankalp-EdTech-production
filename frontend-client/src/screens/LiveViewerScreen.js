@@ -84,11 +84,19 @@ export default function LiveViewerScreen() {
   useEffect(() => {
     if (!playData || !streamId) return;
 
+    let isCancelled = false;
     let sessionId = null;
 
     const doJoin = async () => {
       try {
         const data = await joinStream(streamId);
+        if (isCancelled) {
+          // If already unmounted/cancelled before resolving, immediately leave this session
+          if (data?.session_id) {
+            leaveStream(data.session_id).catch(() => {});
+          }
+          return;
+        }
         if (data?.session_id) {
           sessionId = data.session_id;
           viewerSessionId.current = sessionId;
@@ -101,7 +109,7 @@ export default function LiveViewerScreen() {
     doJoin();
 
     return () => {
-      // Leave stream on unmount
+      isCancelled = true;
       const sid = sessionId || viewerSessionId.current;
       if (sid) {
         leaveStream(sid).catch(() => {});

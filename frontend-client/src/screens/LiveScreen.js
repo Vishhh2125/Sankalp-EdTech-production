@@ -7,6 +7,8 @@ import {
   Pressable,
   ActivityIndicator,
   RefreshControl,
+  Alert,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
@@ -16,8 +18,9 @@ import { theme } from '../constants/theme';
 import { ROUTES } from '../constants/routes';
 import { fetchActiveLiveStreams } from '../components/live/liveApi';
 import { useNetwork } from '../context/NetworkContext';
+import { useGuestAuth } from '../context/GuestAuthContext';
+import { API_BASE_URL } from '../constants/config';
 
-const POLL_MS = 15000;
 
 export default function LiveScreen() {
   const navigation = useNavigation();
@@ -47,13 +50,33 @@ export default function LiveScreen() {
 
   useEffect(() => {
     if (!isFocused) return;
-
     load();
-    const t = setInterval(() => load(true), POLL_MS);
-    return () => clearInterval(t);
   }, [isFocused, load]);
 
+  const { isGuest, openLogin } = useGuestAuth();
+
   const openViewer = (stream) => {
+    if (isGuest) {
+      Alert.alert(
+        'Login Required',
+        'Please log in to join live streams.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign In', onPress: openLogin },
+        ],
+        { cancelable: true }
+      );
+      return;
+    }
+    const isLive = stream.is_live || stream.status === 'LIVE';
+    if (!isLive && stream.status === 'SCHEDULED') {
+      Alert.alert(
+        'Stream Scheduled',
+        `This stream is scheduled for ${new Date(stream.scheduled_at).toLocaleString()}. Please check back then!`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
     navigation.navigate(ROUTES.LIVE_VIEWER, {
       streamId: stream.id,
       title: stream.title,
@@ -106,25 +129,95 @@ export default function LiveScreen() {
             </View>
           ) : null
         }
-        renderItem={({ item }) => (
-          <Pressable style={styles.card} onPress={() => openViewer(item)}>
-            <View style={styles.liveBadge}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveBadgeText}>LIVE</Text>
-            </View>
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            {item.creator?.name ? (
-              <Text style={styles.cardSub}>Hosted by {item.creator.name}</Text>
-            ) : null}
-            <View style={styles.watchRow}>
-              <Text style={styles.watchText}>Watch now</Text>
-              <Ionicons name="chevron-forward" size={18} color={theme.crimson} />
-            </View>
-          </Pressable>
-        )}
+        renderItem={({ item }) => {
+          const isLive = item.is_live || item.status === 'LIVE';
+          const badgeBg = isLive ? 'rgba(255,76,0,0.15)' : 'rgba(255,214,10,0.15)';
+          const badgeDot = isLive ? theme.crimson : theme.gold;
+          const badgeText = isLive ? 'LIVE' : 'SCHEDULED';
+          const linkText = isLive ? 'Watch now' : '';
+          const linkColor = isLive ? theme.crimson : theme.gold;
+
+          const resolvedUrl = resolveThumbnailUrl(item.show?.thumbnail_url || item.thumbnail_url);
+
+          const formatDate = (dateString) => {
+            if (!dateString) return '';
+            const d = new Date(dateString);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            return `${day}/${month}/${year}, ${hours}:${minutes}`;
+          };
+
+          return (
+            <Pressable style={styles.card} onPress={() => openViewer(item)}>
+              {/* Thumbnail Left */}
+              <View style={styles.thumbnailWrap}>
+                {resolvedUrl ? (
+                  <Image
+                    source={{ uri: resolvedUrl }}
+                    style={styles.thumbnail}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={[styles.thumbnail, styles.centered, { backgroundColor: '#2C2C2E' }]}>
+                    <Ionicons name="film-outline" size={28} color={theme.gray} />
+                  </View>
+                )}
+              </View>
+
+              {/* Info Right */}
+              <View style={styles.info}>
+                <View style={{ gap: 2 }}>
+                  <View style={styles.rowHeader}>
+                    {/* Badge */}
+                    <View style={[styles.liveBadge, { backgroundColor: badgeBg }]}>
+                      <View style={[styles.liveDot, { backgroundColor: badgeDot }]} />
+                      <Text style={[styles.liveBadgeText, { color: badgeDot }]}>{badgeText}</Text>
+                    </View>
+                  </View>
+
+                  {/* Course Name */}
+                  {item.show?.title ? (
+                    <Text style={styles.cardCourse} numberOfLines={1}>
+                      {item.show.title}
+                    </Text>
+                  ) : null}
+
+                  {/* Stream Title */}
+                  <Text style={styles.cardTitle} numberOfLines={1}>
+                    {item.title}
+                  </Text>
+
+                  {/* Scheduled Time */}
+                  {item.scheduled_at && !isLive ? (
+                    <Text style={styles.cardSub} numberOfLines={1}>
+                      Sch: {formatDate(item.scheduled_at)}
+                    </Text>
+                  ) : null}
+                </View>
+
+                {/* Footer Action Link */}
+                <View style={styles.watchRow}>
+                  {linkText ? (
+                    <Text style={[styles.watchText, { color: linkColor }]}>{linkText}</Text>
+                  ) : <View />}
+                  <Ionicons name="chevron-forward" size={18} color={linkColor} />
+                </View>
+              </View>
+            </Pressable>
+          );
+        }}
       />
     </View>
   );
+}
+
+function resolveThumbnailUrl(url) {
+  if (!url) return null;
+  if (url.startsWith('http') || url.startsWith('file://')) return url;
+  return `${API_BASE_URL}${url}`;
 }
 
 const styles = StyleSheet.create({
@@ -139,29 +232,49 @@ const styles = StyleSheet.create({
   emptyTitle: { color: theme.white, fontSize: 17, fontWeight: '700', marginTop: 12 },
   emptySub: { color: theme.gray, fontSize: 13, textAlign: 'center', marginTop: 8, lineHeight: 20 },
   card: {
+    flexDirection: 'row',
     backgroundColor: theme.surface,
-    borderRadius: 14,
-    padding: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    height: 120,
     borderWidth: 1,
     borderColor: theme.border,
+  },
+  thumbnailWrap: {
+    width: 95,
+    height: '100%',
+    backgroundColor: '#1C1C1E',
+  },
+  thumbnail: {
+    width: '100%',
+    height: '100%',
+  },
+  info: {
+    flex: 1,
+    padding: 12,
+    justifyContent: 'space-between',
+  },
+  rowHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,45,85,0.15)',
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 3,
     borderRadius: 6,
-    marginBottom: 10,
     gap: 6,
   },
-  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.crimson },
-  liveBadgeText: { color: theme.crimson, fontSize: 11, fontWeight: '800' },
-  cardTitle: { color: theme.white, fontSize: 17, fontWeight: '700' },
-  cardSub: { color: theme.gray, fontSize: 12, marginTop: 4 },
-  watchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 },
-  watchText: { color: theme.crimson, fontWeight: '700', fontSize: 14 },
+  liveDot: { width: 8, height: 8, borderRadius: 4 },
+  liveBadgeText: { fontSize: 11, fontWeight: '800' },
+  cardCourse: { color: theme.lightGray, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
+  cardTitle: { color: theme.white, fontSize: 15, fontWeight: '700', marginTop: 2 },
+  cardSub: { color: theme.gray, fontSize: 12, marginTop: 2 },
+  watchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
+  watchText: { fontWeight: '700', fontSize: 13 },
   errorBox: { padding: 16, alignItems: 'center' },
   errorText: { color: theme.white, fontSize: 14, textAlign: 'center' },
   retryBtn: { marginTop: 10, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: theme.crimson, borderRadius: 8 },

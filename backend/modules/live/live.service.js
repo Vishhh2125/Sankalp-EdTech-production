@@ -1,6 +1,7 @@
 import { randomBytes } from 'crypto';
 import { prisma } from '../../prisma/client.js';
 import { AppError } from '../../middleware/error.middleware.js';
+import { activeMembershipWhere } from '../membership/membership.helpers.js';
 import {
   getRtmpIngestUrl,
   getWhipPublishUrl,
@@ -59,7 +60,10 @@ async function reconcileStreamWithMediaMtx(stream, pathMap = null) {
         source_protocol: protocolFromMediaMtxPath(pathInfo) || stream.source_protocol,
         ended_at: null,
       },
-      include: { creator: { select: { id: true, name: true } } },
+      include: {
+        creator: { select: { id: true, name: true } },
+        show: { select: { id: true, title: true, thumbnail_url: true } }
+      },
     });
   }
 
@@ -69,7 +73,10 @@ async function reconcileStreamWithMediaMtx(stream, pathMap = null) {
       return prisma.liveStream.update({
         where: { id: stream.id },
         data: { source_protocol: sourceProtocol },
-        include: { creator: { select: { id: true, name: true } } },
+        include: {
+          creator: { select: { id: true, name: true } },
+          show: { select: { id: true, title: true, thumbnail_url: true } }
+        },
       });
     }
   }
@@ -92,6 +99,11 @@ function formatStream(stream, includeIngest = false) {
     started_at: stream.started_at,
     ended_at: stream.ended_at,
     created_at: stream.created_at,
+    show_id: stream.show_id,
+    is_public: stream.is_public,
+    show: stream.show
+      ? { id: stream.show.id, title: stream.show.title, thumbnail_url: stream.show.thumbnail_url }
+      : undefined,
     creator: stream.creator
       ? { id: stream.creator.id, name: stream.creator.name }
       : undefined,
@@ -107,7 +119,7 @@ function formatStream(stream, includeIngest = false) {
 }
 
 export async function createStream(data, adminId) {
-  const { title, thumbnail_url, scheduled_at, source_type = 'YOUTUBE', youtube_video_id } = data;
+  const { title, thumbnail_url, scheduled_at, source_type = 'YOUTUBE', youtube_video_id, show_id, is_public = true } = data;
 
   const streamKey = generateStreamKey();
 
@@ -127,8 +139,13 @@ export async function createStream(data, adminId) {
         youtube_video_id: youtubeId,
         created_by: adminId,
         scheduled_at: scheduled_at ? new Date(scheduled_at) : null,
+        show_id,
+        is_public,
       },
-      include: { creator: { select: { id: true, name: true } } },
+      include: {
+        creator: { select: { id: true, name: true } },
+        show: { select: { id: true, title: true, thumbnail_url: true } }
+      },
     });
 
     return {
@@ -146,8 +163,13 @@ export async function createStream(data, adminId) {
         source_type: 'MEDIAMTX',
         created_by: adminId,
         scheduled_at: scheduled_at ? new Date(scheduled_at) : null,
+        show_id,
+        is_public,
       },
-      include: { creator: { select: { id: true, name: true } } },
+      include: {
+        creator: { select: { id: true, name: true } },
+        show: { select: { id: true, title: true, thumbnail_url: true } }
+      },
     });
 
     return {
@@ -160,12 +182,40 @@ export async function createStream(data, adminId) {
   }
 }
 
-export async function listStreams() {
+export async function listStreams({ endedPeriodDays = 7 } = {}) {
+  const periodCutoff = new Date();
+  periodCutoff.setDate(periodCutoff.getDate() - endedPeriodDays);
+
   const streams = await prisma.liveStream.findMany({
-    orderBy: { created_at: 'desc' },
-    take: 100,
-    include: { creator: { select: { id: true, name: true } } },
+    where: {
+      OR: [
+        { status: { in: ['LIVE', 'SCHEDULED'] } },
+        {
+          status: 'ENDED',
+          ended_at: { gte: periodCutoff },
+        },
+      ],
+    },
+    orderBy: [
+      // Active streams first, then ended by most recent
+      { status: 'asc' }, // ENDED < LIVE < SCHEDULED alphabetically — we sort below
+      { created_at: 'desc' },
+    ],
+    take: 200,
+    include: {
+      creator: { select: { id: true, name: true } },
+      show: { select: { id: true, title: true, thumbnail_url: true } }
+    },
   });
+
+  // Sort: LIVE first, then SCHEDULED, then ENDED
+  const order = { LIVE: 0, SCHEDULED: 1, ENDED: 2 };
+  streams.sort((a, b) => {
+    const diff = (order[a.status] ?? 3) - (order[b.status] ?? 3);
+    if (diff !== 0) return diff;
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+
   const pathMap = await getMediaMtxPathMap();
   const reconciled = await Promise.all(streams.map((s) => reconcileStreamWithMediaMtx(s, pathMap)));
   return reconciled.map((s) => formatStream(s, true));
@@ -174,28 +224,149 @@ export async function listStreams() {
 export async function getStreamById(id) {
   const stream = await prisma.liveStream.findUnique({
     where: { id },
-    include: { creator: { select: { id: true, name: true } } },
+    include: {
+      creator: { select: { id: true, name: true } },
+      show: { select: { id: true, title: true, thumbnail_url: true } }
+    },
   });
   if (!stream) throw new AppError('Stream not found', 404);
   const reconciled = await reconcileStreamWithMediaMtx(stream);
   return formatStream(reconciled, true);
 }
 
-export async function getActiveStreams() {
+export async function checkLiveStreamAccess(userId, streamId) {
+  const stream = await prisma.liveStream.findUnique({
+    where: { id: streamId },
+    include: {
+      show: {
+        select: {
+          id: true,
+          category_id: true,
+          is_free: true,
+        }
+      }
+    }
+  });
+
+  if (!stream) {
+    return { has_access: false, reason: 'stream_not_found' };
+  }
+
+  // Public streams are visible/joinable in list (caller blocks guests on /join and /play routes)
+  if (stream.is_public) {
+    return { has_access: true };
+  }
+
+  // Subscribers-only streams logic below:
+  if (!userId) {
+    return { has_access: false, reason: 'login_required' };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  if (user && (user.role === 'ADMIN' || user.role === 'SUB_ADMIN')) {
+    return { has_access: true };
+  }
+
+  const showId = stream.show?.id;
+  if (!showId) {
+    return { has_access: false, reason: 'no_course_linked' };
+  }
+
+  // Rule 1: Direct purchase of the show
+  const directPurchase = await prisma.showAccess.findUnique({
+    where: {
+      idx_sa_user_show: {
+        user_id: userId,
+        show_id: showId,
+      }
+    }
+  });
+  if (directPurchase) {
+    return { has_access: true };
+  }
+
+  // Rule 2: Package purchase that includes the show
+  const packagePurchase = await prisma.packagePurchase.findFirst({
+    where: {
+      user_id: userId,
+      package: {
+        package_shows: {
+          some: {
+            show_id: showId,
+          }
+        }
+      }
+    }
+  });
+  if (packagePurchase) {
+    return { has_access: true };
+  }
+
+  // Rule 3: Active membership that covers this show's category
+  const now = new Date();
+  const membershipWhere = {
+    user_id: userId,
+    ...activeMembershipWhere(now),
+  };
+  const categoryId = stream.show.category_id;
+  if (categoryId) {
+    membershipWhere.plan = {
+      OR: [{ category_id: null }, { category_id: categoryId }],
+    };
+  }
+  const membership = await prisma.userMembership.findFirst({
+    where: membershipWhere,
+  });
+  if (membership) {
+    return { has_access: true };
+  }
+
+  return { has_access: false, reason: 'upgrade_required' };
+}
+
+export async function getActiveStreams(userId) {
   const candidates = await prisma.liveStream.findMany({
     where: { status: { in: ['SCHEDULED', 'LIVE'] } },
     orderBy: { started_at: 'desc' },
-    include: { creator: { select: { id: true, name: true } } },
+    include: {
+      creator: { select: { id: true, name: true } },
+      show: { select: { id: true, title: true, thumbnail_url: true, category_id: true } }
+    },
   });
   const pathMap = await getMediaMtxPathMap();
   const streams = await Promise.all(candidates.map((s) => reconcileStreamWithMediaMtx(s, pathMap)));
-  return streams.filter((s) => s.status === 'LIVE').map((s) => ({
-    ...formatStream(s),
-    is_live: true,
-  }));
+  const reconciled = streams.filter((s) => s.status === 'LIVE' || s.status === 'SCHEDULED');
+  
+  // Sort: LIVE streams first, then SCHEDULED streams sorted by scheduled_at ascending (soonest first)
+  const sorted = reconciled.sort((a, b) => {
+    if (a.status === 'LIVE' && b.status !== 'LIVE') return -1;
+    if (a.status !== 'LIVE' && b.status === 'LIVE') return 1;
+    if (a.status === 'LIVE') {
+      return new Date(b.started_at || b.created_at) - new Date(a.started_at || a.created_at);
+    } else {
+      if (!a.scheduled_at) return 1;
+      if (!b.scheduled_at) return -1;
+      return new Date(a.scheduled_at) - new Date(b.scheduled_at);
+    }
+  });
+
+  const filtered = [];
+  for (const s of sorted) {
+    const access = await checkLiveStreamAccess(userId, s.id);
+    if (access.has_access) {
+      filtered.push({
+        ...formatStream(s),
+        is_live: s.status === 'LIVE',
+      });
+    }
+  }
+  return filtered;
 }
 
-export async function getPlayUrl(streamId) {
+export async function getPlayUrl(streamId, userId) {
   const stream = await prisma.liveStream.findUnique({
     where: { id: streamId },
     include: { creator: { select: { id: true, name: true } } },
@@ -204,6 +375,15 @@ export async function getPlayUrl(streamId) {
   const reconciled = await reconcileStreamWithMediaMtx(stream);
   if (reconciled.status !== 'LIVE') {
     throw new AppError('Stream is not live', 404);
+  }
+
+  // Validate access
+  const access = await checkLiveStreamAccess(userId, streamId);
+  if (!access.has_access) {
+    if (access.reason === 'login_required') {
+      throw new AppError('Authentication required to watch live streams', 401);
+    }
+    throw new AppError('This stream is for subscribers only. Upgrade to unlock.', 403);
   }
 
   if (reconciled.source_type === 'YOUTUBE') {
@@ -243,7 +423,10 @@ export async function markStreamLive(streamId, adminId) {
       status: 'LIVE',
       started_at: new Date(),
     },
-    include: { creator: { select: { id: true, name: true } } },
+    include: {
+      creator: { select: { id: true, name: true } },
+      show: { select: { id: true, title: true, thumbnail_url: true } }
+    },
   });
 
   return formatStream(updated);
@@ -260,7 +443,10 @@ export async function forceEndStream(streamId) {
       status: 'ENDED',
       ended_at: stream.ended_at || now,
     },
-    include: { creator: { select: { id: true, name: true } } },
+    include: {
+      creator: { select: { id: true, name: true } },
+      show: { select: { id: true, title: true, thumbnail_url: true } }
+    },
   });
 
   return formatStream(updated);
@@ -368,7 +554,16 @@ export async function joinStream(streamId, userId) {
   const stream = await prisma.liveStream.findUnique({ where: { id: streamId } });
   if (!stream) throw new AppError('Stream not found', 404);
 
-  // If authenticated user, check for existing active session
+  // Validate access
+  const access = await checkLiveStreamAccess(userId, streamId);
+  if (!access.has_access) {
+    if (access.reason === 'login_required') {
+      throw new AppError('Authentication required to join live streams', 401);
+    }
+    throw new AppError('This stream is for subscribers only. Upgrade to unlock.', 403);
+  }
+
+  // If authenticated user, check for existing active session and deactivate other active streams
   if (userId) {
     const existing = await prisma.liveViewerSession.findFirst({
       where: {
@@ -377,6 +572,20 @@ export async function joinStream(streamId, userId) {
         is_active: true,
       },
     });
+
+    // Deactivate any active sessions on other streams for this user
+    await prisma.liveViewerSession.updateMany({
+      where: {
+        user_id: userId,
+        stream_id: { not: streamId },
+        is_active: true,
+      },
+      data: {
+        is_active: false,
+        left_at: new Date(),
+      },
+    });
+
     if (existing) {
       return { session_id: existing.id, already_joined: true };
     }
@@ -439,5 +648,58 @@ export async function getViewers(streamId) {
   return {
     viewer_count: viewers.length,
     viewers,
+  };
+}
+
+export async function getExportData(streamId) {
+  const stream = await prisma.liveStream.findUnique({
+    where: { id: streamId },
+    include: {
+      show: { select: { title: true } }
+    }
+  });
+
+  if (!stream) {
+    throw new AppError('Stream not found', 404);
+  }
+
+  const sessions = await prisma.liveViewerSession.findMany({
+    where: { stream_id: streamId },
+    orderBy: { joined_at: 'asc' },
+    include: {
+      user: { select: { name: true } }
+    }
+  });
+
+  // Format Date as DD-MM-YYYY
+  const streamDate = stream.started_at || stream.scheduled_at || stream.created_at;
+  let formattedDate = '';
+  if (streamDate) {
+    const d = new Date(streamDate);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    formattedDate = `${day}-${month}-${year}`;
+  }
+
+  const list = sessions.map(s => {
+    const studentName = s.user?.name || s.guest_name || 'Guest';
+    const joinTime = new Date(s.joined_at).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+    return {
+      student_name: studentName,
+      joined_at: joinTime
+    };
+  });
+
+  return {
+    course_title: stream.show?.title || '',
+    stream_title: stream.title || '',
+    date: formattedDate,
+    sessions: list
   };
 }

@@ -12,7 +12,9 @@ async function createStream(req, res, next) {
 
 async function listStreams(req, res, next) {
   try {
-    const streams = await service.listStreams();
+    const PERIOD_MAP = { '7d': 7, '30d': 30, '90d': 90, '365d': 365, 'all': 36500 };
+    const endedPeriodDays = PERIOD_MAP[req.query.ended_period] ?? 7;
+    const streams = await service.listStreams({ endedPeriodDays });
     return res.json(new ApiResponse(200, streams, 'Streams fetched'));
   } catch (e) {
     next(e);
@@ -30,7 +32,7 @@ async function getStream(req, res, next) {
 
 async function getActiveStreams(req, res, next) {
   try {
-    const streams = await service.getActiveStreams();
+    const streams = await service.getActiveStreams(req.user?.id);
     return res.json(new ApiResponse(200, streams, 'Active streams fetched'));
   } catch (e) {
     next(e);
@@ -39,7 +41,7 @@ async function getActiveStreams(req, res, next) {
 
 async function getPlayUrl(req, res, next) {
   try {
-    const data = await service.getPlayUrl(req.params.id);
+    const data = await service.getPlayUrl(req.params.id, req.user?.id);
     return res.json(new ApiResponse(200, data, 'Playback URL'));
   } catch (e) {
     next(e);
@@ -124,6 +126,15 @@ async function goLive(req, res, next) {
   }
 }
 
+async function exportViewers(req, res, next) {
+  try {
+    const data = await service.getExportData(req.params.id);
+    return res.json(new ApiResponse(200, data, 'Export data fetched'));
+  } catch (e) {
+    next(e);
+  }
+}
+
 export {
   createStream,
   listStreams,
@@ -138,4 +149,5 @@ export {
   leaveStream,
   getViewers,
   goLive,
+  exportViewers,
 };

@@ -9,6 +9,8 @@ export const createStreamSchema = Joi.object({
     is: 'YOUTUBE',
     then: Joi.required(),
   }),
+  show_id: Joi.string().uuid().required(),
+  is_public: Joi.boolean().required(),
 });
 
 export const authHookSchema = Joi.object({
