@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 
 import ReelsScreen from '../screens/ReelsScreen';
 import ForYouScreen from '../screens/ForYouScreen';
@@ -26,7 +27,7 @@ const TAB_ICONS = {
 export default function BottomTabNavigator() {
   const insets = useSafeAreaInsets();
   const { isLandscape } = useLandscapePlaybackContext();
-  const { theme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
 
   return (
     <Tab.Navigator
@@ -38,17 +39,38 @@ export default function BottomTabNavigator() {
         tabBarStyle: isLandscape
           ? { display: 'none' }
           : {
-              backgroundColor: theme.tabBarBg,
-              borderTopWidth: 0,           // Remove top border line
-              elevation: 0,               // Remove Android shadow
-              shadowOpacity: 0,           // Remove iOS shadow
-              height: 60 + insets.bottom,
-              paddingBottom: insets.bottom + 4,
-              paddingTop: 6,
+              position: 'absolute',
+              bottom: Math.max(insets.bottom, 16),
+              left: 16,
+              right: 16,
+              height: 64,
+              borderRadius: 32,
+              borderWidth: 1,
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+              backgroundColor: 'transparent', // Let BlurView handle background
+              elevation: 0,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.1,
+              shadowRadius: 10,
+              paddingBottom: 0, // Reset padding as we have explicit height and vertical centering
             },
+        tabBarBackground: () => (
+          <View style={StyleSheet.absoluteFill}>
+            <BlurView
+              tint={isDarkMode ? 'dark' : 'light'}
+              intensity={80}
+              style={[StyleSheet.absoluteFill, { borderRadius: 32, overflow: 'hidden', backgroundColor: isDarkMode ? 'rgba(44,44,46,0.6)' : 'rgba(255,255,255,0.6)' }]}
+            />
+          </View>
+        ),
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
+          marginBottom: 8,
+        },
+        tabBarItemStyle: {
+          paddingTop: 8,
         },
         tabBarIcon: ({ focused, color }) => {
           const icons = TAB_ICONS[route.name];

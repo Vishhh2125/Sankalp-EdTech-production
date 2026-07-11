@@ -7,25 +7,26 @@ import MyWallet from '../screens/MyWallet';
 import TopUpScreen from '../screens/TopUpScreen';
 import TransactionHistoryScreen from '../screens/TransactionHistoryScreen';
 import EarnRewardsScreen from '../screens/EarnRewardsScreen';
+import DownloadsScreen from '../screens/DownloadsScreen';
 import { ROUTES } from '../constants/routes';
-import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 
 const Stack = createNativeStackNavigator();
 
-// FIX: contentStyle added to every screen (and as a screenOptions default) so
-// the navigator background never flashes white before the screen's first paint.
-const DARK_HEADER = {
-  headerShown: true,
-  headerStyle: { backgroundColor: theme.deepBlack },
-  headerTintColor: theme.white,
-  headerShadowVisible: false,
-  contentStyle: { backgroundColor: theme.deepBlack },
-};
-
 export default function ProfileStackNavigator() {
+  const { theme, isDarkMode } = useTheme();
+
+  const DARK_HEADER = {
+    headerShown: true,
+    headerStyle: { backgroundColor: theme.screenBg },
+    headerTintColor: theme.text,
+    headerShadowVisible: false,
+    contentStyle: { backgroundColor: theme.screenBg },
+  };
+
   return (
     <Stack.Navigator
-      screenOptions={{ contentStyle: { backgroundColor: theme.deepBlack } }}
+      screenOptions={{ contentStyle: { backgroundColor: theme.screenBg } }}
     >
       <Stack.Screen
         name={ROUTES.PROFILE}
@@ -56,6 +57,11 @@ export default function ProfileStackNavigator() {
         name={ROUTES.EARN_REWARDS}
         component={EarnRewardsScreen}
         options={{ ...DARK_HEADER, title: 'Earn Rewards' }}
+      />
+      <Stack.Screen
+        name={ROUTES.DOWNLOADS}
+        component={DownloadsScreen}
+        options={{ ...DARK_HEADER, title: 'Downloads' }}
       />
     </Stack.Navigator>
   );

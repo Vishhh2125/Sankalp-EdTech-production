@@ -45,9 +45,6 @@ const { width } = Dimensions.get('window');
 // Tab constants
 const TAB_SAVED = 'saved';
 const TAB_CONTINUE = 'continue';
-const TAB_DOWNLOADS = 'downloads';
-
-import { getDownloadedEpisodes, removeDownload } from '../services/downloadManager';
 
 // ─────────────────────────────────────────────────────────────────
 // Progress bar shown on the thumbnail
@@ -318,7 +315,6 @@ export default function MyListScreen() {
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [downloads, setDownloads] = useState([]);
 
   // Fetch data on mount if authenticated and not yet loaded
   useEffect(() => {
@@ -339,10 +335,9 @@ export default function MyListScreen() {
     useCallback(() => {
       if (!accessToken) return;
       // Refetch to ensure we have the latest bookmarks and watch history
-      dispatch(fetchBookmarks());
-      dispatch(fetchWatchHistory());
-      getDownloadedEpisodes().then(setDownloads);
-    }, [accessToken, dispatch])
+      if (bookmarksLoaded) dispatch(fetchBookmarks());
+      if (watchHistoryLoaded) dispatch(fetchWatchHistory());
+    }, [accessToken, bookmarksLoaded, watchHistoryLoaded, dispatch])
   );
 
   // ── Navigate to player from a bookmark or watch history entry ──
@@ -368,7 +363,6 @@ export default function MyListScreen() {
             is_free: true,
             coin_cost: 0,
             status: 'ready',
-            localVideoPath: entry.localVideoPath || null,
           },
         ],
         startEpisodeNum: entry.episode_num,
@@ -379,15 +373,13 @@ export default function MyListScreen() {
 
     // Immediately fetch the full episode list from backend
     // so the player has HLS URL and can scroll through all episodes
-    if (!entry.localVideoPath) {
-      dispatch(
-        fetchShowPlayerPage({
-          showId: entry.show_id,
-          fromEp: Math.max(1, Math.floor((entry.episode_num - 1) / 30) * 30 + 1),
-          limit: 30,
-        })
-      );
-    }
+    dispatch(
+      fetchShowPlayerPage({
+        showId: entry.show_id,
+        fromEp: Math.max(1, Math.floor((entry.episode_num - 1) / 30) * 30 + 1),
+        limit: 30,
+      })
+    );
 
     navigation.navigate(ROUTES.SHOW_PLAYER, { fromMyList: true });
   }, [dispatch, navigation]);
@@ -396,7 +388,6 @@ export default function MyListScreen() {
     let id;
     if (activeTab === TAB_SAVED) id = entry.bookmark_id;
     else if (activeTab === TAB_CONTINUE) id = entry.history_id;
-    else if (activeTab === TAB_DOWNLOADS) id = entry.episodeId;
 
     if (selectionMode) {
       setSelectedItems((prev) => {
@@ -420,7 +411,6 @@ export default function MyListScreen() {
       let id;
       if (activeTab === TAB_SAVED) id = entry.bookmark_id;
       else if (activeTab === TAB_CONTINUE) id = entry.history_id;
-      else if (activeTab === TAB_DOWNLOADS) id = entry.episodeId;
       setSelectedItems(new Set([id]));
     }
   }, [selectionMode, activeTab]);
@@ -441,10 +431,6 @@ export default function MyListScreen() {
         }));
       } else if (tab === TAB_CONTINUE) {
         dispatch(deleteWatchHistory({ historyId: item.history_id }));
-      } else if (tab === TAB_DOWNLOADS) {
-        await removeDownload(item.episodeId);
-        const updatedDownloads = await getDownloadedEpisodes();
-        setDownloads(updatedDownloads);
       }
     } else {
       if (activeTab === TAB_SAVED) {
@@ -462,12 +448,6 @@ export default function MyListScreen() {
         selectedItems.forEach(id => {
           dispatch(deleteWatchHistory({ historyId: id }));
         });
-      } else if (activeTab === TAB_DOWNLOADS) {
-        for (const id of selectedItems) {
-          await removeDownload(id);
-        }
-        const updatedDownloads = await getDownloadedEpisodes();
-        setDownloads(updatedDownloads);
       }
       cancelSelection();
     }
@@ -513,7 +493,7 @@ export default function MyListScreen() {
     ? "Are you sure you want to delete the selected videos from your list?"
     : "Are you sure you want to remove this video from your list?";
 
-  const totalCount = bookmarks.length + watchHistory.length + downloads.length;
+  const totalCount = bookmarks.length + watchHistory.length;
 
   if (!accessToken) {
     return (
@@ -575,17 +555,6 @@ export default function MyListScreen() {
             Continue Watching {watchHistory.length > 0 ? `(${watchHistory.length})` : ''}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === TAB_DOWNLOADS && styles.tabActive]}
-          onPress={() => {
-            setActiveTab(TAB_DOWNLOADS);
-            cancelSelection();
-          }}
-        >
-          <Text style={[styles.tabText, activeTab === TAB_DOWNLOADS && styles.tabTextActive]}>
-            Downloads {downloads.length > 0 ? `(${downloads.length})` : ''}
-          </Text>
-        </TouchableOpacity>
       </View>
 
       {/* ── Content ── */}
@@ -643,7 +612,7 @@ export default function MyListScreen() {
             }}
           />
         )
-      ) : activeTab === TAB_CONTINUE ? (
+      ) : (
         // ── Continue Watching tab ──────────────────────────────
         watchHistory.length === 0 ? (
           <EmptyState
@@ -676,56 +645,6 @@ export default function MyListScreen() {
                 onDelete={() => handleDeleteDirect(item, TAB_CONTINUE)}
                 onPress={() => handleCardPressAction(item)}
                 onLongPress={() => handleCardLongPress(item)}
-              />
-            )}
-          />
-        )
-      ) : (
-        // ── Downloads tab ──────────────────────────────
-        downloads.length === 0 ? (
-          <EmptyState
-            icon="download-outline"
-            title="No downloads yet"
-            subtitle="Download episodes to watch them offline"
-          />
-        ) : (
-          <FlatList
-            data={downloads}
-            keyExtractor={(item) => item.episodeId}
-            contentContainerStyle={styles.list}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <ShowCard
-                item={{
-                  show_id: item.showName, // mock for local playback
-                  show_title: item.showName || item.title,
-                  thumbnail_url: item.localImagePath,
-                  category: 'Downloaded',
-                  episode_id: item.episodeId,
-                  episode_num: item.episodeNum,
-                  duration_sec: item.duration,
-                  progress_sec: 0,
-                  total_episodes: item.episodeNum,
-                  tags: ['Offline'],
-                }}
-                selectionMode={selectionMode}
-                selected={selectedItems.has(item.episodeId)}
-                onDelete={() => handleDeleteDirect(item, TAB_DOWNLOADS)}
-                onPress={() => handleCardPressAction({
-                  episodeId: item.episodeId,
-                  show_id: item.showName || item.episodeId,
-                  show_title: item.showName || item.title,
-                  thumbnail_url: item.localImagePath,
-                  episode_id: item.episodeId,
-                  episode_num: item.episodeNum,
-                  duration_sec: item.duration,
-                  progress_sec: 0,
-                  total_episodes: 1, 
-                  localVideoPath: item.localVideoPath,
-                })}
-                onLongPress={() => handleCardLongPress({
-                  episodeId: item.episodeId,
-                })}
               />
             )}
           />

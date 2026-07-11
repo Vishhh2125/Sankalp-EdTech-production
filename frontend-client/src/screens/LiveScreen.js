@@ -15,6 +15,7 @@ import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 import { fetchActiveLiveStreams } from '../components/live/liveApi';
 import { useNetwork } from '../context/NetworkContext';
@@ -26,6 +27,7 @@ export default function LiveScreen() {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const insets = useSafeAreaInsets();
+  const { theme: appTheme } = useTheme();
   const { isOffline } = useNetwork();
   const [streams, setStreams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -85,22 +87,22 @@ export default function LiveScreen() {
 
   if (loading && !refreshing) {
     return (
-      <View style={[styles.screen, { paddingTop: insets.top }]}>
+      <View style={[styles.screen, { paddingTop: insets.top, backgroundColor: appTheme.screenBg }]}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Live</Text>
+          <Text style={[styles.headerTitle, { color: appTheme.text }]}>Live</Text>
           <Text style={styles.headerSub}>Watch streams happening now</Text>
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color={theme.crimson} />
+          <ActivityIndicator size="large" color={appTheme.primary} />
         </View>
       </View>
     );
   }
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
+    <View style={[styles.screen, { paddingTop: insets.top, backgroundColor: appTheme.screenBg }]}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Live</Text>
+        <Text style={[styles.headerTitle, { color: appTheme.text }]}>Live</Text>
         <Text style={styles.headerSub}>Watch streams happening now</Text>
       </View>
 
@@ -221,10 +223,17 @@ function resolveThumbnailUrl(url) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.deepBlack },
+  screen: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
   centered: { justifyContent: 'center', alignItems: 'center' },
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 16 },
-  headerTitle: { color: theme.white, fontSize: 26, fontWeight: '800' },
+  headerTitle: {
+    color: '#FFF',
+    fontSize: 28,
+    fontWeight: '800',
+  },
   headerSub: { color: theme.gray, fontSize: 13, marginTop: 4, marginBottom: 16 },
   list: { paddingHorizontal: 16, paddingBottom: 16, gap: 14 },
   emptyWrap: { flexGrow: 1, justifyContent: 'center' },
@@ -277,6 +286,12 @@ const styles = StyleSheet.create({
   watchText: { fontWeight: '700', fontSize: 13 },
   errorBox: { padding: 16, alignItems: 'center' },
   errorText: { color: theme.white, fontSize: 14, textAlign: 'center' },
-  retryBtn: { marginTop: 10, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: theme.crimson, borderRadius: 8 },
+  retryBtn: {
+    marginTop: 10,
+    backgroundColor: theme.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
   retryText: { color: theme.white, fontWeight: '600' },
 });

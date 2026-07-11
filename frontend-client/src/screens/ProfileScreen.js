@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { FontAwesome6, Ionicons } from '@expo/vector-icons';
+import { Switch } from 'react-native';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
@@ -17,6 +18,7 @@ import GuestAccessPrompt from '../components/GuestAccessPrompt';
 import { theme } from '../constants/theme';
 import { ROUTES } from '../constants/routes';
 import { useGuestAuth } from '../context/GuestAuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { fetchCheckinStatus } from '../components/rewards/dailyCheckinApi';
 import { formatMembershipEnd } from '../components/membership/membershipApi';
 import { logoutUser, clearLogoutError } from '../redux/slices/authSlice';
@@ -30,13 +32,11 @@ const MENU_ITEMS = [
   { icon: 'wallet-outline', label: 'Top Up', right: null },
   { icon: 'card-outline', label: 'My Wallet', right: null },
   { icon: 'gift-outline', label: 'Earn Rewards', badge: null },
+  { icon: 'download-outline', label: 'Downloads', right: null },
 ];
 
-const SETTINGS_ITEMS = [
-  { icon: 'help-circle-outline', label: 'Help & feedback', right: null },
-];
-
-function MenuItem({ icon, label, right, badge, onPress, disabled, labelStyle }) {
+function MenuItem({ icon, label, right, rightComponent, badge, onPress, disabled, labelStyle }) {
+  const { theme: appTheme } = useTheme();
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
@@ -47,8 +47,8 @@ function MenuItem({ icon, label, right, badge, onPress, disabled, labelStyle }) 
       ]}
     >
       <View style={styles.menuLeft}>
-        <Ionicons name={icon} size={20} color={disabled ? theme.darkGray : theme.white} />
-        <Text style={[styles.menuLabel, disabled && styles.menuLabelDisabled, labelStyle]}>{label}</Text>
+        <Ionicons name={icon} size={20} color={disabled ? appTheme.textMuted : appTheme.text} />
+        <Text style={[styles.menuLabel, { color: appTheme.text }, disabled && styles.menuLabelDisabled, labelStyle]}>{label}</Text>
       </View>
       <View style={styles.menuRight}>
         {badge && (
@@ -57,7 +57,8 @@ function MenuItem({ icon, label, right, badge, onPress, disabled, labelStyle }) 
           </View>
         )}
         {right && <Text style={styles.menuRightText}>{right}</Text>}
-        <Ionicons name="chevron-forward" size={18} color={theme.darkGray} />
+        {rightComponent}
+        {!rightComponent && <Ionicons name="chevron-forward" size={18} color={appTheme.textMuted} />}
       </View>
     </Pressable>
   );
@@ -115,6 +116,8 @@ function GuestProfileScreen({ insets }) {
 
 export default function ProfileScreen({ navigation }) {
   const insets = useSafeAreaInsets();
+  const dispatch = useDispatch();
+  const { theme: appTheme, isDarkMode, toggleTheme } = useTheme();
   const accessToken = useSelector((state) => state.auth?.accessToken);
   const name = useSelector((state) => state.auth.name);
   const coins = useSelector((state) => state.auth.coins);
@@ -122,7 +125,6 @@ export default function ProfileScreen({ navigation }) {
   const memberships = useSelector((state) => state.auth.memberships) || [];
   const hasAllAccess = useSelector((state) => state.auth.has_all_access);
   const isPaid = plan && plan !== 'FREE';
-  const dispatch = useDispatch();
   const { logout: logoutState } = useSelector((state) => state.auth);
   const [earnRewardsBadge, setEarnRewardsBadge] = useState(null);
 
@@ -181,10 +183,15 @@ export default function ProfileScreen({ navigation }) {
     navigation.navigate(ROUTES.EARN_REWARDS);
   }
 
+  function goToDownloads() {
+    navigation.navigate(ROUTES.DOWNLOADS);
+  }
+
   function handleMenuPress(label) {
     if (label === 'Top Up') goToTopUp();
     else if (label === 'My Wallet') goToMyWallet();
     else if (label === 'Earn Rewards') goToEarnRewards();
+    else if (label === 'Downloads') goToDownloads();
   }
 
   function handleLogout() {
@@ -204,7 +211,7 @@ export default function ProfileScreen({ navigation }) {
 
   return (
     <ScrollView
-      style={styles.screen}
+      style={[styles.screen, { backgroundColor: appTheme.screenBg }]}
       contentContainerStyle={[
         styles.container,
         { paddingTop: insets.top + 12 },
@@ -285,9 +292,22 @@ export default function ProfileScreen({ navigation }) {
       </View>
 
       <View style={styles.menuCard}>
-        {SETTINGS_ITEMS.map((item) => (
-          <MenuItem key={item.label} {...item} />
-        ))}
+        <MenuItem 
+          icon="moon-outline" 
+          label="Appearance" 
+          rightComponent={
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="sunny" size={16} color={!isDarkMode ? appTheme.primary : appTheme.textMuted} />
+              <Switch
+                value={isDarkMode}
+                onValueChange={toggleTheme}
+                trackColor={{ false: appTheme.border, true: appTheme.primary }}
+                thumbColor={appTheme.surface}
+              />
+              <Ionicons name="moon" size={14} color={isDarkMode ? appTheme.primary : appTheme.textMuted} />
+            </View>
+          } 
+        />
         <MenuItem icon="log-out-outline" label="Log out" onPress={handleLogout} />
         {logoutState.error ? (
           <View style={styles.errorContainer}>
@@ -304,7 +324,7 @@ export default function ProfileScreen({ navigation }) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: theme.deepBlack,
+    backgroundColor: '#0A0A0A',
   },
   container: {
     paddingBottom: 20,

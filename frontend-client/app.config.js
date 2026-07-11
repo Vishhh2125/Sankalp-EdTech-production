@@ -54,7 +54,7 @@ module.exports = {
     android: {
       package: "com.samyak_8505.x7K",
       adaptiveIcon: {
-        foregroundImage: "./assets/logo.png",
+        foregroundImage: "./assets/AlphaMinds.png",
         backgroundColor: "#ffffff"
       },
       permissions: [
