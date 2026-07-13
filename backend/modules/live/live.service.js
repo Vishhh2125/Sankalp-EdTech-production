@@ -96,6 +96,7 @@ function formatStream(stream, includeIngest = false) {
     youtube_video_id: stream.youtube_video_id,
     created_by: stream.created_by,
     scheduled_at: stream.scheduled_at,
+    scheduled_end_at: stream.scheduled_end_at,
     started_at: stream.started_at,
     ended_at: stream.ended_at,
     created_at: stream.created_at,
@@ -119,7 +120,66 @@ function formatStream(stream, includeIngest = false) {
 }
 
 export async function createStream(data, adminId) {
-  const { title, thumbnail_url, scheduled_at, source_type = 'YOUTUBE', youtube_video_id, show_id, is_public = true } = data;
+  const { title, thumbnail_url, scheduled_at, scheduled_end_at, source_type = 'YOUTUBE', youtube_video_id, show_id, is_public = true, ignore_conflicts = false } = data;
+
+  if (scheduled_at && scheduled_end_at) {
+    const sTime = new Date(scheduled_at).getTime();
+    const eTime = new Date(scheduled_end_at).getTime();
+    if (eTime <= sTime) {
+      throw new AppError('Scheduled end time must be after scheduled start time', 400);
+    }
+  }
+
+  // Conflict Overlap Check
+  if (!ignore_conflicts) {
+    const targetStart = scheduled_at ? new Date(scheduled_at) : new Date();
+    const targetEnd = scheduled_end_at ? new Date(scheduled_end_at) : new Date(targetStart.getTime() + 2 * 60 * 60 * 1000);
+
+    const activeStreams = await prisma.liveStream.findMany({
+      where: {
+        status: { in: ['LIVE', 'SCHEDULED'] }
+      },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        scheduled_at: true,
+        scheduled_end_at: true,
+        started_at: true,
+        created_at: true
+      }
+    });
+
+    const conflicts = [];
+    for (const s of activeStreams) {
+      const sStart = s.started_at || s.scheduled_at || s.created_at;
+      const sEnd = s.scheduled_end_at || new Date(sStart.getTime() + 2 * 60 * 60 * 1000);
+
+      if (targetStart < sEnd && sStart < targetEnd) {
+        const formatTime = (dateObj) => new Date(dateObj).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+
+        conflicts.push({
+          id: s.id,
+          title: s.title,
+          status: s.status,
+          scheduled_at: sStart.toISOString(),
+          scheduled_end_at: sEnd.toISOString(),
+          formatted_time: `${formatTime(sStart)} to ${formatTime(sEnd)}`
+        });
+      }
+    }
+
+    if (conflicts.length > 0) {
+      return {
+        has_conflict: true,
+        conflicts
+      };
+    }
+  }
 
   const streamKey = generateStreamKey();
 
@@ -139,6 +199,7 @@ export async function createStream(data, adminId) {
         youtube_video_id: youtubeId,
         created_by: adminId,
         scheduled_at: scheduled_at ? new Date(scheduled_at) : null,
+        scheduled_end_at: scheduled_end_at ? new Date(scheduled_end_at) : null,
         show_id,
         is_public,
       },
@@ -163,6 +224,7 @@ export async function createStream(data, adminId) {
         source_type: 'MEDIAMTX',
         created_by: adminId,
         scheduled_at: scheduled_at ? new Date(scheduled_at) : null,
+        scheduled_end_at: scheduled_end_at ? new Date(scheduled_end_at) : null,
         show_id,
         is_public,
       },
@@ -449,6 +511,18 @@ export async function forceEndStream(streamId) {
     },
   });
 
+  // Close all active viewer sessions for this stream
+  await prisma.liveViewerSession.updateMany({
+    where: {
+      stream_id: streamId,
+      is_active: true,
+    },
+    data: {
+      is_active: false,
+      left_at: now,
+    },
+  });
+
   return formatStream(updated);
 }
 
@@ -534,11 +608,24 @@ export async function handleOnEnded(payload) {
     return { ok: true, stream_id: stream.id, already_ended: true };
   }
 
+  const now = new Date();
   await prisma.liveStream.update({
     where: { id: stream.id },
     data: {
       status: 'ENDED',
-      ended_at: new Date(),
+      ended_at: now,
+    },
+  });
+
+  // Close all active viewer sessions for this stream
+  await prisma.liveViewerSession.updateMany({
+    where: {
+      stream_id: stream.id,
+      is_active: true,
+    },
+    data: {
+      is_active: false,
+      left_at: now,
     },
   });
 
@@ -682,6 +769,13 @@ export async function getExportData(streamId) {
     formattedDate = `${day}-${month}-${year}`;
   }
 
+  const exportTime = new Date().toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  });
+
   const list = sessions.map(s => {
     const studentName = s.user?.name || s.guest_name || 'Guest';
     const joinTime = new Date(s.joined_at).toLocaleTimeString('en-US', {
@@ -690,9 +784,23 @@ export async function getExportData(streamId) {
       second: '2-digit',
       hour12: true
     });
+
+    let leaveTime = '';
+    if (s.is_active || !s.left_at) {
+      leaveTime = `Still Active (As of ${exportTime})`;
+    } else {
+      leaveTime = new Date(s.left_at).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+    }
+
     return {
       student_name: studentName,
-      joined_at: joinTime
+      joined_at: joinTime,
+      left_at: leaveTime
     };
   });
 

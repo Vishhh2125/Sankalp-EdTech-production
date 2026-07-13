@@ -639,6 +639,7 @@ model LiveStream {
   youtube_video_id String?          @db.VarChar(20)
   created_by       String           @db.Uuid
   scheduled_at     DateTime?
+  scheduled_end_at DateTime?
   started_at       DateTime?
   ended_at         DateTime?
   show_id          String           @db.Uuid

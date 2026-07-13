@@ -163,7 +163,9 @@ export default function LiveStreaming() {
   const [showId, setShowId] = useState('')
   const [visibility, setVisibility] = useState('PUBLIC')
   const [scheduledAt, setScheduledAt] = useState('')
+  const [scheduledEndAt, setScheduledEndAt] = useState('')
   const [endedPeriod, setEndedPeriod] = useState('7d')
+  const [conflicts, setConflicts] = useState(null)
 
   const loadStreams = useCallback(async () => {
     try {
@@ -225,7 +227,7 @@ export default function LiveStreaming() {
     setViewers({ viewer_count: 0, viewers: [] })
   }, [selected?.id])
 
-  const createStream = async () => {
+  const createStream = async (ignoreConflicts = false) => {
     if (!title.trim()) return
     const yid = extractYoutubeVideoId(youtubeUrl)
     if (!yid) {
@@ -236,6 +238,20 @@ export default function LiveStreaming() {
       alert('Please select a linked show/course')
       return
     }
+
+    const toISOStringSafe = (dateStr) => {
+      if (!dateStr) return null
+      try {
+        const d = new Date(dateStr)
+        if (isNaN(d.getTime())) return null
+        return d.toISOString()
+      } catch {
+        return null
+      }
+    }
+
+    const shouldIgnore = ignoreConflicts === true
+
     setSaving(true)
     setError(null)
     setGoLiveError(null)
@@ -246,21 +262,29 @@ export default function LiveStreaming() {
         source_type: 'YOUTUBE',
         show_id: showId,
         is_public: visibility === 'PUBLIC',
-        scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+        scheduled_at: toISOStringSafe(scheduledAt),
+        scheduled_end_at: toISOStringSafe(scheduledEndAt),
+        ignore_conflicts: shouldIgnore,
       })
       const data = res.data?.data
+      if (data?.has_conflict) {
+        setConflicts(data.conflicts)
+        return
+      }
       setModalOpen(false)
+      setConflicts(null)
       setTitle('')
       setYoutubeUrl('')
       setShowId('')
       setVisibility('PUBLIC')
       setScheduledAt('')
+      setScheduledEndAt('')
       await loadStreams()
       if (data?.stream) {
         setSelected(data.stream)
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create stream')
+      setError(err.response?.data?.message || err.message || 'Failed to create stream')
     } finally {
       setSaving(false)
     }
@@ -280,12 +304,12 @@ export default function LiveStreaming() {
         ['Course Name', 'Live Stream Name', 'Date'],
         [exportData.course_title, exportData.stream_title, exportData.date],
         [],
-        ['Student Name', 'Joining Time']
+        ['Student Name', 'Joining Time', 'Leaving Time']
       ]
 
       if (Array.isArray(exportData.sessions)) {
         exportData.sessions.forEach((s) => {
-          data.push([s.student_name, s.joined_at])
+          data.push([s.student_name, s.joined_at, s.left_at])
         })
       }
 
@@ -774,7 +798,7 @@ export default function LiveStreaming() {
         footer={
           <>
             <button className="btn btn-ghost" onClick={() => setModalOpen(false)} disabled={saving}>Cancel</button>
-            <button className="btn btn-primary" onClick={createStream} disabled={saving || !title.trim() || !extractYoutubeVideoId(youtubeUrl) || !showId}>
+            <button className="btn btn-primary" onClick={() => createStream(false)} disabled={saving || !title.trim() || !extractYoutubeVideoId(youtubeUrl) || !showId}>
               {saving ? 'Creating…' : 'Create'}
             </button>
           </>
@@ -798,6 +822,16 @@ export default function LiveStreaming() {
             className="input"
             value={scheduledAt}
             onChange={(e) => setScheduledAt(e.target.value)}
+            disabled={saving}
+            style={{ width: '100%', padding: '8px 12px', background: 'var(--bg2)', color: 'var(--text1)', border: '1px solid var(--border)', borderRadius: 6 }}
+          />
+        </FormGroup>
+        <FormGroup label="Scheduled End Date & Time">
+          <input
+            type="datetime-local"
+            className="input"
+            value={scheduledEndAt}
+            onChange={(e) => setScheduledEndAt(e.target.value)}
             disabled={saving}
             style={{ width: '100%', padding: '8px 12px', background: 'var(--bg2)', color: 'var(--text1)', border: '1px solid var(--border)', borderRadius: 6 }}
           />
@@ -842,6 +876,49 @@ export default function LiveStreaming() {
         onConfirm={() => endStream(confirmEnd.id)}
         onCancel={() => setConfirmEnd(null)}
       />
+
+      {conflicts && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 2000,
+          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            background: 'var(--bg2)', border: '1px solid var(--border)',
+            borderRadius: 12, padding: 24, maxWidth: 440, width: '100%',
+            margin: '0 20px', boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
+          }}>
+            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 12, color: 'var(--text1)' }}>
+              Schedule Conflict
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 20, lineHeight: '1.5' }}>
+              <p style={{ margin: '0 0 12px 0' }}>
+                The following live stream(s) are already scheduled or active during this time:
+              </p>
+              <ul style={{ margin: '0 0 16px 0', paddingLeft: 20 }}>
+                {conflicts.map((c, idx) => (
+                  <li key={idx} style={{ marginBottom: 6 }}>
+                    <strong>"{c.title}"</strong> is scheduled from {c.formatted_time}
+                  </li>
+                ))}
+              </ul>
+              <p style={{ margin: 0 }}>Do you still want to proceed and create the stream?</p>
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button className="btn btn-ghost" onClick={() => setConflicts(null)} disabled={saving}>
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => createStream(true)} 
+                disabled={saving}
+              >
+                {saving ? 'Creating…' : 'Create anyway'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

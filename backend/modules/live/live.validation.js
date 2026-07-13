@@ -4,6 +4,7 @@ export const createStreamSchema = Joi.object({
   title: Joi.string().min(1).max(255).required(),
   thumbnail_url: Joi.string().max(500).allow('', null),
   scheduled_at: Joi.date().iso().allow(null),
+  scheduled_end_at: Joi.date().iso().allow(null),
   source_type: Joi.string().valid('MEDIAMTX', 'YOUTUBE').default('YOUTUBE'),
   youtube_video_id: Joi.string().max(20).allow('', null).when('source_type', {
     is: 'YOUTUBE',
@@ -11,6 +12,7 @@ export const createStreamSchema = Joi.object({
   }),
   show_id: Joi.string().uuid().required(),
   is_public: Joi.boolean().required(),
+  ignore_conflicts: Joi.boolean().optional(),
 });
 
 export const authHookSchema = Joi.object({

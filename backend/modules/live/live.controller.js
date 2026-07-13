@@ -4,6 +4,9 @@ import { ApiResponse } from '../../utils/ApiResponse.js';
 async function createStream(req, res, next) {
   try {
     const data = await service.createStream(req.body, req.admin.id);
+    if (data.has_conflict) {
+      return res.status(200).json(new ApiResponse(200, data, 'Scheduling conflict detected'));
+    }
     return res.status(201).json(new ApiResponse(201, data, 'Live stream created'));
   } catch (e) {
     next(e);
