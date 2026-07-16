@@ -23,27 +23,31 @@ import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import OrDivider from '../components/OrDivider';
 
 function getPasswordStrength(password) {
-  if (!password) return { level: 0, label: '', color: theme.border };
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
+  if (!password) return { level: 0, label: '', color: appTheme.border };
   let score = 0;
   if (password.length >= 8) score++;
   if (/[A-Z]/.test(password)) score++;
   if (/[0-9]/.test(password)) score++;
   if (/[^A-Za-z0-9]/.test(password)) score++;
 
-  if (score <= 1) return { level: 1, label: 'Weak', color: theme.red };
+  if (score <= 1) return { level: 1, label: 'Weak', color: appTheme.red };
   if (score === 2)
-    return { level: 2, label: 'Medium strength', color: theme.orange };
-  if (score === 3) return { level: 3, label: 'Strong', color: theme.green };
-  return { level: 4, label: 'Very strong', color: theme.green };
+    return { level: 2, label: 'Medium strength', color: appTheme.orange };
+  if (score === 3) return { level: 3, label: 'Strong', color: appTheme.green };
+  return { level: 4, label: 'Very strong', color: appTheme.green };
 }
 
 export default function SignUpScreen({ navigation, onGuestAccess }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState('');
-  const { theme: appTheme } = useTheme();
+
 
   const dispatch = useDispatch();
   const registerStatus = useSelector((state) => state.auth.register.status);
@@ -85,15 +89,15 @@ export default function SignUpScreen({ navigation, onGuestAccess }) {
       {/* Logo */}
       <View style={styles.logoRow}>
         <View style={styles.logoIcon}>
-          <Ionicons name="play" size={16} color={theme.white} />
+          <Ionicons name="play" size={16} color={appTheme.white} />
         </View>
         <Text style={styles.logoText}>
-          7<Text style={styles.logoPrimary}>K</Text>
+          Alpha <Text style={styles.logoPrimary}>Minds</Text>
         </Text>
       </View>
 
       {/* Title */}
-      <Text style={styles.title}>Join the drama</Text>
+      <Text style={styles.title}>Let's crack it</Text>
       <Text style={styles.subtitle}>Create your free account</Text>
 
       {/* Name */}
@@ -106,7 +110,7 @@ export default function SignUpScreen({ navigation, onGuestAccess }) {
         }}
         placeholder="user name"
         style={styles.input}
-        placeholderTextColor={theme.darkGray}
+        placeholderTextColor={appTheme.darkGray}
       />
 
       {/* Email */}
@@ -119,7 +123,7 @@ export default function SignUpScreen({ navigation, onGuestAccess }) {
         }}
         placeholder="user@example.com"
         style={[styles.input, email.length > 0 && styles.inputActive]}
-        placeholderTextColor={theme.darkGray}
+        placeholderTextColor={appTheme.darkGray}
         keyboardType="email-address"
         autoCapitalize="none"
       />
@@ -135,7 +139,7 @@ export default function SignUpScreen({ navigation, onGuestAccess }) {
           }}
           placeholder="Min. 8 characters"
           style={[styles.input, styles.passwordInput]}
-          placeholderTextColor={theme.darkGray}
+          placeholderTextColor={appTheme.darkGray}
           secureTextEntry={!showPassword}
         />
         <Pressable
@@ -145,7 +149,7 @@ export default function SignUpScreen({ navigation, onGuestAccess }) {
           <Ionicons
             name={showPassword ? 'eye-off-outline' : 'eye-outline'}
             size={20}
-            color={theme.gray}
+            color={appTheme.gray}
           />
         </Pressable>
       </View>
@@ -161,7 +165,7 @@ export default function SignUpScreen({ navigation, onGuestAccess }) {
                   styles.strengthBar,
                   {
                     backgroundColor:
-                      i <= strength.level ? strength.color : theme.border,
+                      i <= strength.level ? strength.color : appTheme.border,
                   },
                 ]}
               />
@@ -217,7 +221,7 @@ export default function SignUpScreen({ navigation, onGuestAccess }) {
         onPress={() => promptAsync()}
       >
         <View style={styles.googleBtnContent}>
-          <Ionicons name="logo-google" size={20} color={theme.white} style={{ marginRight: 8 }} />
+          <Ionicons name="logo-google" size={20} color={appTheme.white} style={{ marginRight: 8 }} />
           <Text style={styles.googleBtnText}>
             {googleLoading ? 'Connecting...' : 'Continue with Google'}
           </Text>
@@ -252,7 +256,7 @@ export default function SignUpScreen({ navigation, onGuestAccess }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   container: {
     flexGrow: 1,
     paddingHorizontal: 24,
@@ -268,7 +272,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: theme.primary,
+    backgroundColor: appTheme.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -276,43 +280,43 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 24,
     fontWeight: '800',
-    color: theme.white,
+    color: appTheme.white,
   },
   logoPrimary: {
-    color: theme.primary,
+    color: appTheme.primary,
     fontWeight: '800',
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: theme.white,
+    color: appTheme.white,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
-    color: theme.gray,
+    color: appTheme.gray,
     marginBottom: 32,
   },
   label: {
     fontSize: 12,
     fontWeight: '700',
-    color: theme.gray,
+    color: appTheme.gray,
     marginBottom: 8,
     letterSpacing: 1,
   },
   input: {
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: theme.white,
+    color: appTheme.white,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
   },
   inputActive: {
-    borderColor: theme.primary,
+    borderColor: appTheme.primary,
   },
   passwordWrap: {
     position: 'relative',
@@ -344,18 +348,18 @@ const styles = StyleSheet.create({
   },
   terms: {
     fontSize: 13,
-    color: theme.gray,
+    color: appTheme.gray,
     textAlign: 'center',
     marginTop: 24,
     lineHeight: 20,
     paddingHorizontal: 8,
   },
   termsLink: {
-    color: theme.white,
+    color: appTheme.white,
     fontWeight: '700',
   },
   actionBtn: {
-    backgroundColor: theme.primary,
+    backgroundColor: appTheme.primary,
     borderRadius: 30,
     paddingVertical: 16,
     alignItems: 'center',
@@ -366,7 +370,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   actionBtnText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 17,
     fontWeight: '700',
   },
@@ -386,13 +390,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   googleBtnText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 17,
     fontWeight: '700',
   },
   errorText: {
     marginTop: 12,
-    color: theme.primary,
+    color: appTheme.primary,
     fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
@@ -404,7 +408,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   guestBtnText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -416,11 +420,11 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
   bottomText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 14,
   },
   bottomLink: {
-    color: theme.primary,
+    color: appTheme.primary,
     fontWeight: '700',
     fontSize: 14,
   },

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import DownloadsScreen from './DownloadsScreen';
 import {
   ActivityIndicator,
   Alert,
@@ -45,6 +46,7 @@ const { width } = Dimensions.get('window');
 // Tab constants
 const TAB_SAVED = 'saved';
 const TAB_CONTINUE = 'continue';
+const TAB_DOWNLOADS = 'downloads';
 
 // ─────────────────────────────────────────────────────────────────
 // Progress bar shown on the thumbnail
@@ -93,6 +95,9 @@ const usepStyles = (appTheme) => StyleSheet.create({
 // thumbnail on left, title + category + EP.X / EP.TOTAL on right
 // ─────────────────────────────────────────────────────────────────
 function ShowCard({ item, onPress, onLongPress, selectionMode, selected, onDelete }) {
+  const { theme: appTheme } = useTheme();
+  const cardStyles = usecardStyles(appTheme);
+  const pStyles = usepStyles(appTheme);
   const progressPct =
     item.duration_sec > 0
       ? Math.min(Math.round((item.progress_sec / item.duration_sec) * 100), 100)
@@ -300,12 +305,12 @@ function GuestScreen() {
 // Main screen
 // ─────────────────────────────────────────────────────────────────
 export default function MyListScreen() {
+  const { theme: appTheme } = useTheme();
   const styles = usestyles(appTheme);
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const route = useRoute();
-  const { theme: appTheme } = useTheme();
 
   const accessToken = useSelector((state) => state.auth?.accessToken);
   const bookmarks = useSelector(selectBookmarks);
@@ -527,12 +532,12 @@ export default function MyListScreen() {
       ) : (
         <>
           <View style={styles.header}>
-            <Text style={styles.title}>My List</Text>
+            <Text style={styles.title}>My Learning</Text>
             <View style={styles.countBadge}>
               <Text style={styles.countText}>{totalCount} Videos</Text>
             </View>
           </View>
-          <Text style={styles.subtitle}>Your saved shows and watch progress</Text>
+          <Text style={styles.subtitle}>Your saved courses and watch progress</Text>
         </>
       )}
 
@@ -558,6 +563,17 @@ export default function MyListScreen() {
         >
           <Text style={[styles.tabText, activeTab === TAB_CONTINUE && styles.tabTextActive]}>
             Continue Watching {watchHistory.length > 0 ? `(${watchHistory.length})` : ''}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === TAB_DOWNLOADS && styles.tabActive]}
+          onPress={() => {
+            setActiveTab(TAB_DOWNLOADS);
+            cancelSelection();
+          }}
+        >
+          <Text style={[styles.tabText, activeTab === TAB_DOWNLOADS && styles.tabTextActive]}>
+            Downloads
           </Text>
         </TouchableOpacity>
       </View>
@@ -682,6 +698,13 @@ export default function MyListScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Downloads tab rendered inline */}
+      {activeTab === TAB_DOWNLOADS && (
+        <View style={{ flex: 1, marginHorizontal: -16 }}>
+          <DownloadsScreen />
+        </View>
+      )}
     </View>
   );
 }

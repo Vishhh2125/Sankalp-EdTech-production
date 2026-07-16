@@ -5,6 +5,8 @@ import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 
 export default function CategoryPill({ label, selected = false, onPress }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   return (
     <Pressable
       accessibilityRole="button"
@@ -22,29 +24,29 @@ export default function CategoryPill({ label, selected = false, onPress }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   pill: {
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
   },
   pillSelected: {
-    borderColor: theme.primary,
-    backgroundColor: theme.border,
+    borderColor: appTheme.primary,
+    backgroundColor: appTheme.border,
   },
   pillPressed: {
     opacity: 0.85,
   },
   text: {
-    color: theme.white,
+    color: appTheme.white,
     fontWeight: '700',
     fontSize: 13,
   },
   textSelected: {
-    color: theme.blush,
+    color: appTheme.blush,
   },
 });
 

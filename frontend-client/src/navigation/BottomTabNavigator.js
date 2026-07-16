@@ -91,11 +91,11 @@ export default function BottomTabNavigator() {
         component={ReelsScreen}
         options={{ tabBarLabel: 'Home' }}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
         name={ROUTES.FOR_YOU}
         component={ForYouScreen}
         options={{ tabBarLabel: 'For You' }}
-      />
+      /> */}
       <Tab.Screen
         name={ROUTES.LIVE}
         component={LiveScreen}
@@ -104,7 +104,7 @@ export default function BottomTabNavigator() {
       <Tab.Screen
         name={ROUTES.MY_LIST}
         component={MyListScreen}
-        options={{ tabBarLabel: 'My List' }}
+        options={{ tabBarLabel: 'My Learning' }}
       />
       <Tab.Screen
         name={ROUTES.PROFILE}

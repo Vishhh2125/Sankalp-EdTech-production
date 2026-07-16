@@ -11,19 +11,21 @@ import { useTheme } from '../context/ThemeContext';
  */
 
 const SplashScreen = () => {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color={theme.crimson} />
+      <ActivityIndicator size="large" color={appTheme.crimson} />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.deepBlack,
+    backgroundColor: appTheme.deepBlack,
   },
 });
 

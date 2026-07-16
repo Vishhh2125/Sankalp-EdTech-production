@@ -31,6 +31,8 @@ function getFileNameFromUrl(url) {
 }
 
 export default function AssignmentDetailScreen({ route, navigation }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const assignment = route.params?.assignment;
   const [answerText, setAnswerText] = useState('');
   const [pickedFile, setPickedFile] = useState(null);
@@ -132,14 +134,14 @@ export default function AssignmentDetailScreen({ route, navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
-          <Ionicons name="arrow-back" size={24} color={theme.white} />
+          <Ionicons name="arrow-back" size={24} color={appTheme.white} />
         </Pressable>
         <Text style={styles.headerTitle} numberOfLines={1}>
           Assignment {assignment.order_index || ''}
         </Text>
         {countdownLabel && (
           <View style={styles.countdownPill}>
-            <Ionicons name="time-outline" size={12} color={theme.crimson} />
+            <Ionicons name="time-outline" size={12} color={appTheme.crimson} />
             <Text style={styles.countdownText}>{countdownLabel}</Text>
           </View>
         )}
@@ -169,7 +171,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
 
         {submission && isGraded ? (
           <View style={styles.submittedCard}>
-            <Ionicons name="checkmark-circle" size={28} color={theme.green} />
+            <Ionicons name="checkmark-circle" size={28} color={appTheme.green} />
             <Text style={styles.submittedTitle}>Assignment Graded</Text>
             {submission.score !== null && submission.score !== undefined ? (
               <Text style={styles.submittedScore}>
@@ -193,7 +195,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
                 style={styles.attachmentPill}
                 onPress={() => downloadFile(submission.attachment_url, currentAttachmentName || 'Attachment')}
               >
-                <Ionicons name="document-attach-outline" size={16} color={theme.white} />
+                <Ionicons name="document-attach-outline" size={16} color={appTheme.white} />
                 <Text style={styles.attachmentPillText} numberOfLines={1}>
                   {currentAttachmentName || 'Attachment'}
                 </Text>
@@ -208,7 +210,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
               <TextInput
                 style={styles.textInput}
                 placeholder="Type your answer here..."
-                placeholderTextColor={theme.darkGray}
+                placeholderTextColor={appTheme.darkGray}
                 multiline
                 maxLength={ANSWER_LIMIT}
                 value={answerText}
@@ -224,7 +226,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
             {submission?.attachment_url ? (
               <View style={styles.existingAttachmentCard}>
                 <View style={styles.existingAttachmentRow}>
-                  <Ionicons name="document-text-outline" size={20} color={theme.crimson} />
+                  <Ionicons name="document-text-outline" size={20} color={appTheme.crimson} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.existingAttachmentLabel}>Current attachment</Text>
                     <Text style={styles.pickedName} numberOfLines={1}>{currentAttachmentName || 'Attachment'}</Text>
@@ -247,18 +249,18 @@ export default function AssignmentDetailScreen({ route, navigation }) {
             >
               {pickedFile ? (
                 <View style={styles.pickedRow}>
-                  <Ionicons name="document-attach" size={20} color={theme.crimson} />
+                  <Ionicons name="document-attach" size={20} color={appTheme.crimson} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.pickedName} numberOfLines={1}>{pickedFile.name}</Text>
                     <Text style={styles.pickedSize}>{formatFileSize(pickedFile.size)}</Text>
                   </View>
                   <Pressable onPress={() => setPickedFile(null)}>
-                    <Ionicons name="close-circle" size={20} color={theme.gray} />
+                    <Ionicons name="close-circle" size={20} color={appTheme.gray} />
                   </Pressable>
                 </View>
               ) : (
                 <>
-                  <Ionicons name="cloud-upload-outline" size={28} color={theme.crimson} />
+                  <Ionicons name="cloud-upload-outline" size={28} color={appTheme.crimson} />
                   <Text style={styles.uploadLabel}>{canEdit ? 'Upload or Replace File' : 'Attachment Locked'}</Text>
                   <Text style={styles.uploadHint}>PPT, DOC, PDF, PNG, JPEG (Max 5MB)</Text>
                 </>
@@ -277,7 +279,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
               disabled={submitting || !canEdit}
             >
               {submitting ? (
-                <ActivityIndicator size="small" color={theme.white} />
+                <ActivityIndicator size="small" color={appTheme.white} />
               ) : (
                 <Text style={styles.submitBtnText}>
                   {submission ? 'Resubmit Assignment' : 'Submit Assignment'}
@@ -291,10 +293,10 @@ export default function AssignmentDetailScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.deepBlack,
+    backgroundColor: appTheme.deepBlack,
   },
   header: {
     flexDirection: 'row',
@@ -304,11 +306,11 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: theme.border,
+    borderBottomColor: appTheme.border,
   },
   headerTitle: {
     flex: 1,
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 17,
     fontWeight: '800',
   },
@@ -322,7 +324,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   countdownText: {
-    color: theme.crimson,
+    color: appTheme.crimson,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -331,28 +333,28 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
   },
   assignmentTitle: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 22,
     fontWeight: '800',
     marginBottom: 4,
   },
   dueLine: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 13,
     marginBottom: 20,
   },
   label: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 15,
     fontWeight: '700',
     marginBottom: 10,
     marginTop: 20,
   },
   problemCard: {
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     padding: 16,
   },
   problemText: {
@@ -361,29 +363,29 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   inputWrap: {
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     padding: 14,
   },
   textInput: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 14,
     lineHeight: 22,
     minHeight: 120,
   },
   charCount: {
-    color: theme.darkGray,
+    color: appTheme.darkGray,
     fontSize: 11,
     textAlign: 'right',
     marginTop: 6,
   },
   uploadArea: {
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     borderStyle: 'dashed',
     padding: 24,
     alignItems: 'center',
@@ -397,12 +399,12 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
   uploadLabel: {
-    color: theme.crimson,
+    color: appTheme.crimson,
     fontSize: 14,
     fontWeight: '700',
   },
   uploadHint: {
-    color: theme.darkGray,
+    color: appTheme.darkGray,
     fontSize: 11,
   },
   pickedRow: {
@@ -412,20 +414,20 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   pickedName: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 13,
     fontWeight: '600',
   },
   pickedSize: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 11,
     marginTop: 2,
   },
   existingAttachmentCard: {
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     padding: 14,
     marginBottom: 12,
   },
@@ -435,18 +437,18 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   existingAttachmentLabel: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 11,
     marginBottom: 3,
   },
   openLinkText: {
-    color: theme.crimson,
+    color: appTheme.crimson,
     fontSize: 11,
     fontWeight: '700',
     marginTop: 4,
   },
   submitBtn: {
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.crimson,
     borderRadius: 10,
     paddingVertical: 16,
     alignItems: 'center',
@@ -460,27 +462,27 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   submitBtnText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 16,
     fontWeight: '800',
   },
   submittedCard: {
     alignItems: 'center',
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     padding: 28,
     marginTop: 24,
     gap: 8,
   },
   submittedTitle: {
-    color: theme.green,
+    color: appTheme.green,
     fontSize: 17,
     fontWeight: '800',
   },
   submittedScore: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -489,7 +491,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     padding: 14,
     marginTop: 6,
     gap: 6,
@@ -511,13 +513,13 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   attachmentPillText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 12,
     fontWeight: '700',
     flexShrink: 1,
   },
   feedbackLabel: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 12,
     fontWeight: '600',
     marginTop: 4,

@@ -210,23 +210,23 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 18,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#555',
+    borderWidth: 1,
+    borderColor: appTheme.primary,
   },
 
   categoryTabActive: {
-    borderColor: appTheme.white,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderColor: appTheme.primary,
+    backgroundColor: appTheme.primary,
   },
 
   categoryTabText: {
-    color: '#999',
+    color: appTheme.primary,
     fontSize: 14,
     fontWeight: '600',
   },
 
   categoryTabTextActive: {
-    color: appTheme.white,
+    color: '#FFFFFF',
   },
 
   expandBtn: {

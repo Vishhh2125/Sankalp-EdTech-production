@@ -41,6 +41,8 @@ function resolveThumbnailUrl(url) {
 }
 
 export default function PackageDetailScreen() {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const route = useRoute();
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -237,7 +239,7 @@ export default function PackageDetailScreen() {
   if (loading) {
     return (
       <View style={[styles.centered, { paddingTop: insets.top }]}>
-        <ActivityIndicator size="large" color={theme.crimson} />
+        <ActivityIndicator size="large" color={appTheme.crimson} />
         <Text style={styles.loadingText}>Loading package...</Text>
       </View>
     );
@@ -246,7 +248,7 @@ export default function PackageDetailScreen() {
   if (error || !pkg) {
     return (
       <View style={[styles.centered, { paddingTop: insets.top, paddingHorizontal: 20 }]}>
-        <Ionicons name="alert-circle-outline" size={54} color={theme.red} />
+        <Ionicons name="alert-circle-outline" size={54} color={appTheme.red} />
         <Text style={styles.errorText}>{error || 'Package details could not be found'}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={loadPackageDetail}>
           <Text style={styles.retryBtnText}>Retry</Text>
@@ -269,7 +271,7 @@ export default function PackageDetailScreen() {
           onPress={() => navigation.goBack()}
           hitSlop={12}
         >
-          <Ionicons name="chevron-back" size={26} color={theme.white} />
+          <Ionicons name="chevron-back" size={26} color={appTheme.white} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>Package Details</Text>
         <View style={{ width: 26 }} />
@@ -336,7 +338,7 @@ export default function PackageDetailScreen() {
               <Ionicons
                 name="checkmark-circle-outline"
                 size={20}
-                color={theme.lightGray}
+                color={appTheme.lightGray}
                 style={{ marginRight: 6 }}
               />
               <Text style={styles.disabledBtnText}>Already included in membership</Text>
@@ -346,7 +348,7 @@ export default function PackageDetailScreen() {
               <Ionicons
                 name="lock-open-outline"
                 size={18}
-                color={theme.green}
+                color={appTheme.green}
                 style={{ marginRight: 6 }}
               />
               <Text style={styles.ownedBtnText}>Owned</Text>
@@ -358,7 +360,7 @@ export default function PackageDetailScreen() {
               disabled={purchasing}
             >
               {purchasing ? (
-                <ActivityIndicator size="small" color={theme.white} />
+                <ActivityIndicator size="small" color={appTheme.white} />
               ) : (
                 <Text style={styles.actionBtnText}>
                   {userCoins < pkg.coin_price
@@ -398,7 +400,7 @@ export default function PackageDetailScreen() {
                     </Text>
                   </View>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={theme.darkGray} />
+                <Ionicons name="chevron-forward" size={20} color={appTheme.darkGray} />
               </TouchableOpacity>
             ))}
           </View>
@@ -427,10 +429,10 @@ export default function PackageDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.deepBlack,
+    backgroundColor: appTheme.deepBlack,
   },
   scrollContent: {
     paddingBottom: 40,
@@ -439,15 +441,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.deepBlack,
+    backgroundColor: appTheme.deepBlack,
   },
   loadingText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 14,
     marginTop: 10,
   },
   errorText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 15,
     textAlign: 'center',
     marginTop: 12,
@@ -455,13 +457,13 @@ const styles = StyleSheet.create({
   },
   retryBtn: {
     marginTop: 20,
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.crimson,
     paddingHorizontal: 28,
     paddingVertical: 10,
     borderRadius: 20,
   },
   retryBtnText: {
-    color: theme.white,
+    color: appTheme.white,
     fontWeight: 'bold',
     fontSize: 14,
   },
@@ -473,7 +475,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.06)',
-    backgroundColor: theme.deepBlack,
+    backgroundColor: appTheme.deepBlack,
   },
   backBtn: {
     width: 32,
@@ -482,7 +484,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 17,
     fontWeight: '700',
     textAlign: 'center',
@@ -498,11 +500,11 @@ const styles = StyleSheet.create({
     width: 90,
     height: 110,
     borderRadius: 10,
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
   },
   posterFallback: {
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
   },
   packagePosterMeta: {
     flex: 1,
@@ -510,12 +512,12 @@ const styles = StyleSheet.create({
     paddingTop: 2,
   },
   packageTitle: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 21,
     fontWeight: '800',
   },
   packageMetaText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 13,
     fontWeight: '600',
     marginTop: 6,
@@ -524,21 +526,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   synopsisTitle: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 15,
     fontWeight: '700',
     marginBottom: 8,
   },
   synopsis: {
     fontSize: 14,
-    color: theme.lightGray,
+    color: appTheme.lightGray,
     lineHeight: 20,
     marginBottom: 20,
   },
   pricingCard: {
     backgroundColor: 'rgba(26, 0, 32, 0.65)',
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
@@ -550,7 +552,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   priceLabel: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -559,13 +561,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   individualPriceText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 14,
     textDecorationLine: 'line-through',
     fontWeight: '700',
   },
   packagePriceText: {
-    color: theme.gold,
+    color: appTheme.gold,
     fontSize: 20,
     fontWeight: '800',
   },
@@ -580,7 +582,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   savingsText: {
-    color: theme.blush,
+    color: appTheme.blush,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -588,14 +590,14 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 48,
     borderRadius: 24,
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.crimson,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
     marginBottom: 24,
   },
   actionBtnText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -605,24 +607,24 @@ const styles = StyleSheet.create({
     borderColor: '#303038',
   },
   disabledBtnText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 14,
     fontWeight: '700',
   },
   ownedBtn: {
     backgroundColor: 'rgba(52, 199, 89, 0.1)',
     borderWidth: 1,
-    borderColor: theme.green,
+    borderColor: appTheme.green,
   },
   ownedBtnText: {
-    color: theme.green,
+    color: appTheme.green,
     fontSize: 15,
     fontWeight: '700',
   },
   showsHeader: {
     fontSize: 17,
     fontWeight: '700',
-    color: theme.white,
+    color: appTheme.white,
     marginBottom: 12,
   },
   showsList: {
@@ -631,23 +633,23 @@ const styles = StyleSheet.create({
   showRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 8,
     padding: 10,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
   },
   showPoster: {
     width: 48,
     height: 64,
     borderRadius: 4,
-    backgroundColor: '#111',
+    backgroundColor: appTheme.background,
   },
   showPosterFallback: {
     width: 48,
     height: 64,
     borderRadius: 4,
-    backgroundColor: theme.surfaceLight,
+    backgroundColor: appTheme.surfaceLight,
   },
   showDetails: {
     flex: 1,
@@ -655,7 +657,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   showTitle: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 14,
     fontWeight: '600',
     lineHeight: 18,
@@ -666,7 +668,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   showMetaText: {
-    color: theme.blush,
+    color: appTheme.blush,
     fontSize: 11,
     fontWeight: '600',
   },

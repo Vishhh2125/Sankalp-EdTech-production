@@ -96,6 +96,8 @@ export function PaystackCheckoutModal({
   onSuccess,
   onFailure,
 }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const [loading, setLoading] = useState(true);
   const handledRef = useRef(false);
 
@@ -166,7 +168,7 @@ export function PaystackCheckoutModal({
         </View>
         {loading ? (
           <View style={styles.loader}>
-            <ActivityIndicator size="large" color={theme.primary} />
+            <ActivityIndicator size="large" color={appTheme.primary} />
           </View>
         ) : null}
         <WebView
@@ -185,8 +187,8 @@ export function PaystackCheckoutModal({
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.deepBlack },
+const useStyles = (appTheme) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: appTheme.deepBlack },
   header: {
     paddingTop: 48,
     paddingHorizontal: 16,
@@ -194,12 +196,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
   },
-  closeText: { color: theme.white, fontSize: 16, fontWeight: '600' },
+  closeText: { color: appTheme.white, fontSize: 16, fontWeight: '600' },
   loader: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,
   },
-  webview: { flex: 1, backgroundColor: theme.deepBlack },
+  webview: { flex: 1, backgroundColor: appTheme.deepBlack },
 });

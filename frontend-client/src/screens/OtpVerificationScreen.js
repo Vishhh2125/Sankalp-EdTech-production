@@ -40,6 +40,8 @@ function formatCountdown(targetValue, fallbackNow = Date.now()) {
 }
 
 export default function OtpVerificationScreen({ navigation, route }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const dispatch = useDispatch();
   const otpState = useSelector((state) => state.auth.otp);
   const pendingRegistration = useSelector((state) => state.auth.pendingRegistration);
@@ -155,7 +157,7 @@ export default function OtpVerificationScreen({ navigation, route }) {
     >
       <View style={styles.logoRow}>
         <View style={styles.logoIcon}>
-          <Ionicons name="play" size={16} color={theme.white} />
+          <Ionicons name="play" size={16} color={appTheme.white} />
         </View>
         <Text style={styles.logoText}>
           7<Text style={styles.logoCrimson}>K</Text>
@@ -176,7 +178,7 @@ export default function OtpVerificationScreen({ navigation, route }) {
         }}
         placeholder="000000"
         style={[styles.input, styles.otpInput]}
-        placeholderTextColor={theme.darkGray}
+        placeholderTextColor={appTheme.darkGray}
         keyboardType="number-pad"
         autoComplete="one-time-code"
         textContentType="oneTimeCode"
@@ -240,10 +242,10 @@ export default function OtpVerificationScreen({ navigation, route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: theme.deepBlack,
+    backgroundColor: appTheme.deepBlack,
     paddingHorizontal: 24,
     paddingTop: 56,
     paddingBottom: 40,
@@ -257,7 +259,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.crimson,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -265,37 +267,37 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 20,
     fontWeight: '800',
-    color: theme.white,
+    color: appTheme.white,
   },
   logoCrimson: {
-    color: theme.crimson,
+    color: appTheme.crimson,
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: theme.white,
+    color: appTheme.white,
     marginBottom: 6,
   },
   subtitle: {
     fontSize: 15,
-    color: theme.gray,
+    color: appTheme.gray,
     marginBottom: 24,
   },
   label: {
     fontSize: 12,
     fontWeight: '700',
-    color: theme.gray,
+    color: appTheme.gray,
     marginBottom: 8,
     letterSpacing: 1,
   },
   input: {
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 15,
   },
   otpInput: {
@@ -308,12 +310,12 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   metaText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 13,
     marginTop: 6,
   },
   actionBtn: {
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.crimson,
     borderRadius: 30,
     paddingVertical: 16,
     alignItems: 'center',
@@ -323,7 +325,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   actionBtnText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 17,
     fontWeight: '700',
   },
@@ -333,19 +335,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
     borderWidth: 1,
-    borderColor: theme.border,
-    backgroundColor: theme.surface,
+    borderColor: appTheme.border,
+    backgroundColor: appTheme.surface,
   },
   secondaryBtnPressed: {
     opacity: 0.9,
   },
   secondaryBtnText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 15,
     fontWeight: '700',
   },
   errorText: {
-    color: theme.red,
+    color: appTheme.red,
     marginTop: 16,
     textAlign: 'center',
     lineHeight: 20,
@@ -355,7 +357,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backLinkText: {
-    color: theme.crimson,
+    color: appTheme.crimson,
     fontSize: 14,
     fontWeight: '700',
   },

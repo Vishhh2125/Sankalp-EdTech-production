@@ -32,7 +32,6 @@ const MENU_ITEMS = [
   { icon: 'wallet-outline', label: 'Top Up', right: null },
   { icon: 'card-outline', label: 'My Wallet', right: null },
   { icon: 'gift-outline', label: 'Earn Rewards', badge: null },
-  { icon: 'download-outline', label: 'Downloads', right: null },
 ];
 
 function MenuItem({ icon, label, right, rightComponent, badge, onPress, disabled, labelStyle }) {
@@ -67,6 +66,8 @@ function MenuItem({ icon, label, right, rightComponent, badge, onPress, disabled
 
 function GuestProfileScreen({ insets }) {
   const { openSignUp } = useGuestAuth();
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
 
   return (
     <ScrollView
@@ -79,7 +80,7 @@ function GuestProfileScreen({ insets }) {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.avatar}>
-            <Ionicons name="person" size={28} color={theme.darkGray} />
+            <Ionicons name="person" size={28} color={appTheme.darkGray} />
           </View>
           <View>
             <Text style={styles.loginText}>Guest</Text>
@@ -193,7 +194,6 @@ export default function ProfileScreen({ navigation }) {
     if (label === 'Top Up') goToTopUp();
     else if (label === 'My Wallet') goToMyWallet();
     else if (label === 'Earn Rewards') goToEarnRewards();
-    else if (label === 'Downloads') goToDownloads();
   }
 
   function handleLogout() {
@@ -225,13 +225,13 @@ export default function ProfileScreen({ navigation }) {
             <Ionicons
               name="person"
               size={28}
-              color={isPaid ? '#4CAF50' : theme.darkGray}
+              color={isPaid ? '#4CAF50' : appTheme.darkGray}
             />
           </View>
           <View>
             <View style={styles.loginRow}>
               <Text style={styles.loginText}>{name || 'User'}</Text>
-              <Ionicons name="chevron-forward" size={16} color={theme.white} />
+              <Ionicons name="chevron-forward" size={16} color={appTheme.white} />
             </View>
             {isPaid && memberships.length > 0 ? (
               <Text style={styles.membershipEndText}>
@@ -244,10 +244,7 @@ export default function ProfileScreen({ navigation }) {
             ) : null}
           </View>
         </View>
-        <Pressable style={styles.coinsChip} onPress={goToMyWallet} hitSlop={8}>
-          <FontAwesome6 name="coins" size={14} color={theme.gold} />
-          <Text style={styles.coinsText}>{coins ?? 0}</Text>
-        </Pressable>
+
       </View>
 
       {!isPaid && (
@@ -266,7 +263,7 @@ export default function ProfileScreen({ navigation }) {
           <View style={styles.featureRow}>
             {FEATURE_ICONS.map((f) => (
               <View key={f.label} style={styles.featureItem}>
-                <Ionicons name={f.icon} size={22} color={theme.white} />
+                <Ionicons name={f.icon} size={22} color={appTheme.white} />
                 <Text style={styles.featureLabel}>{f.label}</Text>
               </View>
             ))}
@@ -285,6 +282,16 @@ export default function ProfileScreen({ navigation }) {
           <MenuItem
             key={item.label}
             {...item}
+            rightComponent={
+              item.label === 'My Wallet'
+                ? (
+                  <View style={styles.coinsInlineChip}>
+                    <FontAwesome6 name="naira-sign" size={13} color={appTheme.gold} />
+                    <Text style={styles.coinsInlineText}>{coins ?? 0}</Text>
+                  </View>
+                )
+                : undefined
+            }
             badge={
               item.label === 'Earn Rewards' ? earnRewardsBadge : item.badge
             }
@@ -294,9 +301,9 @@ export default function ProfileScreen({ navigation }) {
       </View>
 
       <View style={styles.menuCard}>
-        <MenuItem 
-          icon="moon-outline" 
-          label="Appearance" 
+        <MenuItem
+          icon="moon-outline"
+          label="Appearance"
           rightComponent={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Ionicons name="sunny" size={16} color={!isDarkMode ? appTheme.primary : appTheme.textMuted} />
@@ -308,7 +315,7 @@ export default function ProfileScreen({ navigation }) {
               />
               <Ionicons name="moon" size={14} color={isDarkMode ? appTheme.primary : appTheme.textMuted} />
             </View>
-          } 
+          }
         />
         <MenuItem icon="log-out-outline" label="Log out" onPress={handleLogout} />
         {logoutState.error ? (
@@ -323,10 +330,10 @@ export default function ProfileScreen({ navigation }) {
   );
 }
 
-const useStyles = (theme) => StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: theme.background,
+    backgroundColor: appTheme.background,
   },
   container: {
     paddingBottom: 20,
@@ -347,7 +354,7 @@ const useStyles = (theme) => StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -356,20 +363,20 @@ const useStyles = (theme) => StyleSheet.create({
     borderWidth: 2,
     borderColor: '#4CAF50',
   },
-  coinsChip: {
+  coinsInlineChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     backgroundColor: 'rgba(255,214,0,0.12)',
     borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderWidth: 1,
     borderColor: 'rgba(255,214,0,0.3)',
   },
-  coinsText: {
-    color: theme.gold,
-    fontSize: 14,
+  coinsInlineText: {
+    color: appTheme.gold,
+    fontSize: 13,
     fontWeight: '700',
   },
   loginRow: {
@@ -378,12 +385,12 @@ const useStyles = (theme) => StyleSheet.create({
     gap: 4,
   },
   loginText: {
-    color: theme.textPrimary,
+    color: appTheme.textPrimary,
     fontSize: 17,
     fontWeight: '700',
   },
   membershipEndText: {
-    color: theme.gold,
+    color: appTheme.gold,
     fontSize: 12,
     fontWeight: '700',
     marginTop: 4,
@@ -393,22 +400,22 @@ const useStyles = (theme) => StyleSheet.create({
     fontWeight: '700',
   },
   guestSubtext: {
-    color: theme.textSecondary,
+    color: appTheme.textSecondary,
     fontSize: 12,
     marginTop: 4,
   },
   guestPromptCard: {
     marginHorizontal: 16,
     marginBottom: 16,
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     overflow: 'hidden',
   },
   memberBanner: {
     marginHorizontal: 16,
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.crimson,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -425,7 +432,7 @@ const useStyles = (theme) => StyleSheet.create({
     borderBottomLeftRadius: 10,
   },
   discountText: {
-    color: theme.textPrimary,
+    color: appTheme.textPrimary,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -439,23 +446,23 @@ const useStyles = (theme) => StyleSheet.create({
     flex: 1,
   },
   bannerTitle: {
-    color: theme.textPrimary,
+    color: appTheme.textPrimary,
     fontSize: 18,
     fontWeight: '800',
   },
   bannerSub: {
-    color: theme.textSecondary,
+    color: appTheme.textSecondary,
     fontSize: 12,
     marginTop: 2,
   },
   joinSmallBtn: {
-    backgroundColor: theme.textPrimary,
+    backgroundColor: '#FF5C1A',
     borderRadius: 20,
     paddingHorizontal: 20,
     paddingVertical: 8,
   },
   joinSmallText: {
-    color: theme.background,
+    color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 14,
   },
@@ -468,13 +475,13 @@ const useStyles = (theme) => StyleSheet.create({
     gap: 4,
   },
   featureLabel: {
-    color: theme.textSecondary,
+    color: appTheme.textSecondary,
     fontSize: 10,
     fontWeight: '600',
   },
   menuCard: {
     marginHorizontal: 16,
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 16,
     paddingVertical: 4,
     marginBottom: 12,
@@ -498,12 +505,12 @@ const useStyles = (theme) => StyleSheet.create({
     gap: 12,
   },
   menuLabel: {
-    color: theme.textPrimary,
+    color: appTheme.textPrimary,
     fontSize: 15,
     fontWeight: '500',
   },
   menuLabelDisabled: {
-    color: theme.textMuted,
+    color: appTheme.textMuted,
   },
   menuRight: {
     flexDirection: 'row',
@@ -511,17 +518,17 @@ const useStyles = (theme) => StyleSheet.create({
     gap: 6,
   },
   menuRightText: {
-    color: theme.textSecondary,
+    color: appTheme.textSecondary,
     fontSize: 14,
   },
   badge: {
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.crimson,
     borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   badgeText: {
-    color: theme.textPrimary,
+    color: appTheme.textPrimary,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -533,7 +540,7 @@ const useStyles = (theme) => StyleSheet.create({
     paddingVertical: 16,
   },
   signUpRowText: {
-    color: theme.crimson,
+    color: appTheme.crimson,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -543,10 +550,10 @@ const useStyles = (theme) => StyleSheet.create({
     borderRadius: 8,
     marginTop: 8,
     borderLeftWidth: 4,
-    borderLeftColor: theme.crimson,
+    borderLeftColor: appTheme.crimson,
   },
   errorText: {
-    color: theme.crimson,
+    color: appTheme.crimson,
     fontSize: 12,
     fontWeight: '500',
   },

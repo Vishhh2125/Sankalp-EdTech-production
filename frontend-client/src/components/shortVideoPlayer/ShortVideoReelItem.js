@@ -82,6 +82,8 @@ export default function ShortVideoReelItem({
   onPlaybackEnd = null,
   enableLandscapeMode = true,
 }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const dispatch = useDispatch();

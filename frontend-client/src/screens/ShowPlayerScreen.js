@@ -60,6 +60,8 @@ function reelItemToHomeSelected(reelItem) {
 }
 
 export default function ShowPlayerScreen({ navigation }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const dispatch = useDispatch();
   const route = useRoute();
   const isFocused = useIsFocused();
@@ -446,7 +448,7 @@ export default function ShowPlayerScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   screen: { flex: 1 },
   centered: {
     flex: 1,

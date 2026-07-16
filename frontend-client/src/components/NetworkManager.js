@@ -9,6 +9,8 @@ import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 
 export default function NetworkManager({ navigationRef, navReady }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const { isOffline } = useNetwork();
   const insets = useSafeAreaInsets();
 
@@ -45,19 +47,19 @@ export default function NetworkManager({ navigationRef, navReady }) {
         }
       }}
     >
-      <Ionicons name="cloud-offline" size={20} color={theme.white} style={styles.icon} />
+      <Ionicons name="cloud-offline" size={20} color={appTheme.white} style={styles.icon} />
       <Text style={styles.text}>You are offline. Tap to view Downloads.</Text>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   banner: {
     position: 'absolute',
     left: 16,
     right: 16,
     borderRadius: 8,
-    backgroundColor: theme.primary,
+    backgroundColor: appTheme.primary,
     paddingVertical: 12,
     paddingHorizontal: 16,
     flexDirection: 'row',
@@ -78,7 +80,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   text: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 14,
     fontWeight: '600',
   },

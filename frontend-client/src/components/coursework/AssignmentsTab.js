@@ -13,12 +13,14 @@ import { theme } from '../../constants/theme';
 import { ROUTES } from '../../constants/routes';
 
 export default function AssignmentsTab({ assignments, loading, showId, onSubmissionSuccess }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const navigation = useNavigation();
 
   if (loading) {
     return (
       <View style={styles.stateBlock}>
-        <ActivityIndicator size="small" color={theme.primary} />
+        <ActivityIndicator size="small" color={appTheme.primary} />
         <Text style={styles.stateText}>Loading assignments...</Text>
       </View>
     );
@@ -84,7 +86,7 @@ export default function AssignmentsTab({ assignments, loading, showId, onSubmiss
               </View>
               <View style={styles.cardRight}>
                 {isLocked ? (
-                  <Ionicons name="lock-closed" size={16} color={theme.gray} />
+                  <Ionicons name="lock-closed" size={16} color={appTheme.gray} />
                 ) : null}
                 <View style={[styles.badge, statusStyle]}>
                   <Text style={[styles.badgeText, isLocked && styles.badgeTextLocked]}>
@@ -100,15 +102,15 @@ export default function AssignmentsTab({ assignments, loading, showId, onSubmiss
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   sectionTitle: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 17,
     fontWeight: '800',
     marginBottom: 4,
   },
   subtitle: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 13,
     marginBottom: 18,
   },
@@ -119,16 +121,16 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   stateText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 13,
     textAlign: 'center',
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     marginBottom: 10,
     overflow: 'hidden',
     minHeight: 76,
@@ -138,10 +140,10 @@ const styles = StyleSheet.create({
   },
   accentBar: {
     width: 4,
-    backgroundColor: theme.primary,
+    backgroundColor: appTheme.primary,
   },
   accentBarLocked: {
-    backgroundColor: theme.darkGray,
+    backgroundColor: appTheme.darkGray,
   },
   cardBody: {
     flex: 1,
@@ -150,22 +152,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cardLabel: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
     marginBottom: 3,
   },
   cardTitle: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 14,
     fontWeight: '700',
   },
   textLocked: {
-    color: theme.gray,
+    color: appTheme.gray,
   },
   dueText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 11,
     marginTop: 3,
   },
@@ -193,11 +195,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(142,142,147,0.1)',
   },
   badgeText: {
-    color: theme.primary,
+    color: appTheme.primary,
     fontSize: 10,
     fontWeight: '700',
   },
   badgeTextLocked: {
-    color: theme.gray,
+    color: appTheme.gray,
   },
 });

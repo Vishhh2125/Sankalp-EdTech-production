@@ -102,15 +102,6 @@ export default function HomeHeroSlider({ banners = [], onBannerPress }) {
                     {item.show_title || item.title}
                   </Text>
                 </View>
-
-                <View style={styles.heroPlayBtn}>
-                  <Ionicons
-                    name="play"
-                    size={28}
-                    color="#000"
-                    style={styles.heroPlayIcon}
-                  />
-                </View>
               </View>
             </Pressable>
           );
@@ -179,11 +170,8 @@ const useStyles = (appTheme) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroPlayIcon: {
-    marginLeft: 3,
-  },
   heroShowName: {
-    color: appTheme.white,
+    color: '#FFFFFF',
     fontSize: 30,
     lineHeight: 34,
     fontWeight: '900',

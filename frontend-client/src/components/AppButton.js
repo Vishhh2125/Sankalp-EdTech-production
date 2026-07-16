@@ -13,6 +13,7 @@ export default function AppButton({
   textStyle,
 }) {
   const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   return (
     <Pressable
       accessibilityRole="button"
@@ -33,7 +34,7 @@ export default function AppButton({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   base: {
     paddingVertical: 12,
     paddingHorizontal: 16,

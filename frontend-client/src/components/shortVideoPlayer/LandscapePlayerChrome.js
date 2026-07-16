@@ -30,6 +30,8 @@ export default function LandscapePlayerChrome({
   onSpeedPress,
   onExitLandscape,
 }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const horizontalPad = Math.max(insets.left, insets.right, 16);
 
   return (

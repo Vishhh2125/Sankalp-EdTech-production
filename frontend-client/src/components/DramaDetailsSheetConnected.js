@@ -150,11 +150,11 @@ function EpisodeRow({ episode, isCurrentEpisode, onPress }) {
           ]}
           numberOfLines={1}
         >
-          Episode {episode.episode_num}
+          Lecture {episode.episode_num}
           {episode.episode_title ? `  •  ${episode.episode_title}` : ''}
         </Text>
         <Text style={styles.episodeRowMeta} numberOfLines={1}>
-          Ep {episode.episode_num}
+          Lec {episode.episode_num}
           {episode.duration_sec ? `  •  ${Math.round(episode.duration_sec / 60)} min` : ''}
         </Text>
       </View>

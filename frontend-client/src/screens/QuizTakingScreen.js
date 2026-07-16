@@ -16,6 +16,8 @@ import { courseworkApi } from '../services/courseworkApi';
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 export default function QuizTakingScreen({ route, navigation }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const quiz = route.params?.quiz;
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -122,7 +124,7 @@ export default function QuizTakingScreen({ route, navigation }) {
   if (loading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={theme.crimson} />
+        <ActivityIndicator size="large" color={appTheme.crimson} />
         <Text style={styles.loadingText}>Loading quiz...</Text>
       </View>
     );
@@ -138,7 +140,7 @@ export default function QuizTakingScreen({ route, navigation }) {
       <View style={styles.container}>
         <View style={styles.header}>
           <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
-            <Ionicons name="arrow-back" size={24} color={theme.white} />
+            <Ionicons name="arrow-back" size={24} color={appTheme.white} />
           </Pressable>
           <Text style={styles.headerTitle} numberOfLines={1}>Quiz Results</Text>
         </View>
@@ -170,9 +172,9 @@ export default function QuizTakingScreen({ route, navigation }) {
                     <Ionicons
                       name={isCorrect ? 'checkmark-circle' : 'close-circle'}
                       size={14}
-                      color={isCorrect ? theme.green : theme.red}
+                      color={isCorrect ? appTheme.green : appTheme.red}
                     />
-                    <Text style={[styles.reviewBadgeText, { color: isCorrect ? theme.green : theme.red }]}>
+                    <Text style={[styles.reviewBadgeText, { color: isCorrect ? appTheme.green : appTheme.red }]}>
                       {isCorrect ? 'Correct' : 'Incorrect'}
                     </Text>
                   </View>
@@ -189,7 +191,7 @@ export default function QuizTakingScreen({ route, navigation }) {
                 {/* Explanation */}
                 {q.explanation && (
                   <View style={styles.explanationCard}>
-                    <Ionicons name="bulb" size={16} color={theme.crimson} />
+                    <Ionicons name="bulb" size={16} color={appTheme.crimson} />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.explanationLabel}>Explanation</Text>
                       <Text style={styles.explanationText}>{q.explanation}</Text>
@@ -217,7 +219,7 @@ export default function QuizTakingScreen({ route, navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
-          <Ionicons name="arrow-back" size={24} color={theme.white} />
+          <Ionicons name="arrow-back" size={24} color={appTheme.white} />
         </Pressable>
         <Text style={styles.headerTitle} numberOfLines={1}>
           Quiz {quiz.order_index}: {quiz.title}
@@ -248,7 +250,7 @@ export default function QuizTakingScreen({ route, navigation }) {
               <Text style={styles.chooseHint}>Choose the best answer</Text>
               {selectedOptions[currentQuestion.id] ? (
                 <View style={styles.explanationCardInline}>
-                  <Ionicons name="bulb-outline" size={16} color={theme.crimson} />
+                  <Ionicons name="bulb-outline" size={16} color={appTheme.crimson} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.explanationLabelInline}>Explanation</Text>
                     <Text style={styles.explanationTextInline}>
@@ -290,8 +292,8 @@ export default function QuizTakingScreen({ route, navigation }) {
           disabled={currentIdx === 0}
           onPress={handlePrevious}
         >
-          <Ionicons name="arrow-back" size={16} color={currentIdx === 0 ? theme.darkGray : theme.white} />
-          <Text style={[styles.prevBtnText, currentIdx === 0 && { color: theme.darkGray }]}>Previous</Text>
+          <Ionicons name="arrow-back" size={16} color={currentIdx === 0 ? appTheme.darkGray : appTheme.white} />
+          <Text style={[styles.prevBtnText, currentIdx === 0 && { color: appTheme.darkGray }]}>Previous</Text>
         </Pressable>
 
         {isLastQuestion ? (
@@ -301,18 +303,18 @@ export default function QuizTakingScreen({ route, navigation }) {
             disabled={submitting}
           >
             {submitting ? (
-              <ActivityIndicator size="small" color={theme.white} />
+              <ActivityIndicator size="small" color={appTheme.white} />
             ) : (
               <>
                 <Text style={styles.submitQuizBtnText}>Submit Quiz</Text>
-                <Ionicons name="checkmark" size={16} color={theme.white} />
+                <Ionicons name="checkmark" size={16} color={appTheme.white} />
               </>
             )}
           </Pressable>
         ) : (
           <Pressable style={[styles.navBtn, styles.nextBtn]} onPress={handleNext}>
             <Text style={styles.nextBtnText}>Next Question</Text>
-            <Ionicons name="arrow-forward" size={16} color={theme.white} />
+            <Ionicons name="arrow-forward" size={16} color={appTheme.white} />
           </Pressable>
         )}
       </View>
@@ -320,10 +322,10 @@ export default function QuizTakingScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.deepBlack,
+    backgroundColor: appTheme.deepBlack,
   },
   centerContent: {
     alignItems: 'center',
@@ -331,7 +333,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   loadingText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 14,
   },
   header: {
@@ -342,11 +344,11 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: theme.border,
+    borderBottomColor: appTheme.border,
   },
   headerTitle: {
     flex: 1,
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 17,
     fontWeight: '800',
   },
@@ -359,12 +361,12 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   progressLabel: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 12,
     fontWeight: '600',
   },
   progressPct: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -378,7 +380,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.crimson,
     borderRadius: 2,
   },
   scrollContent: {
@@ -386,10 +388,10 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   questionCard: {
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     padding: 18,
     marginBottom: 16,
   },
@@ -400,7 +402,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   questionLabel: {
-    color: theme.crimson,
+    color: appTheme.crimson,
     fontSize: 12,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -412,34 +414,34 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   markText: {
-    color: theme.crimson,
+    color: appTheme.crimson,
     fontSize: 10,
     fontWeight: '700',
   },
   questionText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 17,
     fontWeight: '700',
     lineHeight: 25,
     marginBottom: 8,
   },
   chooseHint: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 12,
   },
   optionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     padding: 16,
     marginBottom: 10,
     gap: 12,
   },
   optionCardSelected: {
-    borderColor: theme.crimson,
+    borderColor: appTheme.crimson,
     backgroundColor: 'rgba(255,45,85,0.06)',
   },
   radio: {
@@ -447,30 +449,30 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: theme.darkGray,
+    borderColor: appTheme.darkGray,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioSelected: {
-    borderColor: theme.crimson,
+    borderColor: appTheme.crimson,
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.crimson,
   },
   optionLetter: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 14,
     fontWeight: '800',
     width: 20,
   },
   optionLetterSelected: {
-    color: theme.crimson,
+    color: appTheme.crimson,
   },
   optionText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 14,
     flex: 1,
     lineHeight: 21,
@@ -481,7 +483,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderTopWidth: 1,
-    borderTopColor: theme.border,
+    borderTopColor: appTheme.border,
     gap: 12,
   },
   navBtn: {
@@ -495,44 +497,44 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   prevBtn: {
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
   },
   prevBtnText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 14,
     fontWeight: '700',
   },
   nextBtn: {
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.crimson,
   },
   nextBtnText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 14,
     fontWeight: '800',
   },
   submitQuizBtn: {
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.crimson,
   },
   submitQuizBtnText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 14,
     fontWeight: '800',
   },
   // ── Results Styles ──
   scoreCard: {
     alignItems: 'center',
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     padding: 28,
     marginBottom: 20,
     gap: 6,
   },
   scoreLabel: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -541,14 +543,14 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   scoreSubtext: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 13,
   },
   reviewCard: {
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     padding: 16,
     marginBottom: 12,
   },
@@ -559,7 +561,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   reviewQNum: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -582,20 +584,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   reviewQuestion: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 14,
     fontWeight: '600',
     lineHeight: 21,
     marginBottom: 6,
   },
   selectedAnswerText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 12,
     fontWeight: '600',
     marginBottom: 6,
   },
   correctAnswerText: {
-    color: theme.green,
+    color: appTheme.green,
     fontSize: 12,
     fontWeight: '600',
     marginBottom: 8,
@@ -609,7 +611,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   explanationLabel: {
-    color: theme.crimson,
+    color: appTheme.crimson,
     fontSize: 11,
     fontWeight: '700',
     marginBottom: 3,
@@ -631,7 +633,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   explanationLabelInline: {
-    color: theme.crimson,
+    color: appTheme.crimson,
     fontSize: 11,
     fontWeight: '800',
     marginBottom: 4,
@@ -643,7 +645,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   doneBtn: {
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.crimson,
     borderRadius: 10,
     paddingVertical: 16,
     alignItems: 'center',
@@ -651,7 +653,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   doneBtnText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 16,
     fontWeight: '800',
   },

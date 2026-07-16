@@ -88,6 +88,8 @@ function showMatchesCategory(show, tab) {
 }
 
 function ThumbnailProgressBar({ progressSec, durationSec }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   if (!durationSec || durationSec === 0) return null;
   const pct = Math.min((progressSec / durationSec) * 100, 100);
   if (pct <= 0) return null;
@@ -99,58 +101,68 @@ function ThumbnailProgressBar({ progressSec, durationSec }) {
   );
 }
 
-const DramaCard = ({ item, onPress }) => (
-  <TouchableOpacity style={styles.cardContainer} onPress={onPress} activeOpacity={0.85}>
-    <View style={styles.imageWrapper}>
-      <Image
-        style={styles.posterImage}
-        source={{ uri: item.thumbnail_url }}
-        resizeMode="cover"
-      />
-      {item.tag && (
-        <View style={[styles.statusTag, { backgroundColor: item.tag === 'Hot' ? '#FF2D55' : '#7B2FFF' }]}>
-          <Text style={styles.tagText}>{item.tag}</Text>
-        </View>
-      )}
-      <View style={styles.viewCountContainer}>
-        <Ionicons name="eye-outline" size={11} color="#fff" />
-        <Text style={styles.viewCountText}>
-          {formatViews(item.view_count || item.views)}
-        </Text>
-      </View>
-      <ThumbnailProgressBar
-        progressSec={item.progress_sec || 0}
-        durationSec={item.duration_sec || 0}
-      />
-    </View>
-    <Text style={styles.dramaTitle} numberOfLines={2}>{item.title}</Text>
-    <Text style={styles.dramaTagsText} numberOfLines={1}>
-      {item.tags?.length > 0 ? item.tags[0] : (item.category_name || item.category || '')}
-    </Text>
-  </TouchableOpacity>
-);
-
-const PackageCard = ({ item, onPress }) => (
-  <TouchableOpacity style={styles.cardContainer} onPress={onPress} activeOpacity={0.85}>
-    <View style={styles.imageWrapper}>
-      {item.thumbnail_url ? (
+function DramaCard({ item, onPress }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
+  return (
+    <TouchableOpacity style={styles.cardContainer} onPress={onPress} activeOpacity={0.85}>
+      <View style={styles.imageWrapper}>
         <Image
           style={styles.posterImage}
           source={{ uri: item.thumbnail_url }}
           resizeMode="cover"
         />
-      ) : (
-        <View style={[styles.posterImage, { backgroundColor: '#1A0020' }]} />
-      )}
-    </View>
-    <Text style={styles.dramaTitle} numberOfLines={2}>{item.title}</Text>
-    <Text style={styles.dramaTagsText} numberOfLines={1}>
-      {item.shows_count} {item.shows_count === 1 ? 'Show' : 'Shows'}
-    </Text>
-  </TouchableOpacity>
-);
+        {item.tag && (
+          <View style={[styles.statusTag, { backgroundColor: item.tag === 'Hot' ? appTheme.primary : '#7B2FFF' }]}>
+            <Text style={styles.tagText}>{item.tag}</Text>
+          </View>
+        )}
+        <View style={styles.viewCountContainer}>
+          <Ionicons name="eye-outline" size={11} color="#fff" />
+          <Text style={styles.viewCountText}>
+            {formatViews(item.view_count || item.views)}
+          </Text>
+        </View>
+        <ThumbnailProgressBar
+          progressSec={item.progress_sec || 0}
+          durationSec={item.duration_sec || 0}
+        />
+      </View>
+      <Text style={styles.dramaTitle} numberOfLines={2}>{item.title}</Text>
+      <Text style={styles.dramaTagsText} numberOfLines={1}>
+        {item.tags?.length > 0 ? item.tags[0] : (item.category_name || item.category || '')}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+function PackageCard({ item, onPress }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
+  return (
+    <TouchableOpacity style={styles.cardContainer} onPress={onPress} activeOpacity={0.85}>
+      <View style={styles.imageWrapper}>
+        {item.thumbnail_url ? (
+          <Image
+            style={styles.posterImage}
+            source={{ uri: item.thumbnail_url }}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[styles.posterImage, { backgroundColor: appTheme.surface }]} />
+        )}
+      </View>
+      <Text style={styles.dramaTitle} numberOfLines={2}>{item.title}</Text>
+      <Text style={styles.dramaTagsText} numberOfLines={1}>
+        {item.shows_count} {item.shows_count === 1 ? 'Show' : 'Shows'}
+      </Text>
+    </TouchableOpacity>
+  );
+}
 
 export default function PopularScreen() {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const dispatch = useDispatch();
   const accessToken = useSelector((state) => state.auth?.accessToken);
   const insets = useSafeAreaInsets();
@@ -659,7 +671,7 @@ export default function PopularScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={appTheme.isDark ? 'light-content' : 'dark-content'} />
 
       <View
         style={styles.header}
@@ -668,7 +680,7 @@ export default function PopularScreen() {
         <View style={styles.searchColumn}>
           <View style={styles.searchRow}>
             <View style={[styles.searchBar, showFilterButton && styles.searchBarWithFilter]}>
-              <Ionicons name="search" size={18} color="#666" style={styles.searchIcon} />
+              <Ionicons name="search" size={18} color={appTheme.isDark ? '#666' : '#555'} style={styles.searchIcon} />
               {selectedTags.length > 0 ? (
                 <ScrollView
                   horizontal
@@ -687,7 +699,7 @@ export default function PopularScreen() {
                         hitSlop={8}
                         style={styles.selectedFilterRemove}
                       >
-                        <Ionicons name="close" size={12} color={theme.gray} />
+                        <Ionicons name="close" size={12} color={appTheme.gray} />
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -696,8 +708,8 @@ export default function PopularScreen() {
                 <TextInput
                   ref={searchInputRef}
                   style={styles.searchInput}
-                  placeholder="Search dramas or tags..."
-                  placeholderTextColor="#666"
+                  placeholder="Search course or tags..."
+                  placeholderTextColor={appTheme.isDark ? '#666' : '#9CA3AF'}
                   value={searchQuery}
                   onChangeText={handleSearchTextChange}
                   onFocus={handleSearchFocus}
@@ -723,7 +735,7 @@ export default function PopularScreen() {
                 <Ionicons
                   name="funnel-outline"
                   size={18}
-                  color={selectedTags.length > 0 || filterPanelOpen ? theme.crimson : '#AAA'}
+                  color={selectedTags.length > 0 || filterPanelOpen ? appTheme.crimson : '#AAA'}
                 />
                 {selectedTags.length > 0 && (
                   <View style={styles.filterBadge}>
@@ -789,10 +801,10 @@ export default function PopularScreen() {
               })
             }
           >
-            <FontAwesome6 name="crown" size={22} color="#FFD700" />
+            <FontAwesome6 name="crown" size={22} color={appTheme.isDark ? '#FFD700' : '#FF5C1A'} />
           </TouchableOpacity>
           <TouchableOpacity onPress={goToEarnRewards} hitSlop={8}>
-            <Ionicons name="gift" size={24} color="#FFD700" />
+            <Ionicons name="gift" size={24} color={appTheme.isDark ? '#FFD700' : '#FF5C1A'} />
           </TouchableOpacity>
         </View>
       </View>
@@ -810,15 +822,15 @@ export default function PopularScreen() {
 
       {loading && shows.length === 0 ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
-          <ActivityIndicator size="large" color={theme.crimson} />
+          <ActivityIndicator size="large" color={appTheme.crimson} />
         </View>
       ) : isOffline && shows.length === 0 && heroBanners.length === 0 ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
           <Ionicons name="cloud-offline-outline" size={48} color="#555" />
-          <Text style={[styles.emptyText, { marginTop: 16, fontSize: 18, color: theme.white, fontWeight: 'bold' }]}>You are offline</Text>
-          <Text style={{ color: theme.gray, marginTop: 8 }}>Check your internet connection and try again.</Text>
-          <TouchableOpacity style={{ marginTop: 20, backgroundColor: theme.crimson, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20 }} onPress={loadShows}>
-            <Text style={{ color: theme.white, fontWeight: '600' }}>Retry</Text>
+          <Text style={[styles.emptyText, { marginTop: 16, fontSize: 18, color: appTheme.white, fontWeight: 'bold' }]}>You are offline</Text>
+          <Text style={{ color: appTheme.gray, marginTop: 8 }}>Check your internet connection and try again.</Text>
+          <TouchableOpacity style={{ marginTop: 20, backgroundColor: appTheme.crimson, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20 }} onPress={loadShows}>
+            <Text style={{ color: appTheme.white, fontWeight: '600' }}>Retry</Text>
           </TouchableOpacity>
         </View>
       ) : isSearchActive ? (
@@ -1008,8 +1020,8 @@ export default function PopularScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
+const useStyles = (appTheme) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: appTheme.background },
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -1030,12 +1042,14 @@ const styles = StyleSheet.create({
   searchBar: {
     flex: 1,
     height: 40,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: appTheme.isDark ? '#1A1A1A' : '#FFFFFF',
     borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 12,
     paddingRight: 8,
+    borderWidth: appTheme.isDark ? 0 : 1,
+    borderColor: appTheme.isDark ? 'transparent' : '#E5E7EB',
   },
   searchBarWithFilter: {
     flex: 1,
@@ -1045,7 +1059,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: '#FFF',
+    color: appTheme.isDark ? '#FFF' : '#1A1D29',
     fontSize: 14,
     height: 40,
     padding: 0,
@@ -1067,13 +1081,13 @@ const styles = StyleSheet.create({
     paddingLeft: 9,
     paddingRight: 5,
     borderRadius: 6,
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
   },
   selectedFilterText: {
     flexShrink: 1,
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -1089,14 +1103,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: appTheme.isDark ? '#1A1A1A' : '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: appTheme.isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
   },
   filterButtonActive: {
-    borderColor: theme.crimson,
+    borderColor: appTheme.crimson,
     backgroundColor: 'rgba(255, 45, 85, 0.12)',
   },
   filterBadge: {
@@ -1106,13 +1120,13 @@ const styles = StyleSheet.create({
     minWidth: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.crimson,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
   },
   filterBadgeText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 10,
     fontWeight: '800',
   },
@@ -1150,9 +1164,9 @@ const styles = StyleSheet.create({
     marginRight: TAG_GRID_GAP,
     marginBottom: TAG_FILTER_ROW_GAP,
     borderRadius: 8,
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1160,20 +1174,20 @@ const styles = StyleSheet.create({
     marginRight: 0,
   },
   tagSearchItemActive: {
-    backgroundColor: theme.surfaceLight,
+    backgroundColor: appTheme.surfaceLight,
     borderColor: '#5A0068',
   },
   tagSearchItemText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
   },
   tagSearchItemTextActive: {
-    color: theme.white,
+    color: appTheme.white,
   },
   tagSearchEmpty: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 13,
     paddingVertical: 8,
   },
@@ -1218,14 +1232,14 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: theme.crimson,
+    backgroundColor: appTheme.crimson,
     borderRadius: 2,
   },
   dramaTitle: { color: '#FFF', fontSize: 13, marginTop: 8, fontWeight: '500', lineHeight: 18 },
   dramaTagsText: { color: '#E0E0E0', fontSize: 11, marginTop: 4, fontWeight: '400' },
   categoryText: { color: '#666', fontSize: 11, marginTop: 4 },
   homeScrollContent: { paddingHorizontal: 16, paddingBottom: 24 },
-  expandModal: { flex: 1, backgroundColor: '#000' },
+  expandModal: { flex: 1, backgroundColor: appTheme.background },
   expandHeader: {
     flexDirection: 'row',
     alignItems: 'center',

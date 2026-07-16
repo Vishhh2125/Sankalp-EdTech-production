@@ -13,12 +13,14 @@ import { theme } from '../../constants/theme';
 import { ROUTES } from '../../constants/routes';
 
 export default function QuizTab({ quizzes, loading, showId, onAttemptCompleted }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const navigation = useNavigation();
 
   if (loading) {
     return (
       <View style={styles.stateBlock}>
-        <ActivityIndicator size="small" color={theme.primary} />
+        <ActivityIndicator size="small" color={appTheme.primary} />
         <Text style={styles.stateText}>Loading quizzes...</Text>
       </View>
     );
@@ -84,9 +86,9 @@ export default function QuizTab({ quizzes, loading, showId, onAttemptCompleted }
                     </Text>
                   </View>
                   {isLocked ? (
-                    <Ionicons name="lock-closed" size={14} color={theme.gray} />
+                    <Ionicons name="lock-closed" size={14} color={appTheme.gray} />
                   ) : !isCompleted ? (
-                    <Ionicons name="chevron-forward" size={16} color={theme.primary} />
+                    <Ionicons name="chevron-forward" size={16} color={appTheme.primary} />
                   ) : null}
                 </View>
               </Pressable>
@@ -116,15 +118,15 @@ export default function QuizTab({ quizzes, loading, showId, onAttemptCompleted }
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   sectionTitle: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 17,
     fontWeight: '800',
     marginBottom: 4,
   },
   subtitle: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 13,
     marginBottom: 18,
   },
@@ -135,16 +137,16 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   stateText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 13,
     textAlign: 'center',
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     marginBottom: 10,
     padding: 14,
     alignItems: 'center',
@@ -156,22 +158,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardLabel: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
     marginBottom: 3,
   },
   cardTitle: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 14,
     fontWeight: '700',
   },
   textLocked: {
-    color: theme.gray,
+    color: appTheme.gray,
   },
   questionCount: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 11,
     marginTop: 3,
   },
@@ -195,26 +197,26 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(142,142,147,0.1)',
   },
   badgeText: {
-    color: theme.primary,
+    color: appTheme.primary,
     fontSize: 10,
     fontWeight: '700',
   },
   badgeTextLocked: {
-    color: theme.gray,
+    color: appTheme.gray,
   },
   badgeTextCompleted: {
-    color: theme.green,
+    color: appTheme.green,
   },
   progressCard: {
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
     padding: 16,
     marginTop: 10,
   },
   progressTitle: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 15,
     fontWeight: '800',
     marginBottom: 12,
@@ -229,12 +231,12 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     borderWidth: 3,
-    borderColor: theme.primary,
+    borderColor: appTheme.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   progressPct: {
-    color: theme.primary,
+    color: appTheme.primary,
     fontSize: 15,
     fontWeight: '900',
   },
@@ -242,12 +244,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   progressLabel: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 12,
     lineHeight: 17,
   },
   progressCount: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 12,
     fontWeight: '700',
     marginTop: 4,

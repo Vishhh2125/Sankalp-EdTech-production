@@ -90,6 +90,8 @@ export default function DramaDetailsSheet({
   onRangeChange,
   onEpisodePress,
 }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const [tab, setTab] = useState(initialTab);
   const [activeRangeStart, setActiveRangeStart] = useState(1);
   const scrollRef = useRef(null);
@@ -207,7 +209,7 @@ export default function DramaDetailsSheet({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   backdropWrap: {
     flex: 1,
     justifyContent: 'flex-end',

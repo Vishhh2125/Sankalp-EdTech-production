@@ -8,6 +8,8 @@ import { useTheme } from '../context/ThemeContext';
  * action button and social login options.
  */
 export default function OrDivider() {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   return (
     <View style={styles.container}>
       <View style={styles.line} />
@@ -17,7 +19,7 @@ export default function OrDivider() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -26,10 +28,10 @@ const styles = StyleSheet.create({
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: theme.border,
+    backgroundColor: appTheme.border,
   },
   text: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 1.5,

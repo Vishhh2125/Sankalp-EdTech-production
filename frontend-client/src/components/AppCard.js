@@ -6,10 +6,11 @@ import { useTheme } from '../context/ThemeContext';
 
 export default function AppCard({ children, style }) {
   const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   return <View style={[styles.card, { backgroundColor: appTheme.surface, borderColor: appTheme.border }, style]}>{children}</View>;
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   card: {
     borderRadius: 12,
     padding: 16,

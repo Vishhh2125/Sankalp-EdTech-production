@@ -29,6 +29,8 @@ import { setCoins } from '../redux/slices/authSlice';
 import * as authService from '../services/authService';
 
 const WalletScreen = () => {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const accessToken = useSelector((s) => s.auth?.accessToken);
@@ -361,7 +363,7 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
 
   topUpButton: {
-    backgroundColor: '#FF2D55',
+    backgroundColor: '#FF5C1A',
     borderRadius: 30,
     height: 58,
     justifyContent: 'center',
@@ -369,7 +371,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     marginBottom: 40,
     marginHorizontal: 10,
 
-    shadowColor: '#FF2D55',
+    shadowColor: '#FF5C1A',
     shadowOpacity: 0.3,
     shadowRadius: 10,
     shadowOffset: {
@@ -446,7 +448,7 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
 
   modalCard: {
-    backgroundColor: '#111',
+    backgroundColor: appTheme.background,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingHorizontal: 20,

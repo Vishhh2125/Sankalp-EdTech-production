@@ -20,6 +20,8 @@ import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import OrDivider from '../components/OrDivider';
 
 export default function LoginScreen({ navigation, route, onGuestAccess }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -29,7 +31,7 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
   const { isLoading, error, status, accessToken } = useSelector((state) => state.auth);
 
   const { promptAsync, loading: googleLoading, googleError } = useGoogleAuth();
-  const { theme: appTheme } = useTheme();
+
 
   useEffect(() => {
     // Navigate after redux marks login as succeeded.
@@ -67,10 +69,10 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
       {/* Logo */}
       <View style={styles.logoRow}>
         <View style={styles.logoIcon}>
-          <Ionicons name="play" size={16} color={theme.white} />
+          <Ionicons name="play" size={16} color={appTheme.white} />
         </View>
         <Text style={styles.logoText}>
-          7<Text style={styles.logoPrimary}>K</Text>
+          Alpha<Text style={styles.logoPrimary}>Minds</Text>
         </Text>
       </View>
 
@@ -87,7 +89,7 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
         onChangeText={setEmail}
         placeholder="user@example.com"
         style={[styles.input, email.length > 0 && styles.inputActive]}
-        placeholderTextColor={theme.darkGray}
+        placeholderTextColor={appTheme.darkGray}
         keyboardType="email-address"
         autoCapitalize="none"
       />
@@ -100,7 +102,7 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
           onChangeText={setPassword}
           placeholder="••••••••"
           style={[styles.input, styles.passwordInput]}
-          placeholderTextColor={theme.darkGray}
+          placeholderTextColor={appTheme.darkGray}
           secureTextEntry={!showPassword}
         />
         <Pressable
@@ -110,7 +112,7 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
           <Ionicons
             name={showPassword ? 'eye-off-outline' : 'eye-outline'}
             size={20}
-            color={theme.gray}
+            color={appTheme.gray}
           />
         </Pressable>
       </View>
@@ -151,7 +153,7 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
         onPress={() => promptAsync()}
       >
         <View style={styles.googleBtnContent}>
-          <Ionicons name="logo-google" size={20} color={theme.white} style={{ marginRight: 8 }} />
+          <Ionicons name="logo-google" size={20} color={appTheme.white} style={{ marginRight: 8 }} />
           <Text style={styles.googleBtnText}>
             {googleLoading ? 'Connecting...' : 'Continue with Google'}
           </Text>
@@ -193,7 +195,7 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   guestButton: {
     marginTop: 20,
     paddingVertical: 14,
@@ -220,7 +222,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: theme.primary,
+    backgroundColor: appTheme.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -228,43 +230,43 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 24,
     fontWeight: '800',
-    color: theme.white,
+    color: appTheme.white,
   },
   logoPrimary: {
-    color: theme.primary,
+    color: appTheme.primary,
     fontWeight: '800',
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: theme.white,
+    color: appTheme.white,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
-    color: theme.gray,
+    color: appTheme.gray,
     marginBottom: 32,
   },
   label: {
     fontSize: 12,
     fontWeight: '700',
-    color: theme.gray,
+    color: appTheme.gray,
     marginBottom: 8,
     letterSpacing: 1,
   },
   input: {
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: theme.white,
+    color: appTheme.white,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
   },
   inputActive: {
-    borderColor: theme.primary,
+    borderColor: appTheme.primary,
   },
   passwordWrap: {
     position: 'relative',
@@ -285,12 +287,12 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   forgotText: {
-    color: theme.primary,
+    color: appTheme.primary,
     fontSize: 13,
     fontWeight: '600',
   },
   actionBtn: {
-    backgroundColor: theme.primary,
+    backgroundColor: appTheme.primary,
     borderRadius: 30,
     paddingVertical: 16,
     alignItems: 'center',
@@ -300,7 +302,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   actionBtnText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 17,
     fontWeight: '700',
   },
@@ -317,17 +319,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   googleBtnText: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 17,
     fontWeight: '700',
   },
   successText: {
-    color: theme.green,
+    color: appTheme.green,
     marginTop: 10,
     textAlign: 'center',
   },
   errorText: {
-    color: theme.red,
+    color: appTheme.red,
     marginTop: 10,
     textAlign: 'center',
   },
@@ -338,11 +340,11 @@ const styles = StyleSheet.create({
     marginTop: 'auto',
   },
   bottomText: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 14,
   },
   bottomLink: {
-    color: theme.primary,
+    color: appTheme.primary,
     fontWeight: '700',
     fontSize: 14,
   },

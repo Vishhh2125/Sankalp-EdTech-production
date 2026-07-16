@@ -45,7 +45,7 @@ function formatTime(iso) {
   });
 }
 
-function txMeta(item) {
+function txMeta(item, appTheme) {
   const isCredit = item.type?.toLowerCase() === 'credit';
   if (item.reason === 'wallet_topup_simulated') {
     return {
@@ -57,7 +57,7 @@ function txMeta(item) {
   if (item.reason === 'episode_unlock') {
     return {
       icon: 'play-circle',
-      iconColor: theme.crimson,
+      iconColor: appTheme.crimson,
       iconBg: 'rgba(255,45,85,0.15)',
     };
   }
@@ -76,8 +76,10 @@ function txMeta(item) {
 }
 
 function TransactionRow({ item }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const isCredit = item.type?.toLowerCase() === 'credit';
-  const meta = txMeta(item);
+  const meta = txMeta(item, appTheme);
   const title = item.title || (isCredit ? 'Coins added' : 'Coins spent');
   const subtitle = item.description || item.reason || '';
   const fiat = formatInr(item.fiat_paise);
@@ -123,6 +125,8 @@ function TransactionRow({ item }) {
 }
 
 export default function TransactionHistoryScreen() {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const accessToken = useSelector((s) => s.auth?.accessToken);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -188,8 +192,8 @@ export default function TransactionHistoryScreen() {
 
   if (loading && !refreshing) {
     return (
-      <View style={{ flex: 1, backgroundColor: theme.deepBlack, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={theme.crimson} />
+      <View style={{ flex: 1, backgroundColor: appTheme.deepBlack, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={appTheme.crimson} />
       </View>
     );
   }
@@ -197,7 +201,7 @@ export default function TransactionHistoryScreen() {
   return (
     <View style={styles.screen}>
       <View style={styles.infoBanner}>
-        <Ionicons name="information-circle-outline" size={18} color={theme.gray} />
+        <Ionicons name="information-circle-outline" size={18} color={appTheme.gray} />
         <Text style={styles.infoText}>
           All coin top-ups and episode unlocks appear here.
         </Text>
@@ -215,7 +219,7 @@ export default function TransactionHistoryScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => load(true)}
-              tintColor={theme.crimson}
+              tintColor={appTheme.crimson}
             />
           }
           contentContainerStyle={
@@ -223,7 +227,7 @@ export default function TransactionHistoryScreen() {
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="receipt-outline" size={48} color={theme.darkGray} />
+              <Ionicons name="receipt-outline" size={48} color={appTheme.darkGray} />
               <Text style={styles.emptyTitle}>No transactions yet</Text>
               <Text style={styles.emptySub}>
                 Top up coins or unlock episodes to see your history.
@@ -242,8 +246,8 @@ export default function TransactionHistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.deepBlack },
+const useStyles = (appTheme) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: appTheme.deepBlack },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   infoBanner: {
     flexDirection: 'row',
@@ -253,14 +257,14 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 4,
     padding: 12,
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 10,
   },
-  infoText: { flex: 1, color: theme.gray, fontSize: 12, lineHeight: 18 },
+  infoText: { flex: 1, color: appTheme.gray, fontSize: 12, lineHeight: 18 },
   listContent: { paddingHorizontal: 16, paddingBottom: 32 },
   emptyList: { flexGrow: 1, paddingHorizontal: 16 },
   sectionHeader: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 13,
     fontWeight: '700',
     marginTop: 16,
@@ -270,12 +274,12 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    backgroundColor: theme.surface,
+    backgroundColor: appTheme.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: appTheme.border,
   },
   iconWrap: {
     width: 44,
@@ -293,7 +297,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   rowTitle: {
-    color: theme.white,
+    color: appTheme.white,
     fontSize: 15,
     fontWeight: '700',
     flex: 1,
@@ -301,7 +305,7 @@ const styles = StyleSheet.create({
   amount: { fontSize: 16, fontWeight: '800' },
   amountCredit: { color: '#4CD964' },
   amountDebit: { color: '#FF6B6B' },
-  rowSub: { color: theme.gray, fontSize: 13, marginTop: 4, lineHeight: 18 },
+  rowSub: { color: appTheme.gray, fontSize: 13, marginTop: 4, lineHeight: 18 },
   rowFooter: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -309,8 +313,8 @@ const styles = StyleSheet.create({
     gap: 8,
     flexWrap: 'wrap',
   },
-  rowTime: { color: theme.darkGray, fontSize: 11 },
-  rowFiat: { color: theme.gray, fontSize: 11, fontWeight: '600' },
+  rowTime: { color: appTheme.darkGray, fontSize: 11 },
+  rowFiat: { color: appTheme.gray, fontSize: 11, fontWeight: '600' },
   statusPill: {
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -318,11 +322,11 @@ const styles = StyleSheet.create({
   },
   statusDone: { backgroundColor: 'rgba(76,217,100,0.15)' },
   statusPending: { backgroundColor: 'rgba(255,149,0,0.15)' },
-  statusText: { color: theme.gray, fontSize: 10, fontWeight: '700' },
+  statusText: { color: appTheme.gray, fontSize: 10, fontWeight: '700' },
   empty: { alignItems: 'center', marginTop: 80, paddingHorizontal: 32 },
-  emptyTitle: { color: theme.white, fontSize: 18, fontWeight: '700', marginTop: 16 },
+  emptyTitle: { color: appTheme.white, fontSize: 18, fontWeight: '700', marginTop: 16 },
   emptySub: {
-    color: theme.gray,
+    color: appTheme.gray,
     fontSize: 14,
     textAlign: 'center',
     marginTop: 8,
