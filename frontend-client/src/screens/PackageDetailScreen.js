@@ -17,7 +17,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ROUTES } from '../constants/routes';
-import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { API_BASE_URL } from '../constants/config';
 import { packageApi } from '../services/packageApi';
@@ -41,8 +40,8 @@ function resolveThumbnailUrl(url) {
 }
 
 export default function PackageDetailScreen() {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
+  const { theme, isDarkMode } = useTheme();
+  const styles = useStyles(theme);
   const route = useRoute();
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -239,7 +238,7 @@ export default function PackageDetailScreen() {
   if (loading) {
     return (
       <View style={[styles.centered, { paddingTop: insets.top }]}>
-        <ActivityIndicator size="large" color={appTheme.crimson} />
+        <ActivityIndicator size="large" color={theme.primary} />
         <Text style={styles.loadingText}>Loading package...</Text>
       </View>
     );
@@ -248,7 +247,7 @@ export default function PackageDetailScreen() {
   if (error || !pkg) {
     return (
       <View style={[styles.centered, { paddingTop: insets.top, paddingHorizontal: 20 }]}>
-        <Ionicons name="alert-circle-outline" size={54} color={appTheme.red} />
+        <Ionicons name="alert-circle-outline" size={54} color={theme.red} />
         <Text style={styles.errorText}>{error || 'Package details could not be found'}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={loadPackageDetail}>
           <Text style={styles.retryBtnText}>Retry</Text>
@@ -262,7 +261,7 @@ export default function PackageDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} translucent />
 
       {/* Sticky Header Bar */}
       <View style={[styles.headerBar, { paddingTop: Math.max(insets.top, 12) }]}>
@@ -271,7 +270,7 @@ export default function PackageDetailScreen() {
           onPress={() => navigation.goBack()}
           hitSlop={12}
         >
-          <Ionicons name="chevron-back" size={26} color={appTheme.white} />
+          <Ionicons name="chevron-back" size={26} color={theme.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>Package Details</Text>
         <View style={{ width: 26 }} />
@@ -338,7 +337,7 @@ export default function PackageDetailScreen() {
               <Ionicons
                 name="checkmark-circle-outline"
                 size={20}
-                color={appTheme.lightGray}
+                color={theme.lightGray}
                 style={{ marginRight: 6 }}
               />
               <Text style={styles.disabledBtnText}>Already included in membership</Text>
@@ -348,7 +347,7 @@ export default function PackageDetailScreen() {
               <Ionicons
                 name="lock-open-outline"
                 size={18}
-                color={appTheme.green}
+                color={theme.green}
                 style={{ marginRight: 6 }}
               />
               <Text style={styles.ownedBtnText}>Owned</Text>
@@ -360,7 +359,7 @@ export default function PackageDetailScreen() {
               disabled={purchasing}
             >
               {purchasing ? (
-                <ActivityIndicator size="small" color={appTheme.white} />
+                <ActivityIndicator size="small" color={theme.white} />
               ) : (
                 <Text style={styles.actionBtnText}>
                   {userCoins < pkg.coin_price
@@ -400,7 +399,7 @@ export default function PackageDetailScreen() {
                     </Text>
                   </View>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={appTheme.darkGray} />
+                <Ionicons name="chevron-forward" size={20} color={theme.darkGray} />
               </TouchableOpacity>
             ))}
           </View>
@@ -429,10 +428,10 @@ export default function PackageDetailScreen() {
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: appTheme.deepBlack,
+    backgroundColor: theme.deepBlack,
   },
   scrollContent: {
     paddingBottom: 40,
@@ -441,15 +440,15 @@ const useStyles = (appTheme) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: appTheme.deepBlack,
+    backgroundColor: theme.deepBlack,
   },
   loadingText: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 14,
     marginTop: 10,
   },
   errorText: {
-    color: appTheme.white,
+    color: theme.text,
     fontSize: 15,
     textAlign: 'center',
     marginTop: 12,
@@ -457,13 +456,13 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
   retryBtn: {
     marginTop: 20,
-    backgroundColor: appTheme.crimson,
+    backgroundColor: theme.primary,
     paddingHorizontal: 28,
     paddingVertical: 10,
     borderRadius: 20,
   },
   retryBtnText: {
-    color: appTheme.white,
+    color: '#fff',
     fontWeight: 'bold',
     fontSize: 14,
   },
@@ -474,8 +473,8 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
-    backgroundColor: appTheme.deepBlack,
+    borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+    backgroundColor: theme.deepBlack,
   },
   backBtn: {
     width: 32,
@@ -484,7 +483,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    color: appTheme.white,
+    color: theme.text,
     fontSize: 17,
     fontWeight: '700',
     textAlign: 'center',
@@ -500,11 +499,11 @@ const useStyles = (appTheme) => StyleSheet.create({
     width: 90,
     height: 110,
     borderRadius: 10,
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
   },
   posterFallback: {
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
   },
   packagePosterMeta: {
     flex: 1,
@@ -512,12 +511,12 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingTop: 2,
   },
   packageTitle: {
-    color: appTheme.white,
+    color: theme.text,
     fontSize: 21,
     fontWeight: '800',
   },
   packageMetaText: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 13,
     fontWeight: '600',
     marginTop: 6,
@@ -526,21 +525,21 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingHorizontal: 16,
   },
   synopsisTitle: {
-    color: appTheme.white,
+    color: theme.text,
     fontSize: 15,
     fontWeight: '700',
     marginBottom: 8,
   },
   synopsis: {
     fontSize: 14,
-    color: appTheme.lightGray,
+    color: theme.gray,
     lineHeight: 20,
     marginBottom: 20,
   },
   pricingCard: {
-    backgroundColor: 'rgba(26, 0, 32, 0.65)',
+    backgroundColor: theme.isDark ? 'rgba(26, 0, 32, 0.65)' : '#FFFFFF',
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
@@ -552,7 +551,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     marginBottom: 8,
   },
   priceLabel: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -561,13 +560,13 @@ const useStyles = (appTheme) => StyleSheet.create({
     alignItems: 'center',
   },
   individualPriceText: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 14,
     textDecorationLine: 'line-through',
     fontWeight: '700',
   },
   packagePriceText: {
-    color: appTheme.gold,
+    color: theme.gold,
     fontSize: 20,
     fontWeight: '800',
   },
@@ -576,13 +575,13 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
   savingsRow: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.08)',
+    borderTopColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
     marginTop: 8,
     paddingTop: 8,
     alignItems: 'flex-end',
   },
   savingsText: {
-    color: appTheme.blush,
+    color: theme.primary,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -590,41 +589,41 @@ const useStyles = (appTheme) => StyleSheet.create({
     width: '100%',
     height: 48,
     borderRadius: 24,
-    backgroundColor: appTheme.crimson,
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
     marginBottom: 24,
   },
   actionBtnText: {
-    color: appTheme.white,
+    color: '#fff',
     fontSize: 15,
     fontWeight: '700',
   },
   disabledBtn: {
-    backgroundColor: '#1E1E24',
+    backgroundColor: theme.isDark ? '#1E1E24' : '#F1F5F9',
     borderWidth: 1,
-    borderColor: '#303038',
+    borderColor: theme.isDark ? '#303038' : '#CBD5E1',
   },
   disabledBtnText: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 14,
     fontWeight: '700',
   },
   ownedBtn: {
-    backgroundColor: 'rgba(52, 199, 89, 0.1)',
+    backgroundColor: theme.isDark ? 'rgba(52, 199, 89, 0.1)' : 'rgba(22, 163, 74, 0.08)',
     borderWidth: 1,
-    borderColor: appTheme.green,
+    borderColor: theme.green,
   },
   ownedBtnText: {
-    color: appTheme.green,
+    color: theme.green,
     fontSize: 15,
     fontWeight: '700',
   },
   showsHeader: {
     fontSize: 17,
     fontWeight: '700',
-    color: appTheme.white,
+    color: theme.text,
     marginBottom: 12,
   },
   showsList: {
@@ -633,23 +632,23 @@ const useStyles = (appTheme) => StyleSheet.create({
   showRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderRadius: 8,
     padding: 10,
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
   },
   showPoster: {
     width: 48,
     height: 64,
     borderRadius: 4,
-    backgroundColor: appTheme.background,
+    backgroundColor: theme.isDark ? '#111' : '#F3F4F6',
   },
   showPosterFallback: {
     width: 48,
     height: 64,
     borderRadius: 4,
-    backgroundColor: appTheme.surfaceLight,
+    backgroundColor: theme.surfaceLight,
   },
   showDetails: {
     flex: 1,
@@ -657,7 +656,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     justifyContent: 'center',
   },
   showTitle: {
-    color: appTheme.white,
+    color: theme.text,
     fontSize: 14,
     fontWeight: '600',
     lineHeight: 18,
@@ -668,7 +667,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     alignItems: 'center',
   },
   showMetaText: {
-    color: appTheme.blush,
+    color: theme.primary,
     fontSize: 11,
     fontWeight: '600',
   },

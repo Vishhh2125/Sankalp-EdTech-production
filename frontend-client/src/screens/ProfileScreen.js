@@ -7,15 +7,16 @@ import {
   View,
   Pressable,
   Alert,
+  Switch,
 } from 'react-native';
 import { FontAwesome6, Ionicons } from '@expo/vector-icons';
-import { Switch } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 
 import GuestAccessPrompt from '../components/GuestAccessPrompt';
-import { theme } from '../constants/theme';
+import CoinIcon from '../components/CoinIcon';
 import { ROUTES } from '../constants/routes';
 import { useGuestAuth } from '../context/GuestAuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -34,7 +35,11 @@ const MENU_ITEMS = [
   { icon: 'gift-outline', label: 'Earn Rewards', badge: null },
 ];
 
-function MenuItem({ icon, label, right, rightComponent, badge, onPress, disabled, labelStyle }) {
+const SETTINGS_ITEMS = [
+  { icon: 'help-circle-outline', label: 'Help & feedback', right: null },
+];
+
+function MenuItem({ icon, label, right, rightComponent, badge, onPress, disabled, labelStyle, hideArrow }) {
   const { theme: appTheme } = useTheme();
   const styles = useStyles(appTheme);
   return (
@@ -58,15 +63,14 @@ function MenuItem({ icon, label, right, rightComponent, badge, onPress, disabled
         )}
         {right && <Text style={styles.menuRightText}>{right}</Text>}
         {rightComponent}
-        {!rightComponent && <Ionicons name="chevron-forward" size={18} color={appTheme.textMuted} />}
+        {!hideArrow && <Ionicons name="chevron-forward" size={18} color={appTheme.textMuted} />}
       </View>
     </Pressable>
   );
 }
 
 function GuestProfileScreen({ insets }) {
-  const { openSignUp } = useGuestAuth();
-  const { theme: appTheme } = useTheme();
+  const { theme: appTheme, isDarkMode, toggleTheme } = useTheme();
   const styles = useStyles(appTheme);
 
   return (
@@ -109,6 +113,22 @@ function GuestProfileScreen({ insets }) {
         {SETTINGS_ITEMS.map((item) => (
           <MenuItem key={item.label} {...item} disabled />
         ))}
+        <MenuItem
+          icon="moon-outline"
+          label="Appearance"
+          rightComponent={
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="sunny" size={16} color={!isDarkMode ? appTheme.primary : appTheme.textMuted} />
+              <Switch
+                value={isDarkMode}
+                onValueChange={toggleTheme}
+                trackColor={{ false: appTheme.border, true: appTheme.primary }}
+                thumbColor={appTheme.surface}
+              />
+              <Ionicons name="moon" size={14} color={isDarkMode ? appTheme.primary : appTheme.textMuted} />
+            </View>
+          }
+        />
       </View>
 
       <View style={{ height: 30 }} />
@@ -118,7 +138,6 @@ function GuestProfileScreen({ insets }) {
 
 export default function ProfileScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const dispatch = useDispatch();
   const { theme: appTheme, isDarkMode, toggleTheme } = useTheme();
   const styles = useStyles(appTheme);
   const accessToken = useSelector((state) => state.auth?.accessToken);
@@ -126,8 +145,8 @@ export default function ProfileScreen({ navigation }) {
   const coins = useSelector((state) => state.auth.coins);
   const plan = useSelector((state) => state.auth.plan);
   const memberships = useSelector((state) => state.auth.memberships) || [];
-  const hasAllAccess = useSelector((state) => state.auth.has_all_access);
   const isPaid = plan && plan !== 'FREE';
+  const dispatch = useDispatch();
   const { logout: logoutState } = useSelector((state) => state.auth);
   const [earnRewardsBadge, setEarnRewardsBadge] = useState(null);
 
@@ -186,10 +205,6 @@ export default function ProfileScreen({ navigation }) {
     navigation.navigate(ROUTES.EARN_REWARDS);
   }
 
-  function goToDownloads() {
-    navigation.navigate(ROUTES.DOWNLOADS);
-  }
-
   function handleMenuPress(label) {
     if (label === 'Top Up') goToTopUp();
     else if (label === 'My Wallet') goToMyWallet();
@@ -213,7 +228,7 @@ export default function ProfileScreen({ navigation }) {
 
   return (
     <ScrollView
-      style={[styles.screen, { backgroundColor: appTheme.screenBg }]}
+      style={styles.screen}
       contentContainerStyle={[
         styles.container,
         { paddingTop: insets.top + 12 },
@@ -244,11 +259,15 @@ export default function ProfileScreen({ navigation }) {
             ) : null}
           </View>
         </View>
-
       </View>
 
       {!isPaid && (
-        <View style={styles.memberBanner}>
+        <LinearGradient
+          colors={appTheme.isDark ? ['#1A0B02', '#2D1606'] : ['#FF6B35', '#FF8C5A']}
+          style={styles.memberBanner}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
           <View style={styles.bannerContent}>
             <View style={styles.bannerLeft}>
               <Text style={styles.bannerTitle}>Join Membership</Text>
@@ -268,7 +287,7 @@ export default function ProfileScreen({ navigation }) {
               </View>
             ))}
           </View>
-        </View>
+        </LinearGradient>
       )}
 
       <View style={styles.menuCard}>
@@ -282,18 +301,18 @@ export default function ProfileScreen({ navigation }) {
           <MenuItem
             key={item.label}
             {...item}
-            rightComponent={
-              item.label === 'My Wallet'
-                ? (
-                  <View style={styles.coinsInlineChip}>
-                    <FontAwesome6 name="naira-sign" size={13} color={appTheme.gold} />
-                    <Text style={styles.coinsInlineText}>{coins ?? 0}</Text>
-                  </View>
-                )
-                : undefined
-            }
             badge={
               item.label === 'Earn Rewards' ? earnRewardsBadge : item.badge
+            }
+            rightComponent={
+              item.label === 'My Wallet' ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: 6 }}>
+                  <CoinIcon size={14} color={appTheme.gold} />
+                  <Text style={{ color: appTheme.text, fontWeight: '700', fontSize: 14 }}>
+                    {coins ?? 0}
+                  </Text>
+                </View>
+              ) : null
             }
             onPress={() => handleMenuPress(item.label)}
           />
@@ -301,9 +320,13 @@ export default function ProfileScreen({ navigation }) {
       </View>
 
       <View style={styles.menuCard}>
+        {SETTINGS_ITEMS.map((item) => (
+          <MenuItem key={item.label} {...item} />
+        ))}
         <MenuItem
           icon="moon-outline"
           label="Appearance"
+          hideArrow={true}
           rightComponent={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Ionicons name="sunny" size={16} color={!isDarkMode ? appTheme.primary : appTheme.textMuted} />
@@ -333,7 +356,7 @@ export default function ProfileScreen({ navigation }) {
 const useStyles = (appTheme) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: appTheme.background,
+    backgroundColor: appTheme.deepBlack,
   },
   container: {
     paddingBottom: 20,
@@ -363,20 +386,20 @@ const useStyles = (appTheme) => StyleSheet.create({
     borderWidth: 2,
     borderColor: '#4CAF50',
   },
-  coinsInlineChip: {
+  coinsChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     backgroundColor: 'rgba(255,214,0,0.12)',
     borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderWidth: 1,
     borderColor: 'rgba(255,214,0,0.3)',
   },
-  coinsInlineText: {
+  coinsText: {
     color: appTheme.gold,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
   },
   loginRow: {
@@ -385,7 +408,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     gap: 4,
   },
   loginText: {
-    color: appTheme.textPrimary,
+    color: appTheme.white,
     fontSize: 17,
     fontWeight: '700',
   },
@@ -400,7 +423,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     fontWeight: '700',
   },
   guestSubtext: {
-    color: appTheme.textSecondary,
+    color: appTheme.gray,
     fontSize: 12,
     marginTop: 4,
   },
@@ -432,7 +455,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     borderBottomLeftRadius: 10,
   },
   discountText: {
-    color: appTheme.textPrimary,
+    color: appTheme.white,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -446,23 +469,23 @@ const useStyles = (appTheme) => StyleSheet.create({
     flex: 1,
   },
   bannerTitle: {
-    color: appTheme.textPrimary,
+    color: appTheme.white,
     fontSize: 18,
     fontWeight: '800',
   },
   bannerSub: {
-    color: appTheme.textSecondary,
+    color: 'rgba(255,255,255,0.75)',
     fontSize: 12,
     marginTop: 2,
   },
   joinSmallBtn: {
-    backgroundColor: '#FF5C1A',
+    backgroundColor: appTheme.white,
     borderRadius: 20,
     paddingHorizontal: 20,
     paddingVertical: 8,
   },
   joinSmallText: {
-    color: '#FFFFFF',
+    color: appTheme.crimson,
     fontWeight: '700',
     fontSize: 14,
   },
@@ -475,7 +498,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     gap: 4,
   },
   featureLabel: {
-    color: appTheme.textSecondary,
+    color: 'rgba(255,255,255,0.85)',
     fontSize: 10,
     fontWeight: '600',
   },
@@ -505,12 +528,11 @@ const useStyles = (appTheme) => StyleSheet.create({
     gap: 12,
   },
   menuLabel: {
-    color: appTheme.textPrimary,
     fontSize: 15,
     fontWeight: '500',
   },
   menuLabelDisabled: {
-    color: appTheme.textMuted,
+    color: appTheme.darkGray,
   },
   menuRight: {
     flexDirection: 'row',
@@ -518,7 +540,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     gap: 6,
   },
   menuRightText: {
-    color: appTheme.textSecondary,
+    color: appTheme.gray,
     fontSize: 14,
   },
   badge: {
@@ -528,7 +550,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingVertical: 2,
   },
   badgeText: {
-    color: appTheme.textPrimary,
+    color: appTheme.white,
     fontSize: 11,
     fontWeight: '700',
   },

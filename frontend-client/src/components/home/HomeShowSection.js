@@ -1,4 +1,3 @@
-import { useTheme } from '../../context/ThemeContext';
 import React from 'react';
 import {
   Image,
@@ -11,14 +10,16 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+import { useTheme } from '../../context/ThemeContext';
 import { API_BASE_URL } from '../../constants/config';
 
 // Wider card to match reference image (Udemy-style)
 const CARD_WIDTH = 110;
 
-function ThumbnailProgressBar({ progressSec, durationSec, styles }) {
+function ThumbnailProgressBar({ progressSec, durationSec }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   if (!durationSec || durationSec === 0) return null;
-
   const pct = Math.min((progressSec / durationSec) * 100, 100);
   if (pct <= 0) return null;
 
@@ -35,13 +36,13 @@ function resolveThumbnailUrl(url) {
   return `${API_BASE_URL}${url}`;
 }
 
-function SectionCard({ item, onPress, styles }) {
+function SectionCard({ item, onPress }) {
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
   const uri = resolveThumbnailUrl(item.thumbnail_url);
-
-  const categoryLabel =
-    item.tags?.length > 0
-      ? item.tags[0]
-      : item.category_name || item.category || '';
+  const categoryLabel = item.tags?.length > 0
+    ? item.tags[0]
+    : (item.category_name || item.category || '');
 
   return (
     <TouchableOpacity
@@ -49,6 +50,7 @@ function SectionCard({ item, onPress, styles }) {
       onPress={onPress}
       activeOpacity={0.85}
     >
+      {/* Poster image — tall, portrait ratio */}
       <View style={styles.posterWrap}>
         {uri ? (
           <Image source={{ uri }} style={styles.poster} resizeMode="cover" />
@@ -56,19 +58,37 @@ function SectionCard({ item, onPress, styles }) {
           <View style={[styles.poster, styles.posterFallback]} />
         )}
 
-        {/* ...rest of your existing code... */}
+        {/* Tag badge top-right */}
+        {item.tag ? (
+          <View style={[
+            styles.tagBadge,
+            { backgroundColor: item.tag === 'Hot' ? '#FF2D55' : '#7B2FFF' }
+          ]}>
+            <Text style={styles.tagBadgeText}>{item.tag}</Text>
+          </View>
+        ) : null}
 
+        {/* View count */}
+        <View style={styles.viewBadge}>
+          <Ionicons name="eye-outline" size={10} color="#fff" />
+          <Text style={styles.viewText}>
+            {formatViews(item.view_count)}
+          </Text>
+        </View>
+
+        {/* Progress bar */}
         <ThumbnailProgressBar
           progressSec={item.progress_sec || 0}
           durationSec={item.duration_sec || 0}
-          styles={styles}
         />
       </View>
 
+      {/* Title */}
       <Text style={styles.cardTitle} numberOfLines={2}>
         {item.title}
       </Text>
 
+      {/* Category / tag label */}
       {categoryLabel ? (
         <Text style={styles.cardCategory} numberOfLines={1}>
           {categoryLabel}
@@ -168,7 +188,6 @@ export default function HomeShowSection({
                   key={itemKey}
                   item={item}
                   onPress={() => onItemPress?.(item)}
-                  styles={styles}
                 />
               )
             );
@@ -227,6 +246,7 @@ const useStyles = (appTheme) => StyleSheet.create({
 
   categoryTabTextActive: {
     color: '#FFFFFF',
+    fontWeight: '700',
   },
 
   expandBtn: {
@@ -253,7 +273,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     aspectRatio: 2 / 3,          // Taller portrait ratio
     borderRadius: 10,
     overflow: 'hidden',
-    backgroundColor: '#1C1C1E',
+    backgroundColor: appTheme.isDark ? '#1C1C1E' : '#F3F4F6',
     position: 'relative',
   },
 
@@ -276,7 +296,7 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
 
   tagBadgeText: {
-    color: appTheme.textPrimary,
+    color: '#fff',
     fontSize: 10,
     fontWeight: '700',
   },
@@ -295,7 +315,7 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
 
   viewText: {
-    color: appTheme.textPrimary,
+    color: '#fff',
     fontSize: 10,
     fontWeight: '600',
   },

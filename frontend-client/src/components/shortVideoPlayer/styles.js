@@ -1,4 +1,3 @@
-import { useTheme } from '../../context/ThemeContext';
 import { StyleSheet } from 'react-native';
 
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from './constants';
@@ -213,9 +212,9 @@ export const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(255,45,85,0.2)',
+    backgroundColor: 'rgba(255,92,26,0.2)',
     borderWidth: 1,
-    borderColor: 'rgba(255,45,85,0.4)',
+    borderColor: 'rgba(255,92,26,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -224,7 +223,7 @@ export const styles = StyleSheet.create({
   lockBalance: { color: '#ccc', fontSize: 14, marginBottom: 12 },
   lockError: { color: '#ff6b6b', fontSize: 13, marginBottom: 10, textAlign: 'center', paddingHorizontal: 24 },
   lockButton: {
-    backgroundColor: '#FF2D55',
+    backgroundColor: shortVideoTheme.crimson,
     paddingHorizontal: 28,
     paddingVertical: 10,
     borderRadius: 20,
@@ -234,7 +233,7 @@ export const styles = StyleSheet.create({
   lockButtonDisabled: { opacity: 0.5 },
   lockButtonText: { color: '#fff', fontSize: 14, fontWeight: '700' },
   lockSecondaryButton: { marginTop: 12, paddingVertical: 8 },
-  lockSecondaryText: { color: '#FF2D55', fontSize: 14, fontWeight: '600' },
+  lockSecondaryText: { color: shortVideoTheme.crimson, fontSize: 14, fontWeight: '600' },
 
   bufferingOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -299,7 +298,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   speedRowActive: {
-    backgroundColor: 'rgba(255,45,85,0.12)',
+    backgroundColor: 'rgba(255,92,26,0.12)',
   },
   speedRowText: {
     color: '#ddd',
@@ -380,7 +379,7 @@ export const styles = StyleSheet.create({
   },
   volumeIconButtonActive: {
     borderColor: shortVideoTheme.crimson,
-    backgroundColor: 'rgba(255,45,85,0.18)',
+    backgroundColor: 'rgba(255,92,26,0.18)',
   },
   volumePanel: {
     position: 'absolute',

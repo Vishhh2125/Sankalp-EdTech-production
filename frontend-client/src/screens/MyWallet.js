@@ -1,17 +1,16 @@
-import { useTheme } from '../context/ThemeContext';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   Modal,
   ActivityIndicator,
   ScrollView,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -27,10 +26,11 @@ import CoinIcon from '../components/CoinIcon';
 import { ROUTES } from '../constants/routes';
 import { setCoins } from '../redux/slices/authSlice';
 import * as authService from '../services/authService';
+import { useTheme } from '../context/ThemeContext';
 
 const WalletScreen = () => {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
+  const { theme, isDarkMode } = useTheme();
+  const styles = useStyles(theme);
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const accessToken = useSelector((s) => s.auth?.accessToken);
@@ -148,12 +148,15 @@ const WalletScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
 
       <View style={styles.balanceContainer}>
         <View style={styles.balanceItem}>
-          <Text style={styles.balanceLabel}>Coins</Text>
-          <Text style={styles.balanceValue}>{String(displayCoins)}</Text>
+          <Text style={styles.balanceLabel}>Wallet Balance</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
+            <CoinIcon size={28} color={theme.gold} />
+            <Text style={styles.balanceValue}>{String(displayCoins)}</Text>
+          </View>
         </View>
       </View>
 
@@ -333,10 +336,10 @@ const WalletScreen = () => {
   );
 };
 
-const useStyles = (appTheme) => StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: appTheme.background,
+    backgroundColor: theme.deepBlack,
     paddingHorizontal: 20,
   },
 
@@ -351,19 +354,19 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
 
   balanceLabel: {
-    color: '#8E8E93',
+    color: theme.gray,
     fontSize: 14,
     marginBottom: 10,
   },
 
   balanceValue: {
-    color: appTheme.textPrimary,
+    color: theme.text,
     fontSize: 34,
     fontWeight: '700',
   },
 
   topUpButton: {
-    backgroundColor: '#FF5C1A',
+    backgroundColor: theme.primary,
     borderRadius: 30,
     height: 58,
     justifyContent: 'center',
@@ -371,7 +374,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     marginBottom: 40,
     marginHorizontal: 10,
 
-    shadowColor: '#FF5C1A',
+    shadowColor: theme.primary,
     shadowOpacity: 0.3,
     shadowRadius: 10,
     shadowOffset: {
@@ -383,7 +386,7 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
 
   topUpText: {
-    color: appTheme.textPrimary,
+    color: '#FFF',
     fontSize: 18,
     fontWeight: '700',
     letterSpacing: 0.4,
@@ -401,7 +404,7 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
 
   listItemText: {
-    color: appTheme.textPrimary,
+    color: theme.text,
     fontSize: 16,
     fontWeight: '500',
   },
@@ -410,14 +413,14 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingTop: 8,
   },
   recentTxTitle: {
-    color: '#8E8E93',
+    color: theme.gray,
     fontSize: 13,
     fontWeight: '700',
     marginBottom: 10,
     letterSpacing: 0.5,
   },
   recentTxEmpty: {
-    color: '#666',
+    color: theme.gray,
     fontSize: 14,
   },
   recentTxRow: {
@@ -426,10 +429,10 @@ const useStyles = (appTheme) => StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A1A',
+    borderBottomColor: theme.border,
   },
   recentTxLabel: {
-    color: appTheme.textPrimary,
+    color: theme.text,
     fontSize: 14,
     flex: 1,
     marginRight: 12,
@@ -438,8 +441,8 @@ const useStyles = (appTheme) => StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
-  txCredit: { color: '#4CD964' },
-  txDebit: { color: '#FF6B6B' },
+  txCredit: { color: theme.green },
+  txDebit: { color: theme.red },
 
   modalBackdrop: {
     flex: 1,
@@ -448,7 +451,7 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
 
   modalCard: {
-    backgroundColor: appTheme.background,
+    backgroundColor: theme.surface,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingHorizontal: 20,
@@ -456,7 +459,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingBottom: 30,
     maxHeight: '72%',
     borderWidth: 1,
-    borderColor: '#222',
+    borderColor: theme.border,
   },
 
   modalHeader: {
@@ -467,7 +470,7 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
 
   modalTitle: {
-    color: appTheme.textPrimary,
+    color: theme.text,
     fontSize: 24,
     fontWeight: '700',
     letterSpacing: 0.3,
@@ -478,14 +481,14 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
 
   packCard: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: theme.isDark ? '#1A1A1A' : '#FFF7ED',
     borderRadius: 22,
     paddingVertical: 18,
     paddingHorizontal: 18,
     marginBottom: 16,
 
     borderWidth: 1,
-    borderColor: '#2B2B2B',
+    borderColor: theme.border,
 
     flexDirection: 'row',
     alignItems: 'center',
@@ -493,9 +496,9 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
 
   featuredPack: {
-    borderColor: '#FF2D55',
+    borderColor: theme.primary,
 
-    shadowColor: '#FF2D55',
+    shadowColor: theme.primary,
     shadowOpacity: 0.25,
     shadowRadius: 10,
     shadowOffset: {
@@ -516,20 +519,20 @@ const useStyles = (appTheme) => StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'rgba(255,45,85,0.15)',
+    backgroundColor: theme.isDark ? 'rgba(255,92,26,0.15)' : 'rgba(255,76,0,0.08)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
   },
 
   packTitle: {
-    color: appTheme.textPrimary,
+    color: theme.text,
     fontSize: 17,
     fontWeight: '700',
   },
 
   packSubtitle: {
-    color: '#8E8E93',
+    color: theme.gray,
     fontSize: 13,
     marginTop: 4,
   },
@@ -540,7 +543,7 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
 
   popularTag: {
-    backgroundColor: '#FF2D55',
+    backgroundColor: theme.primary,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
@@ -548,14 +551,14 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
 
   popularTagText: {
-    color: appTheme.textPrimary,
+    color: '#fff',
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
 
   errorText: {
-    color: '#ff6b6b',
+    color: theme.red,
     fontSize: 14,
     marginVertical: 8,
   },
@@ -568,15 +571,15 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
 
   confirmCard: {
-    backgroundColor: '#171717',
+    backgroundColor: theme.surface,
     borderRadius: 24,
     padding: 22,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: theme.border,
   },
 
   confirmTitle: {
-    color: appTheme.textPrimary,
+    color: theme.text,
     fontSize: 22,
     fontWeight: '700',
     marginBottom: 18,
@@ -585,7 +588,7 @@ const useStyles = (appTheme) => StyleSheet.create({
   selectedPackContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#202020',
+    backgroundColor: theme.isDark ? '#202020' : '#FFF7ED',
     padding: 16,
     borderRadius: 18,
     marginBottom: 20,
@@ -595,20 +598,20 @@ const useStyles = (appTheme) => StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: 'rgba(255,45,85,0.15)',
+    backgroundColor: theme.isDark ? 'rgba(255,92,26,0.15)' : 'rgba(255,76,0,0.08)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
   },
 
   selectedPackText: {
-    color: appTheme.textPrimary,
+    color: theme.text,
     fontSize: 16,
     fontWeight: '700',
   },
 
   selectedPackSubtext: {
-    color: '#8E8E93',
+    color: theme.gray,
     fontSize: 13,
     marginTop: 4,
   },
@@ -626,13 +629,13 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
 
   btnSecondaryText: {
-    color: '#8E8E93',
+    color: theme.gray,
     fontSize: 16,
     fontWeight: '600',
   },
 
   btnPrimary: {
-    backgroundColor: '#FF2D55',
+    backgroundColor: theme.primary,
     paddingVertical: 14,
     paddingHorizontal: 28,
     borderRadius: 14,
@@ -640,7 +643,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
 
-    shadowColor: '#FF2D55',
+    shadowColor: theme.primary,
     shadowOpacity: 0.3,
     shadowRadius: 8,
     shadowOffset: {
@@ -652,7 +655,7 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
 
   btnPrimaryText: {
-    color: appTheme.textPrimary,
+    color: '#fff',
     fontSize: 16,
     fontWeight: '700',
   },

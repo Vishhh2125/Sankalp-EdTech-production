@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 
@@ -20,8 +19,6 @@ import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import OrDivider from '../components/OrDivider';
 
 export default function LoginScreen({ navigation, route, onGuestAccess }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -31,7 +28,8 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
   const { isLoading, error, status, accessToken } = useSelector((state) => state.auth);
 
   const { promptAsync, loading: googleLoading, googleError } = useGoogleAuth();
-
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
 
   useEffect(() => {
     // Navigate after redux marks login as succeeded.
@@ -72,7 +70,7 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
           <Ionicons name="play" size={16} color={appTheme.white} />
         </View>
         <Text style={styles.logoText}>
-          Alpha<Text style={styles.logoPrimary}>Minds</Text>
+          7<Text style={styles.logoPrimary}>K</Text>
         </Text>
       </View>
 
@@ -348,4 +346,4 @@ const useStyles = (appTheme) => StyleSheet.create({
     fontWeight: '700',
     fontSize: 14,
   },
-});
+});;

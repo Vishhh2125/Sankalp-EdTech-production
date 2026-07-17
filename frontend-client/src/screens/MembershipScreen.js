@@ -9,8 +9,10 @@ import {
   Modal,
   Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 
 import GuestAccessPrompt from '../components/GuestAccessPrompt';
@@ -34,7 +36,6 @@ import {
   launchPaystackCheckout,
   PaystackCheckoutModal,
 } from '../components/payment/paystackCheckout';
-import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 import { patchUserProfile } from '../redux/slices/authSlice';
@@ -54,8 +55,9 @@ const PAYMENT_GATEWAYS = [
 ];
 
 export default function MembershipScreen({ navigation }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
+  const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
+  const styles = useStyles(theme, insets);
   const route = useRoute();
   const dispatch = useDispatch();
   const accessToken = useSelector((s) => s.auth?.accessToken);
@@ -118,7 +120,7 @@ export default function MembershipScreen({ navigation }) {
           hitSlop={12}
           style={{ paddingLeft: 4 }}
         >
-          <Ionicons name="chevron-back" size={26} color={appTheme.white} />
+          <Ionicons name="chevron-back" size={26} color={theme.white} />
         </Pressable>
       ),
     });
@@ -392,7 +394,7 @@ export default function MembershipScreen({ navigation }) {
   if (loading) {
     return (
       <View style={[styles.screen, styles.centered]}>
-        <ActivityIndicator size="large" color={appTheme.primary} />
+        <ActivityIndicator size="large" color={theme.crimson} />
       </View>
     );
   }
@@ -400,7 +402,7 @@ export default function MembershipScreen({ navigation }) {
   if (error || plans.length === 0) {
     return (
       <View style={[styles.screen, styles.centered, { paddingHorizontal: 20 }]}>
-        <Ionicons name="alert-circle-outline" size={48} color={appTheme.gray} />
+        <Ionicons name="alert-circle-outline" size={48} color={theme.gray} />
         <Text style={styles.errorText}>{error || 'No membership plans available'}</Text>
         <Pressable style={styles.retryBtn} onPress={loadPlans}>
           <Text style={styles.retryBtnText}>Try Again</Text>
@@ -416,7 +418,12 @@ export default function MembershipScreen({ navigation }) {
         contentContainerStyle={styles.container}
       >
         <View style={styles.heroArea}>
-          <View style={styles.heroGradient} />
+          <LinearGradient
+            colors={theme.isDark ? ['#1A0B2E', '#0A0A0A'] : ['#FF6B35', '#FF8C5A']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.heroGradient}
+          />
           <Text style={styles.heroTitle}>Join Membership</Text>
           {isMember ? (
             <Text style={styles.heroSub}>
@@ -493,7 +500,7 @@ export default function MembershipScreen({ navigation }) {
                   ]}
                 >
                   {selectedPlan === plan.id ? (
-                    <Ionicons name="checkmark" size={16} color={appTheme.white} />
+                    <Ionicons name="checkmark" size={16} color={theme.white} />
                   ) : null}
                 </View>
                 <View style={{ flex: 1 }}>
@@ -530,7 +537,7 @@ export default function MembershipScreen({ navigation }) {
               <Ionicons
                 name={b.icon}
                 size={24}
-                color={appTheme.primary}
+                color={theme.crimson}
                 style={styles.benefitIcon}
               />
               <View style={styles.benefitTextWrap}>
@@ -691,14 +698,14 @@ export default function MembershipScreen({ navigation }) {
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
-  screen: { flex: 1, backgroundColor: appTheme.deepBlack },
+const useStyles = (theme, insets = {}) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: theme.deepBlack },
   centered: { justifyContent: 'center', alignItems: 'center' },
   scrollView: { flex: 1 },
-  container: { paddingBottom: 20 },
+  container: { paddingBottom: 120 + (insets.bottom || 0) },
   heroArea: {
     height: 160,
-    backgroundColor: appTheme.border,
+    backgroundColor: theme.primary, // will be overlaid by gradient
     justifyContent: 'flex-end',
     paddingHorizontal: 20,
     paddingBottom: 20,
@@ -706,11 +713,10 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
   heroGradient: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(13, 0, 16, 0.6)',
   },
-  heroTitle: { fontSize: 26, fontWeight: '800', color: appTheme.white, zIndex: 1 },
+  heroTitle: { fontSize: 26, fontWeight: '800', color: '#FFFFFF', zIndex: 1 },
   heroSub: {
-    color: 'rgba(255,255,255,0.75)',
+    color: 'rgba(255,255,255,0.85)',
     fontSize: 13,
     marginTop: 6,
     zIndex: 1,
@@ -722,30 +728,30 @@ const useStyles = (appTheme) => StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 12,
     padding: 14,
-    backgroundColor: 'rgba(76,217,100,0.12)',
+    backgroundColor: theme.isDark ? 'rgba(76,217,100,0.12)' : 'rgba(22,163,74,0.08)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(76,217,100,0.35)',
+    borderColor: theme.isDark ? 'rgba(76,217,100,0.35)' : 'rgba(22,163,74,0.25)',
   },
   activeBannerText: {
     flex: 1,
-    color: '#ccc',
+    color: theme.isDark ? '#ccc' : '#475569',
     fontSize: 13,
     lineHeight: 19,
   },
   plansSection: { paddingHorizontal: 16, paddingTop: 16, gap: 12 },
   planCard: {
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderRadius: 14,
     borderWidth: 2,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
     padding: 16,
     position: 'relative',
     overflow: 'hidden',
   },
   planCardActive: {
-    borderColor: appTheme.primary,
-    backgroundColor: 'rgba(255, 45, 85, 0.08)',
+    borderColor: theme.primary,
+    backgroundColor: theme.isDark ? 'rgba(255, 92, 26, 0.12)' : 'rgba(255, 76, 0, 0.08)',
   },
   planLeft: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   planRadio: {
@@ -753,15 +759,15 @@ const useStyles = (appTheme) => StyleSheet.create({
     height: 26,
     borderRadius: 13,
     borderWidth: 2,
-    borderColor: appTheme.border,
+    borderColor: theme.isDark ? theme.border : '#CBD5E1',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
   },
-  planRadioActive: { borderColor: appTheme.primary, backgroundColor: appTheme.primary },
-  planName: { color: appTheme.white, fontSize: 16, fontWeight: '700', marginBottom: 4 },
-  planPrice: { color: appTheme.white, fontSize: 18, fontWeight: '800' },
-  planScope: { color: appTheme.gray, fontSize: 12, marginBottom: 4 },
+  planRadioActive: { borderColor: theme.primary, backgroundColor: theme.primary },
+  planName: { color: theme.text, fontSize: 16, fontWeight: '700', marginBottom: 4 },
+  planPrice: { color: theme.text, fontSize: 18, fontWeight: '800' },
+  planScope: { color: theme.gray, fontSize: 12, marginBottom: 4 },
   categoryTabs: { maxHeight: 44, marginTop: 8 },
   categoryTabsContent: { paddingHorizontal: 16, gap: 8 },
   categoryTab: {
@@ -769,17 +775,17 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: appTheme.border,
-    backgroundColor: appTheme.surface,
+    borderColor: theme.isDark ? theme.border : '#E2E8F0',
+    backgroundColor: theme.surface,
   },
   categoryTabActive: {
-    borderColor: appTheme.primary,
-    backgroundColor: 'rgba(255, 45, 85, 0.12)',
+    borderColor: theme.primary,
+    backgroundColor: theme.isDark ? 'rgba(255, 92, 26, 0.12)' : 'rgba(255, 76, 0, 0.08)',
   },
-  categoryTabText: { color: appTheme.gray, fontSize: 12, fontWeight: '600' },
-  categoryTabTextActive: { color: appTheme.white },
+  categoryTabText: { color: theme.gray, fontSize: 12, fontWeight: '600' },
+  categoryTabTextActive: { color: theme.primary, fontWeight: '700' },
   emptyPlansText: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 13,
     textAlign: 'center',
     paddingVertical: 20,
@@ -787,7 +793,7 @@ const useStyles = (appTheme) => StyleSheet.create({
   whyTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: appTheme.white,
+    color: theme.text,
     paddingHorizontal: 20,
     marginTop: 28,
     marginBottom: 16,
@@ -796,39 +802,39 @@ const useStyles = (appTheme) => StyleSheet.create({
   benefitItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 14 },
   benefitIcon: { marginTop: 2 },
   benefitTextWrap: { flex: 1 },
-  benefitTitle: { color: appTheme.white, fontSize: 15, fontWeight: '600' },
-  benefitSub: { color: appTheme.gray, fontSize: 13, marginTop: 2 },
+  benefitTitle: { color: theme.text, fontSize: 15, fontWeight: '600' },
+  benefitSub: { color: theme.gray, fontSize: 13, marginTop: 2 },
   floatingBtnWrap: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 20 + (insets.bottom || 0),
     left: 0,
     right: 0,
     alignItems: 'center',
   },
   joinBtn: {
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.primary,
     borderRadius: 30,
     paddingVertical: 14,
     paddingHorizontal: 40,
     alignItems: 'center',
     elevation: 8,
-    shadowColor: appTheme.primary,
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
   },
   joinBtnPressed: { opacity: 0.85 },
-  joinBtnText: { color: appTheme.white, fontSize: 17, fontWeight: '800' },
-  joinBtnSub: { color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 2 },
-  errorText: { color: appTheme.white, fontSize: 16, marginTop: 12, textAlign: 'center' },
+  joinBtnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '800' },
+  joinBtnSub: { color: 'rgba(255,255,255,0.75)', fontSize: 11, marginTop: 2 },
+  errorText: { color: theme.text, fontSize: 16, marginTop: 12, textAlign: 'center' },
   retryBtn: {
     marginTop: 20,
     paddingVertical: 10,
     paddingHorizontal: 30,
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.primary,
     borderRadius: 8,
   },
-  retryBtnText: { color: appTheme.white, fontWeight: '600' },
+  retryBtnText: { color: '#FFFFFF', fontWeight: '600' },
   confirmBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.72)',
@@ -836,30 +842,30 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingHorizontal: 24,
   },
   confirmCard: {
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderRadius: 20,
     padding: 22,
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
   },
-  confirmTitle: { color: appTheme.white, fontSize: 20, fontWeight: '700', marginBottom: 16 },
+  confirmTitle: { color: theme.text, fontSize: 20, fontWeight: '700', marginBottom: 16 },
   confirmPlanBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: appTheme.deepBlack,
+    backgroundColor: theme.isDark ? theme.deepBlack : '#FFF7ED',
     padding: 14,
     borderRadius: 12,
     marginBottom: 16,
   },
-  confirmPlanName: { color: appTheme.white, fontSize: 16, fontWeight: '700' },
-  confirmPlanPrice: { color: appTheme.gray, fontSize: 14, marginTop: 4 },
-  confirmPlanHint: { color: appTheme.darkGray, fontSize: 12, marginTop: 6 },
+  confirmPlanName: { color: theme.text, fontSize: 16, fontWeight: '700' },
+  confirmPlanPrice: { color: theme.gray, fontSize: 14, marginTop: 4 },
+  confirmPlanHint: { color: theme.darkGray, fontSize: 12, marginTop: 6 },
   purchaseError: { color: '#ff6b6b', fontSize: 13, marginBottom: 12 },
   gatewayWrap: {
     marginBottom: 12,
   },
   gatewayLabel: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 12,
     fontWeight: '600',
     marginBottom: 8,
@@ -873,33 +879,33 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: appTheme.border,
-    backgroundColor: appTheme.deepBlack,
+    borderColor: theme.border,
+    backgroundColor: theme.isDark ? theme.deepBlack : '#FFF7ED',
     alignItems: 'center',
   },
   gatewayChipActive: {
-    borderColor: appTheme.primary,
-    backgroundColor: 'rgba(255,45,85,0.12)',
+    borderColor: theme.primary,
+    backgroundColor: theme.isDark ? 'rgba(255,92,26,0.12)' : 'rgba(255,76,0,0.08)',
   },
   gatewayChipText: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontWeight: '700',
   },
   gatewayChipTextActive: {
-    color: appTheme.white,
+    color: theme.primary,
   },
   confirmActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12 },
   btnSecondary: { paddingVertical: 12, paddingHorizontal: 16 },
-  btnSecondaryText: { color: appTheme.gray, fontSize: 16, fontWeight: '600' },
-  planDetail: { color: appTheme.gray, fontSize: 11, marginTop: 4, lineHeight: 16 },
+  btnSecondaryText: { color: theme.gray, fontSize: 16, fontWeight: '600' },
+  planDetail: { color: theme.gray, fontSize: 11, marginTop: 4, lineHeight: 16 },
   btnPrimaryDisabled: { opacity: 0.45 },
   btnPrimary: {
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.primary,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 12,
     minWidth: 110,
     alignItems: 'center',
   },
-  btnPrimaryText: { color: appTheme.textPrimary, fontSize: 16, fontWeight: '700' },
+  btnPrimaryText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
 });

@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const THEME_KEY = '@app_theme_mode';
 
-/** Semantic Dark Mode */
+/** Premium Dark Theme Scheme */
 const darkTheme = {
   isDark: true,
   // Core Semantic Colors
@@ -38,54 +38,66 @@ const darkTheme = {
   orange: '#FF5C1A',
   green: '#22C55E',
   red: '#EF4444',
+  crimson: '#FF5C1A',
   blush: '#FF6584',
-  lockedCellBg: '#21252F',
-  episodeBg: '#181B23',
-  // Old aliases (to be phased out where possible, but keeping for safety if missed)
+  surfaceLight: '#21252F',
   text: '#F5F6F8',
   screenBg: '#0F1117',
+  cardBg: '#181B23',
+  modalBg: '#181B23',
+  inputBg: '#21252F',
+  tabBarBg: '#181B23',
+  searchBarBg: '#21252F',
+  lockedCellBg: '#21252F',
+  episodeBg: '#181B23',
 };
 
-/** Semantic Light Mode */
+/** Premium Light Theme Scheme */
 const lightTheme = {
   isDark: false,
   // Core Semantic Colors
-  background: '#F8F9FC',
-  surface: '#FFFFFF',
+  background: '#FFF7ED', // Warm Ivory (orange-50/100 tint)
+  surface: '#FFFFFF',    // Pure White Card/Surface
   elevatedSurface: '#FFFFFF',
   card: '#FFFFFF',
-  textPrimary: '#1A1D29',
-  textSecondary: '#667085',
+  textPrimary: '#1A1A1A', // Soft Near-black primary text
+  textSecondary: '#6B6B6B', // Warm Gray secondary text
   textMuted: '#A7ADBB',
-  border: '#E5E7EB',
-  primary: '#FF4C00',
+  border: '#FFEDD5',     // Warm Light Orange Tint (orange-100 border)
+  primary: '#FF4C00',    // Warm Orange Brand Accent
   primaryHover: '#E64400',
-  primarySoft: '#FFF0E9',
+  primarySoft: '#FFF7ED',
   accent: '#D4A600',
   success: '#16A34A',
   warning: '#F59E0B',
   error: '#DC2626',
   info: '#2563EB',
   tabBarBackground: '#FFFFFF',
-  inputBackground: '#F8F9FC',
+  inputBackground: '#FFF7ED',
   
   // Specific Component Backwards Compatibility / Legacy Primitives
-  deepBlack: '#F8F9FC',
+  deepBlack: '#FFF7ED',
   black: '#FFFFFF',
-  white: '#1A1D29',
-  gray: '#667085',
-  darkGray: '#1A1D29',
+  white: '#1A1A1A',
+  gray: '#6B6B6B',
+  darkGray: '#6B6B6B',
   lightGray: '#A7ADBB',
   gold: '#D4A600',
   orange: '#FF4C00',
   green: '#16A34A',
   red: '#DC2626',
+  crimson: '#FF4C00',
   blush: '#FF6584',
-  lockedCellBg: '#F8F9FC',
+  surfaceLight: '#FFEDD5',
+  text: '#1A1A1A',
+  screenBg: '#FFF7ED',
+  cardBg: '#FFFFFF',
+  modalBg: '#FFFFFF',
+  inputBg: '#FFF7ED',
+  tabBarBg: '#FFFFFF',
+  searchBarBg: '#FFEDD5',
+  lockedCellBg: '#FFF7ED',
   episodeBg: '#FFFFFF',
-  // Old aliases (to be phased out where possible, but keeping for safety if missed)
-  text: '#1A1D29',
-  screenBg: '#F8F9FC',
 };
 
 const ThemeContext = createContext({

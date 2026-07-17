@@ -1,4 +1,3 @@
-import { useTheme } from '../context/ThemeContext';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -49,8 +48,6 @@ import { upsertWatchHistory } from '../redux/slices/myListSlice';
 const DETAILS_PAGE_SIZE = 30;
 
 export default function ForYouScreen() {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const items = useSelector(selectForYouItems);
@@ -449,18 +446,18 @@ export default function ForYouScreen() {
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
-  screen: { flex: 1, backgroundColor: appTheme.background },
-  loadingScreen: { flex: 1, backgroundColor: appTheme.background, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: appTheme.textMuted, fontSize: 14, marginTop: 12 },
-  emptyTitle: { color: appTheme.textSecondary, fontSize: 18, fontWeight: '600', marginTop: 16 },
-  emptySubtitle: { color: appTheme.textMuted, fontSize: 14, marginTop: 6 },
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: '#000' },
+  loadingScreen: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: '#888', fontSize: 14, marginTop: 12 },
+  emptyTitle: { color: '#aaa', fontSize: 18, fontWeight: '600', marginTop: 16 },
+  emptySubtitle: { color: '#666', fontSize: 14, marginTop: 6 },
   retryButton: {
     marginTop: 20,
-    backgroundColor: appTheme.primary,
+    backgroundColor: '#FF2D55',
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 20,
   },
-  retryText: { color: '#FFFFFF', fontSize: 14, fontWeight: '600' },
+  retryText: { color: '#fff', fontSize: 14, fontWeight: '600' },
 });

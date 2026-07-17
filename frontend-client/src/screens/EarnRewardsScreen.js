@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 
 import CoinIcon from '../components/CoinIcon';
@@ -20,7 +21,6 @@ import {
   claimDailyCheckin,
   walletApiErrorMessage,
 } from '../components/rewards/dailyCheckinApi';
-import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 import { setCoins } from '../redux/slices/authSlice';
@@ -38,8 +38,8 @@ function dayState(day, streakDay, claimedToday) {
 }
 
 function DayCard({ day, coins, state }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const isCompleted = state === 'completed';
   const isCurrent = state === 'current';
 
@@ -57,27 +57,27 @@ function DayCard({ day, coins, state }) {
       <View style={styles.coinRow}>
         <CoinIcon
           size={14}
-          color={isCurrent ? appTheme.gold : appTheme.gray}
+          color={isCurrent ? theme.gold : theme.gray}
         />
         <Text style={[styles.dayCoins, isCurrent && styles.dayCoinsCurrent]}>
           {coins}
         </Text>
       </View>
       {isCompleted ? (
-        <Ionicons name="checkmark-circle" size={20} color={appTheme.green} style={styles.dayIcon} />
+        <Ionicons name="checkmark-circle" size={20} color={theme.green} style={styles.dayIcon} />
       ) : isCurrent ? (
         <View style={styles.todayDot} />
       ) : (
-        <Ionicons name="lock-closed" size={14} color={appTheme.darkGray} style={styles.dayIcon} />
+        <Ionicons name="lock-closed" size={14} color={theme.darkGray} style={styles.dayIcon} />
       )}
     </View>
   );
 }
 
 export default function EarnRewardsScreen({ navigation }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
-
+  const { theme, isDarkMode } = useTheme();
+  const insets = useSafeAreaInsets();
+  const styles = useStyles(theme, insets);
   const route = useRoute();
   const dispatch = useDispatch();
   const accessToken = useSelector((s) => s.auth?.accessToken);
@@ -129,7 +129,7 @@ export default function EarnRewardsScreen({ navigation }) {
           hitSlop={12}
           style={{ paddingLeft: 4 }}
         >
-          <Ionicons name="chevron-back" size={26} color={appTheme.white} />
+          <Ionicons name="chevron-back" size={26} color={theme.white} />
         </Pressable>
       ),
     });
@@ -189,7 +189,7 @@ export default function EarnRewardsScreen({ navigation }) {
   if (loading && !refreshing) {
     return (
       <View style={[styles.screen, styles.centered]}>
-        <ActivityIndicator size="large" color={appTheme.primary} />
+        <ActivityIndicator size="large" color={theme.crimson} />
       </View>
     );
   }
@@ -197,7 +197,7 @@ export default function EarnRewardsScreen({ navigation }) {
   if (error && !status) {
     return (
       <View style={[styles.screen, styles.centered, styles.padH]}>
-        <Ionicons name="alert-circle-outline" size={48} color={appTheme.gray} />
+        <Ionicons name="alert-circle-outline" size={48} color={theme.gray} />
         <Text style={styles.errorText}>{error}</Text>
         <Pressable style={styles.retryBtn} onPress={() => loadStatus()}>
           <Text style={styles.retryBtnText}>Try Again</Text>
@@ -219,14 +219,14 @@ export default function EarnRewardsScreen({ navigation }) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => loadStatus(true)}
-            tintColor={appTheme.primary}
+            tintColor={theme.crimson}
           />
         }
       >
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Your balance</Text>
           <View style={styles.balanceRow}>
-            <CoinIcon size={28} color={appTheme.gold} />
+            <CoinIcon size={28} color={theme.gold} />
             <Text style={styles.balanceValue}>{coins ?? status?.coins ?? 0}</Text>
             <Text style={styles.balanceUnit}>coins</Text>
           </View>
@@ -251,7 +251,7 @@ export default function EarnRewardsScreen({ navigation }) {
 
         {claimedToday ? (
           <View style={styles.doneBanner}>
-            <Ionicons name="checkmark-circle" size={22} color={appTheme.green} />
+            <Ionicons name="checkmark-circle" size={22} color={theme.green} />
             <Text style={styles.doneBannerText}>
               You checked in today (Day {streakDay}). Come back tomorrow for your next reward.
             </Text>
@@ -279,10 +279,10 @@ export default function EarnRewardsScreen({ navigation }) {
           disabled={claimedToday || claiming}
         >
           {claiming ? (
-            <ActivityIndicator color={appTheme.white} />
+            <ActivityIndicator color={theme.white} />
           ) : (
             <>
-              <Ionicons name="gift" size={20} color={appTheme.white} style={{ marginRight: 8 }} />
+              <Ionicons name="gift" size={20} color={theme.white} style={{ marginRight: 8 }} />
               <Text style={styles.claimBtnText}>
                 {claimedToday ? 'Come back tomorrow' : `Claim ${todayReward} coins`}
               </Text>
@@ -294,31 +294,31 @@ export default function EarnRewardsScreen({ navigation }) {
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
-  screen: { flex: 1, backgroundColor: appTheme.deepBlack },
+const useStyles = (theme, insets = {}) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: theme.deepBlack },
   centered: { justifyContent: 'center', alignItems: 'center' },
   padH: { paddingHorizontal: 24 },
-  container: { padding: 16, paddingBottom: 24 },
+  container: { padding: 16, paddingBottom: 100 + (insets.bottom || 0) },
   balanceCard: {
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
     marginBottom: 24,
   },
-  balanceLabel: { color: appTheme.gray, fontSize: 13, marginBottom: 8 },
+  balanceLabel: { color: theme.gray, fontSize: 13, marginBottom: 8 },
   balanceRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  balanceValue: { color: appTheme.white, fontSize: 32, fontWeight: '800' },
-  balanceUnit: { color: appTheme.gray, fontSize: 16, marginTop: 8 },
+  balanceValue: { color: theme.text, fontSize: 32, fontWeight: '800' },
+  balanceUnit: { color: theme.gray, fontSize: 16, marginTop: 8 },
   sectionTitle: {
-    color: appTheme.white,
+    color: theme.text,
     fontSize: 20,
     fontWeight: '800',
     marginBottom: 8,
   },
   sectionSub: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 13,
     lineHeight: 19,
     marginBottom: 20,
@@ -333,32 +333,32 @@ const useStyles = (appTheme) => StyleSheet.create({
     width: '30%',
     minWidth: 100,
     flexGrow: 1,
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderRadius: 12,
     padding: 12,
     borderWidth: 2,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
     alignItems: 'center',
   },
   dayCardCurrent: {
-    borderColor: appTheme.primary,
-    backgroundColor: 'rgba(255, 45, 85, 0.1)',
+    borderColor: theme.primary,
+    backgroundColor: theme.isDark ? 'rgba(255, 92, 26, 0.12)' : 'rgba(255, 76, 0, 0.08)',
   },
   dayCardCompleted: {
-    borderColor: 'rgba(52, 199, 89, 0.4)',
+    borderColor: theme.isDark ? 'rgba(52, 199, 89, 0.4)' : 'rgba(22, 163, 74, 0.35)',
     opacity: 0.9,
   },
-  dayLabel: { color: appTheme.gray, fontSize: 11, fontWeight: '600', marginBottom: 6 },
-  dayLabelCurrent: { color: appTheme.primary },
+  dayLabel: { color: theme.gray, fontSize: 11, fontWeight: '600', marginBottom: 6 },
+  dayLabelCurrent: { color: theme.primary },
   coinRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  dayCoins: { color: appTheme.white, fontSize: 16, fontWeight: '700' },
-  dayCoinsCurrent: { color: appTheme.gold },
+  dayCoins: { color: theme.text, fontSize: 16, fontWeight: '700' },
+  dayCoinsCurrent: { color: theme.gold },
   dayIcon: { marginTop: 8 },
   todayDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.primary,
     marginTop: 10,
   },
   doneBanner: {
@@ -367,44 +367,44 @@ const useStyles = (appTheme) => StyleSheet.create({
     gap: 10,
     marginTop: 20,
     padding: 14,
-    backgroundColor: 'rgba(52, 199, 89, 0.12)',
+    backgroundColor: theme.isDark ? 'rgba(52, 199, 89, 0.12)' : 'rgba(22, 163, 74, 0.08)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(52, 199, 89, 0.35)',
+    borderColor: theme.isDark ? 'rgba(52, 199, 89, 0.35)' : 'rgba(22, 163, 74, 0.25)',
   },
-  doneBannerText: { flex: 1, color: '#ccc', fontSize: 13, lineHeight: 19 },
+  doneBannerText: { flex: 1, color: theme.isDark ? '#ccc' : '#475569', fontSize: 13, lineHeight: 19 },
   rewardHint: {
     marginTop: 20,
     padding: 12,
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderRadius: 10,
   },
-  rewardHintText: { color: appTheme.gray, fontSize: 14, textAlign: 'center' },
-  rewardHintBold: { color: appTheme.gold, fontWeight: '700' },
+  rewardHintText: { color: theme.gray, fontSize: 14, textAlign: 'center' },
+  rewardHintBold: { color: theme.gold, fontWeight: '700' },
   floatingWrap: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 24 + (insets.bottom || 0),
     left: 16,
     right: 16,
   },
   claimBtn: {
     flexDirection: 'row',
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.primary,
     borderRadius: 28,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  claimBtnDisabled: { backgroundColor: appTheme.border, opacity: 0.85 },
+  claimBtnDisabled: { backgroundColor: theme.border, opacity: 0.85 },
   claimBtnPressed: { opacity: 0.9 },
-  claimBtnText: { color: appTheme.white, fontSize: 17, fontWeight: '800' },
-  errorText: { color: appTheme.white, fontSize: 16, marginTop: 12, textAlign: 'center' },
+  claimBtnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '800' },
+  errorText: { color: theme.text, fontSize: 16, marginTop: 12, textAlign: 'center' },
   retryBtn: {
     marginTop: 20,
     paddingVertical: 10,
     paddingHorizontal: 28,
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.primary,
     borderRadius: 8,
   },
-  retryBtnText: { color: appTheme.white, fontWeight: '600' },
+  retryBtnText: { color: '#FFFFFF', fontWeight: '600' },
 });

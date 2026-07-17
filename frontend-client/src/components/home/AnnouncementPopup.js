@@ -1,4 +1,3 @@
-import { useTheme } from '../../context/ThemeContext';
 import React, { useEffect, useState } from 'react';
 import {
   Modal,
@@ -15,9 +14,6 @@ import { theme } from '../../constants/theme';
 const CARD_WIDTH = Math.min(Dimensions.get('window').width - 80, 320);
 
 export default function AnnouncementPopup({ visible, announcements, onDismiss }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
-
   const [index, setIndex] = useState(0);
   const list = Array.isArray(announcements) ? announcements.slice(0, 3) : [];
   const listKey = list.map((a) => a.id).join(',');
@@ -48,7 +44,7 @@ export default function AnnouncementPopup({ visible, announcements, onDismiss })
           {/* Card */}
           <View style={[styles.card, { width: CARD_WIDTH }]}>
             <Pressable style={styles.closeBtn} onPress={onDismiss} hitSlop={12}>
-              <Ionicons name="close" size={22} color={appTheme.white} />
+              <Ionicons name="close" size={22} color={theme.white} />
             </Pressable>
             <View style={styles.iconCircle}>
               <Text style={styles.emojiLarge}>{emoji}</Text>
@@ -75,7 +71,7 @@ export default function AnnouncementPopup({ visible, announcements, onDismiss })
                 onPress={goToPrev}
                 hitSlop={12}
               >
-                <Ionicons name="chevron-back" size={24} color={appTheme.white} />
+                <Ionicons name="chevron-back" size={24} color={theme.white} />
               </Pressable>
             )}
 
@@ -86,7 +82,7 @@ export default function AnnouncementPopup({ visible, announcements, onDismiss })
                 onPress={goToNext}
                 hitSlop={12}
               >
-                <Ionicons name="chevron-forward" size={24} color={appTheme.white} />
+                <Ionicons name="chevron-forward" size={24} color={theme.white} />
               </Pressable>
             )}
           </View>
@@ -108,7 +104,7 @@ export default function AnnouncementPopup({ visible, announcements, onDismiss })
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
+const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.82)',
@@ -140,7 +136,7 @@ const useStyles = (appTheme) => StyleSheet.create({
   card: {
     borderRadius: 20,
     padding: 22,
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.crimson,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.28)',
     alignItems: 'center',
@@ -177,7 +173,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     letterSpacing: 1,
   },
   title: {
-    color: appTheme.white,
+    color: theme.white,
     fontSize: 20,
     fontWeight: '800',
     textAlign: 'center',
@@ -192,14 +188,14 @@ const useStyles = (appTheme) => StyleSheet.create({
     fontWeight: '500',
   },
   okBtn: {
-    backgroundColor: appTheme.white,
+    backgroundColor: theme.white,
     borderRadius: 28,
     paddingVertical: 14,
     paddingHorizontal: 40,
     minWidth: '70%',
     alignItems: 'center',
   },
-  okBtnText: { color: appTheme.primary, fontSize: 16, fontWeight: '800' },
+  okBtnText: { color: theme.crimson, fontSize: 16, fontWeight: '800' },
   dots: {
     flexDirection: 'row',
     gap: 8,
@@ -212,7 +208,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.35)',
   },
   dotActive: {
-    backgroundColor: appTheme.white,
+    backgroundColor: theme.white,
     width: 20,
   },
 });

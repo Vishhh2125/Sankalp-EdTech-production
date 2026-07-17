@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import DownloadsScreen from './DownloadsScreen';
 import {
   ActivityIndicator,
   Alert,
@@ -20,7 +19,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 
 import GuestAccessPrompt from '../components/GuestAccessPrompt';
-import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 import { API_BASE_URL } from '../constants/config';
@@ -48,12 +46,14 @@ const TAB_SAVED = 'saved';
 const TAB_CONTINUE = 'continue';
 const TAB_DOWNLOADS = 'downloads';
 
+import { getDownloadedEpisodes, removeDownload } from '../services/downloadManager';
+
 // ─────────────────────────────────────────────────────────────────
 // Progress bar shown on the thumbnail
 // ─────────────────────────────────────────────────────────────────
 function ThumbnailProgressBar({ progressSec, durationSec }) {
   const { theme: appTheme } = useTheme();
-  const pStyles = usepStyles(appTheme);
+  const pStyles = usePStyles(appTheme);
   if (!durationSec || durationSec === 0) return null;
   const pct = Math.min((progressSec / durationSec) * 100, 100);
   if (pct <= 0) return null;
@@ -65,16 +65,7 @@ function ThumbnailProgressBar({ progressSec, durationSec }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Helper to resolve thumbnail URLs to absolute URLs
-// ─────────────────────────────────────────────────────────────────
-function resolveThumbnailUrl(url) {
-  if (!url) return null;
-  if (url.startsWith('http') || url.startsWith('file://')) return url; // already absolute
-  return `${API_BASE_URL}${url}`; // make it absolute
-}
-
-const usepStyles = (appTheme) => StyleSheet.create({
+const usePStyles = (appTheme) => StyleSheet.create({
   track: {
     position: 'absolute',
     bottom: 0,
@@ -91,13 +82,22 @@ const usepStyles = (appTheme) => StyleSheet.create({
 });
 
 // ─────────────────────────────────────────────────────────────────
+// Helper to resolve thumbnail URLs to absolute URLs
+// ─────────────────────────────────────────────────────────────────
+function resolveThumbnailUrl(url) {
+  if (!url) return null;
+  if (url.startsWith('http') || url.startsWith('file://')) return url; // already absolute
+  return `${API_BASE_URL}${url}`; // make it absolute
+}
+
+
+// ─────────────────────────────────────────────────────────────────
 // Show card — matches the UI reference image exactly
 // thumbnail on left, title + category + EP.X / EP.TOTAL on right
 // ─────────────────────────────────────────────────────────────────
 function ShowCard({ item, onPress, onLongPress, selectionMode, selected, onDelete }) {
   const { theme: appTheme } = useTheme();
-  const cardStyles = usecardStyles(appTheme);
-  const pStyles = usepStyles(appTheme);
+  const cardStyles = useCardStyles(appTheme);
   const progressPct =
     item.duration_sec > 0
       ? Math.min(Math.round((item.progress_sec / item.duration_sec) * 100), 100)
@@ -165,7 +165,7 @@ function ShowCard({ item, onPress, onLongPress, selectionMode, selected, onDelet
 
         {/* EP.X / EP.TOTAL */}
         <Text style={cardStyles.epLine}>
-          Lec.{item.episode_num} {'/'} Lec.{item.total_episodes || '?'}
+          EP.{item.episode_num} {'/'} EP.{item.total_episodes || '?'}
         </Text>
       </View>
 
@@ -179,7 +179,7 @@ function ShowCard({ item, onPress, onLongPress, selectionMode, selected, onDelet
   );
 }
 
-const usecardStyles = (appTheme) => StyleSheet.create({
+const useCardStyles = (appTheme) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     backgroundColor: appTheme.surface,
@@ -253,14 +253,14 @@ const usecardStyles = (appTheme) => StyleSheet.create({
     fontWeight: '500',
     marginTop: 2,
   },
-});
+});;
 
 // ─────────────────────────────────────────────────────────────────
 // Empty state component
 // ─────────────────────────────────────────────────────────────────
 function EmptyState({ icon, title, subtitle }) {
   const { theme: appTheme } = useTheme();
-  const emptyStyles = useemptyStyles(appTheme);
+  const emptyStyles = useEmptyStyles(appTheme);
   return (
     <View style={emptyStyles.wrap}>
       <Ionicons name={icon} size={48} color={appTheme.border} />
@@ -270,7 +270,7 @@ function EmptyState({ icon, title, subtitle }) {
   );
 }
 
-const useemptyStyles = (appTheme) => StyleSheet.create({
+const useEmptyStyles = (appTheme) => StyleSheet.create({
   wrap: {
     alignItems: 'center',
     paddingTop: 60,
@@ -287,7 +287,7 @@ const useemptyStyles = (appTheme) => StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 32,
   },
-});
+});;
 
 // ─────────────────────────────────────────────────────────────────
 // Guest screen
@@ -305,12 +305,12 @@ function GuestScreen() {
 // Main screen
 // ─────────────────────────────────────────────────────────────────
 export default function MyListScreen() {
-  const { theme: appTheme } = useTheme();
-  const styles = usestyles(appTheme);
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const route = useRoute();
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
 
   const accessToken = useSelector((state) => state.auth?.accessToken);
   const bookmarks = useSelector(selectBookmarks);
@@ -325,6 +325,7 @@ export default function MyListScreen() {
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [downloads, setDownloads] = useState([]);
 
   // Fetch data on mount if authenticated and not yet loaded
   useEffect(() => {
@@ -345,9 +346,10 @@ export default function MyListScreen() {
     useCallback(() => {
       if (!accessToken) return;
       // Refetch to ensure we have the latest bookmarks and watch history
-      if (bookmarksLoaded) dispatch(fetchBookmarks());
-      if (watchHistoryLoaded) dispatch(fetchWatchHistory());
-    }, [accessToken, bookmarksLoaded, watchHistoryLoaded, dispatch])
+      dispatch(fetchBookmarks());
+      dispatch(fetchWatchHistory());
+      getDownloadedEpisodes().then(setDownloads);
+    }, [accessToken, dispatch])
   );
 
   // ── Navigate to player from a bookmark or watch history entry ──
@@ -373,6 +375,7 @@ export default function MyListScreen() {
             is_free: true,
             coin_cost: 0,
             status: 'ready',
+            localVideoPath: entry.localVideoPath || null,
           },
         ],
         startEpisodeNum: entry.episode_num,
@@ -383,13 +386,15 @@ export default function MyListScreen() {
 
     // Immediately fetch the full episode list from backend
     // so the player has HLS URL and can scroll through all episodes
-    dispatch(
-      fetchShowPlayerPage({
-        showId: entry.show_id,
-        fromEp: Math.max(1, Math.floor((entry.episode_num - 1) / 30) * 30 + 1),
-        limit: 30,
-      })
-    );
+    if (!entry.localVideoPath) {
+      dispatch(
+        fetchShowPlayerPage({
+          showId: entry.show_id,
+          fromEp: Math.max(1, Math.floor((entry.episode_num - 1) / 30) * 30 + 1),
+          limit: 30,
+        })
+      );
+    }
 
     navigation.navigate(ROUTES.SHOW_PLAYER, { fromMyList: true });
   }, [dispatch, navigation]);
@@ -398,6 +403,7 @@ export default function MyListScreen() {
     let id;
     if (activeTab === TAB_SAVED) id = entry.bookmark_id;
     else if (activeTab === TAB_CONTINUE) id = entry.history_id;
+    else if (activeTab === TAB_DOWNLOADS) id = entry.episodeId;
 
     if (selectionMode) {
       setSelectedItems((prev) => {
@@ -421,6 +427,7 @@ export default function MyListScreen() {
       let id;
       if (activeTab === TAB_SAVED) id = entry.bookmark_id;
       else if (activeTab === TAB_CONTINUE) id = entry.history_id;
+      else if (activeTab === TAB_DOWNLOADS) id = entry.episodeId;
       setSelectedItems(new Set([id]));
     }
   }, [selectionMode, activeTab]);
@@ -441,6 +448,10 @@ export default function MyListScreen() {
         }));
       } else if (tab === TAB_CONTINUE) {
         dispatch(deleteWatchHistory({ historyId: item.history_id }));
+      } else if (tab === TAB_DOWNLOADS) {
+        await removeDownload(item.episodeId);
+        const updatedDownloads = await getDownloadedEpisodes();
+        setDownloads(updatedDownloads);
       }
     } else {
       if (activeTab === TAB_SAVED) {
@@ -458,6 +469,12 @@ export default function MyListScreen() {
         selectedItems.forEach(id => {
           dispatch(deleteWatchHistory({ historyId: id }));
         });
+      } else if (activeTab === TAB_DOWNLOADS) {
+        for (const id of selectedItems) {
+          await removeDownload(id);
+        }
+        const updatedDownloads = await getDownloadedEpisodes();
+        setDownloads(updatedDownloads);
       }
       cancelSelection();
     }
@@ -503,7 +520,7 @@ export default function MyListScreen() {
     ? "Are you sure you want to delete the selected videos from your list?"
     : "Are you sure you want to remove this video from your list?";
 
-  const totalCount = bookmarks.length + watchHistory.length;
+  const totalCount = bookmarks.length + watchHistory.length + downloads.length;
 
   if (!accessToken) {
     return (
@@ -532,12 +549,12 @@ export default function MyListScreen() {
       ) : (
         <>
           <View style={styles.header}>
-            <Text style={styles.title}>My Learning</Text>
+            <Text style={styles.title}>My List</Text>
             <View style={styles.countBadge}>
               <Text style={styles.countText}>{totalCount} Videos</Text>
             </View>
           </View>
-          <Text style={styles.subtitle}>Your saved courses and watch progress</Text>
+          <Text style={styles.subtitle}>Your saved shows and watch progress</Text>
         </>
       )}
 
@@ -573,7 +590,7 @@ export default function MyListScreen() {
           }}
         >
           <Text style={[styles.tabText, activeTab === TAB_DOWNLOADS && styles.tabTextActive]}>
-            Downloads
+            Downloads {downloads.length > 0 ? `(${downloads.length})` : ''}
           </Text>
         </TouchableOpacity>
       </View>
@@ -670,7 +687,57 @@ export default function MyListScreen() {
             )}
           />
         )
-      ) : null}
+      ) : (
+        // ── Downloads tab ──────────────────────────────
+        downloads.length === 0 ? (
+          <EmptyState
+            icon="download-outline"
+            title="No downloads yet"
+            subtitle="Download episodes to watch them offline"
+          />
+        ) : (
+          <FlatList
+            data={downloads}
+            keyExtractor={(item) => item.episodeId}
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <ShowCard
+                item={{
+                  show_id: item.showName, // mock for local playback
+                  show_title: item.showName || item.title,
+                  thumbnail_url: item.localImagePath,
+                  category: 'Downloaded',
+                  episode_id: item.episodeId,
+                  episode_num: item.episodeNum,
+                  duration_sec: item.duration,
+                  progress_sec: 0,
+                  total_episodes: item.episodeNum,
+                  tags: ['Offline'],
+                }}
+                selectionMode={selectionMode}
+                selected={selectedItems.has(item.episodeId)}
+                onDelete={() => handleDeleteDirect(item, TAB_DOWNLOADS)}
+                onPress={() => handleCardPressAction({
+                  episodeId: item.episodeId,
+                  show_id: item.showName || item.episodeId,
+                  show_title: item.showName || item.title,
+                  thumbnail_url: item.localImagePath,
+                  episode_id: item.episodeId,
+                  episode_num: item.episodeNum,
+                  duration_sec: item.duration,
+                  progress_sec: 0,
+                  total_episodes: 1, 
+                  localVideoPath: item.localVideoPath,
+                })}
+                onLongPress={() => handleCardLongPress({
+                  episodeId: item.episodeId,
+                })}
+              />
+            )}
+          />
+        )
+      )}
 
       {/* Delete Confirmation Modal */}
       <Modal visible={deleteModalVisible} transparent animationType="fade">
@@ -698,18 +765,11 @@ export default function MyListScreen() {
           </View>
         </View>
       </Modal>
-
-      {/* Downloads tab rendered inline */}
-      {activeTab === TAB_DOWNLOADS && (
-        <View style={{ flex: 1, marginHorizontal: -16 }}>
-          <DownloadsScreen />
-        </View>
-      )}
     </View>
   );
 }
 
-const usestyles = (appTheme) => StyleSheet.create({
+const useStyles = (appTheme) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: appTheme.deepBlack,
@@ -770,7 +830,7 @@ const usestyles = (appTheme) => StyleSheet.create({
     color: appTheme.white,
   },
   list: {
-    paddingBottom: 100,
+    paddingBottom: 100, // added extra padding bottom for the rectangular tab bar overlap prevention
   },
   loadingWrap: {
     flex: 1,
@@ -862,4 +922,4 @@ const usestyles = (appTheme) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-});
+});;

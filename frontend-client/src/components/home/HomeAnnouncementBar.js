@@ -1,4 +1,3 @@
-import { useTheme } from '../../context/ThemeContext';
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,9 +10,6 @@ export const HOME_ANNOUNCEMENT_BAR_HEIGHT = 76;
  * Crimson announcement strip (over Home search bar).
  */
 export default function HomeAnnouncementBar({ announcements, onDismiss }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
-
   const [index, setIndex] = useState(0);
   const list = Array.isArray(announcements) ? announcements.slice(0, 3) : [];
 
@@ -59,7 +55,7 @@ export default function HomeAnnouncementBar({ announcements, onDismiss }) {
           hitSlop={12}
           style={({ pressed }) => [styles.closeBtn, pressed && styles.closeBtnPressed]}
         >
-          <Ionicons name="close" size={20} color={appTheme.white} />
+          <Ionicons name="close" size={20} color={theme.white} />
         </Pressable>
       </View>
       {list.length > 1 ? (
@@ -76,7 +72,7 @@ export default function HomeAnnouncementBar({ announcements, onDismiss }) {
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
+const styles = StyleSheet.create({
   wrap: {
     width: '100%',
     zIndex: 1000,
@@ -90,11 +86,11 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingLeft: 14,
     paddingRight: 10,
     borderRadius: 14,
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.crimson,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.28)',
     gap: 12,
-    shadowColor: appTheme.primary,
+    shadowColor: theme.crimson,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.45,
     shadowRadius: 10,
@@ -107,7 +103,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     gap: 4,
   },
   title: {
-    color: appTheme.white,
+    color: theme.white,
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.2,
@@ -142,7 +138,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.4)',
   },
   dotActive: {
-    backgroundColor: appTheme.white,
+    backgroundColor: theme.white,
     width: 14,
   },
 });

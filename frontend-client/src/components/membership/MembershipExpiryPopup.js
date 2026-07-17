@@ -1,4 +1,3 @@
-import { useTheme } from '../../context/ThemeContext';
 import React from 'react';
 import {
   Modal,

@@ -1,4 +1,3 @@
-import { useTheme } from '../../context/ThemeContext';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -130,7 +129,7 @@ export default function ShortVideoReelItem({
   const bottomControlsPadding = showOttOverlayControls
     ? (itemHeight ? 10 : insets.bottom)
     : itemHeight
-      ? Math.max(insets.bottom + 90, 100)
+      ? Math.max(insets.bottom + 34, 44)
       : Math.max(insets.bottom + 18, 24);
   const dramaVideoMaxHeight = Math.max(layoutHeight - insets.top - bottomControlsPadding - 24, 0);
   const dramaVideoHeight = Math.min(windowWidth * (16 / 9), dramaVideoMaxHeight);
@@ -1003,7 +1002,7 @@ export default function ShortVideoReelItem({
 
                 <View style={styles.epBadge}>
                   <Ionicons name="videocam" size={12} color={shortVideoTheme.crimson} />
-                  <Text style={styles.epBadgeText}>Lec.{item.episode_num}</Text>
+                  <Text style={styles.epBadgeText}>EP.{item.episode_num}</Text>
                 </View>
 
                 <View style={styles.tagsRow}>
@@ -1083,7 +1082,7 @@ export default function ShortVideoReelItem({
                   color={shortVideoTheme.crimson}
                 />
                 <Text style={styles.episodeText}>
-                  Lec.{item.episode_num} / Lec.{item.total_episodes}
+                  EP.{item.episode_num} / EP.{item.total_episodes}
                 </Text>
                 <View style={{ flex: 1 }} />
                 <Text style={styles.watchAllText}>Watch All</Text>

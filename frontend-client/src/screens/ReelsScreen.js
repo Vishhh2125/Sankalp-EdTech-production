@@ -26,7 +26,6 @@ import HomeHeroSlider from '../components/home/HomeHeroSlider';
 import HomeShowSection from '../components/home/HomeShowSection';
 import { fetchHeroBanners } from '../components/home/homePromoApi';
 import { ROUTES } from '../constants/routes';
-import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { clearPendingHomeBanner } from '../redux/slices/promoFlowSlice';
 import { API_BASE_URL } from '../constants/config';
@@ -101,7 +100,7 @@ function ThumbnailProgressBar({ progressSec, durationSec }) {
   );
 }
 
-function DramaCard({ item, onPress }) {
+const DramaCard = ({ item, onPress }) => {
   const { theme: appTheme } = useTheme();
   const styles = useStyles(appTheme);
   return (
@@ -113,7 +112,7 @@ function DramaCard({ item, onPress }) {
           resizeMode="cover"
         />
         {item.tag && (
-          <View style={[styles.statusTag, { backgroundColor: item.tag === 'Hot' ? appTheme.primary : '#7B2FFF' }]}>
+          <View style={[styles.statusTag, { backgroundColor: item.tag === 'Hot' ? '#FF2D55' : '#7B2FFF' }]}>
             <Text style={styles.tagText}>{item.tag}</Text>
           </View>
         )}
@@ -134,9 +133,9 @@ function DramaCard({ item, onPress }) {
       </Text>
     </TouchableOpacity>
   );
-}
+};
 
-function PackageCard({ item, onPress }) {
+const PackageCard = ({ item, onPress }) => {
   const { theme: appTheme } = useTheme();
   const styles = useStyles(appTheme);
   return (
@@ -149,7 +148,7 @@ function PackageCard({ item, onPress }) {
             resizeMode="cover"
           />
         ) : (
-          <View style={[styles.posterImage, { backgroundColor: appTheme.surface }]} />
+          <View style={[styles.posterImage, { backgroundColor: '#1A0020' }]} />
         )}
       </View>
       <Text style={styles.dramaTitle} numberOfLines={2}>{item.title}</Text>
@@ -158,7 +157,7 @@ function PackageCard({ item, onPress }) {
       </Text>
     </TouchableOpacity>
   );
-}
+};
 
 export default function PopularScreen() {
   const { theme: appTheme } = useTheme();
@@ -671,7 +670,7 @@ export default function PopularScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle={appTheme.isDark ? 'light-content' : 'dark-content'} />
+      <StatusBar barStyle="light-content" />
 
       <View
         style={styles.header}
@@ -680,7 +679,7 @@ export default function PopularScreen() {
         <View style={styles.searchColumn}>
           <View style={styles.searchRow}>
             <View style={[styles.searchBar, showFilterButton && styles.searchBarWithFilter]}>
-              <Ionicons name="search" size={18} color={appTheme.isDark ? '#666' : '#555'} style={styles.searchIcon} />
+              <Ionicons name="search" size={18} color="#666" style={styles.searchIcon} />
               {selectedTags.length > 0 ? (
                 <ScrollView
                   horizontal
@@ -708,8 +707,8 @@ export default function PopularScreen() {
                 <TextInput
                   ref={searchInputRef}
                   style={styles.searchInput}
-                  placeholder="Search course or tags..."
-                  placeholderTextColor={appTheme.isDark ? '#666' : '#9CA3AF'}
+                  placeholder="Search dramas or tags..."
+                  placeholderTextColor="#666"
                   value={searchQuery}
                   onChangeText={handleSearchTextChange}
                   onFocus={handleSearchFocus}
@@ -801,10 +800,10 @@ export default function PopularScreen() {
               })
             }
           >
-            <FontAwesome6 name="crown" size={22} color={appTheme.isDark ? '#FFD700' : '#FF5C1A'} />
+            <FontAwesome6 name="crown" size={22} color="#FFD700" />
           </TouchableOpacity>
           <TouchableOpacity onPress={goToEarnRewards} hitSlop={8}>
-            <Ionicons name="gift" size={24} color={appTheme.isDark ? '#FFD700' : '#FF5C1A'} />
+            <Ionicons name="gift" size={24} color="#FFD700" />
           </TouchableOpacity>
         </View>
       </View>
@@ -1144,11 +1143,8 @@ const useStyles = (appTheme) => StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-
     backgroundColor: 'rgba(0,0,0,0.55)',
-
     zIndex: 100,
-
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1201,7 +1197,7 @@ const useStyles = (appTheme) => StyleSheet.create({
   tabContainer: { paddingHorizontal: 16, paddingVertical: 15 },
   tabScrollContent: { flexDirection: 'row', gap: 20 },
   tabText: { color: '#999', fontSize: 16, fontWeight: '600' },
-  activeTabText: { color: '#FFF', fontSize: 18, borderBottomWidth: 2, borderBottomColor: '#FFF' },
+  activeTabText: { color: appTheme.isDark ? '#FFF' : '#1A1D29', fontSize: 18, borderBottomWidth: 2, borderBottomColor: appTheme.isDark ? '#FFF' : '#1A1D29' },
   listContent: { paddingHorizontal: 8, paddingBottom: 20 },
   columnWrapper: { justifyContent: 'flex-start', gap: 8, marginBottom: 15 },
   cardContainer: { width: COLUMN_WIDTH },
@@ -1235,8 +1231,8 @@ const useStyles = (appTheme) => StyleSheet.create({
     backgroundColor: appTheme.crimson,
     borderRadius: 2,
   },
-  dramaTitle: { color: '#FFF', fontSize: 13, marginTop: 8, fontWeight: '500', lineHeight: 18 },
-  dramaTagsText: { color: '#E0E0E0', fontSize: 11, marginTop: 4, fontWeight: '400' },
+  dramaTitle: { color: appTheme.isDark ? '#FFF' : '#1A1D29', fontSize: 13, marginTop: 8, fontWeight: '500', lineHeight: 18 },
+  dramaTagsText: { color: appTheme.isDark ? '#E0E0E0' : '#667085', fontSize: 11, marginTop: 4, fontWeight: '400' },
   categoryText: { color: '#666', fontSize: 11, marginTop: 4 },
   homeScrollContent: { paddingHorizontal: 16, paddingBottom: 24 },
   expandModal: { flex: 1, backgroundColor: appTheme.background },
@@ -1247,7 +1243,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  expandTitle: { color: '#fff', fontSize: 20, fontWeight: '800' },
+  expandTitle: { color: appTheme.isDark ? '#fff' : '#1A1D29', fontSize: 20, fontWeight: '800' },
   expandTabContainer: {
     paddingHorizontal: 16,
     paddingBottom: 12,
@@ -1262,7 +1258,6 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 24,
-
     overflow: 'hidden',
   },
-});
+});;

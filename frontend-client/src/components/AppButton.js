@@ -2,7 +2,6 @@ import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { theme } from '../constants/theme';
-import { useTheme } from '../context/ThemeContext';
 
 export default function AppButton({
   title,
@@ -12,8 +11,6 @@ export default function AppButton({
   style,
   textStyle,
 }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
   return (
     <Pressable
       accessibilityRole="button"
@@ -21,20 +18,20 @@ export default function AppButton({
       disabled={disabled}
       style={({ pressed }) => [
         styles.base,
-        variant === 'primary' ? { backgroundColor: appTheme.primary } : { backgroundColor: appTheme.border },
+        styles[variant],
         disabled && styles.disabled,
         pressed && !disabled && styles.pressed,
         style,
       ]}
     >
-      <Text style={[{ color: appTheme.textPrimary, fontWeight: '600' }, textStyle]}>
+      <Text style={[styles.text, styles[`${variant}Text`], textStyle]}>
         {title}
       </Text>
     </Pressable>
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
+const styles = StyleSheet.create({
   base: {
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -43,11 +40,23 @@ const useStyles = (appTheme) => StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
   },
+  primary: {
+    backgroundColor: theme.primary,
+  },
+  secondary: {
+    backgroundColor: theme.border,
+  },
   disabled: {
     opacity: 0.6,
   },
   pressed: {
     opacity: 0.85,
   },
+  text: {
+    color: theme.white,
+    fontWeight: '600',
+  },
+  primaryText: {},
+  secondaryText: {},
 });
 

@@ -6,13 +6,12 @@ import {
   StatusBar,
   StyleSheet,
   View,
-  TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
-import { useTheme } from '../context/ThemeContext';
+
 import {
   setForYouDramaSheetSession,
   setForYouReopenSheetAfterPlayer,
@@ -61,8 +60,6 @@ function reelItemToHomeSelected(reelItem) {
 }
 
 export default function ShowPlayerScreen({ navigation }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
   const dispatch = useDispatch();
   const route = useRoute();
   const isFocused = useIsFocused();
@@ -136,7 +133,7 @@ export default function ShowPlayerScreen({ navigation }) {
     if (episodes.length === 0) return;
     const ep = episodes[startIndex];
     recordWatchHistory(ep, startProgressSec || 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchedRangesRef = useRef(new Set());
@@ -353,22 +350,25 @@ export default function ShowPlayerScreen({ navigation }) {
 
   if (episodes.length === 0) {
     return (
-      <View style={[styles.centered, { backgroundColor: appTheme.background }]}>
-        <ActivityIndicator size="large" color={appTheme.primary} />
+      <View style={styles.centered}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <ActivityIndicator size="large" color={shortVideoTheme.crimson} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.screen, { backgroundColor: appTheme.background }]} onLayout={onScreenLayout}>
+    <View style={styles.screen} onLayout={onScreenLayout}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
       {!isLandscape ? (
-        <TouchableOpacity style={[styles.backBtnWrapper, { top: insets.top + 10 }]} onPress={handleClose}>
-          <View style={[styles.backBtnInner, { backgroundColor: appTheme.elevatedSurface }]}>
-            <Ionicons name="chevron-back" size={28} color={appTheme.textPrimary} />
-          </View>
-        </TouchableOpacity>
+      <Pressable
+        style={[styles.backButton, { top: insets.top + 10 }]}
+        onPress={handleClose}
+        hitSlop={14}
+      >
+        <Ionicons name="chevron-back" size={28} color="#fff" />
+      </Pressable>
       ) : null}
 
       <FlatList
@@ -380,44 +380,44 @@ export default function ShowPlayerScreen({ navigation }) {
           (() => {
             const isFinalEpisode = !hasMore && index === episodes.length - 1;
             return (
-              <ShortVideoReelItem
-                item={item}
-                isActive={index === currentIndex && isFocused}
-                shouldPreload={Math.abs(index - currentIndex) === 1}
-                isFocused={isFocused}
-                streamBase=""
-                itemHeight={itemHeight}
-                renderTopOverlay={() => null}
-                onReturnToDramaSheet={detailsSheetSource ? returnToDramaSheet : undefined}
-                walletReturnParams={
-                  fromHome ? { fromHome: true } : fromForYou ? { fromForYou: true } : null
-                }
-                showEpisodeStrip={dramaSheetSource === 'forYou'}
-                repeatPlayback={isFinalEpisode}
-                autoAdvanceOnEnd={!isFinalEpisode}
-                onPlaybackEnd={() => handlePlaybackEnd(index)}
-                // Seek to saved progress on first render of the starting episode
-                initialSeekSec={
-                  index === startIndex && !hasSeenRef.current
-                    ? startProgressSec || 0
-                    : 0
-                }
-                onFirstFrameReady={
-                  index === startIndex && !hasSeenRef.current
-                    ? () => { hasSeenRef.current = true; }
-                    : null
-                }
-                // Progress update for active episode only
-                onProgressUpdate={
-                  index === currentIndex && accessToken
-                    ? (progressSec) => {
-                      currentProgressSecRef.current = progressSec;
-                      recordWatchHistory(item, progressSec);
-                    }
-                    : null
-                }
-                showPlaybackSpeedControl
-              />
+          <ShortVideoReelItem
+            item={item}
+            isActive={index === currentIndex && isFocused}
+            shouldPreload={Math.abs(index - currentIndex) === 1}
+            isFocused={isFocused}
+            streamBase=""
+            itemHeight={itemHeight}
+            renderTopOverlay={() => null}
+            onReturnToDramaSheet={detailsSheetSource ? returnToDramaSheet : undefined}
+            walletReturnParams={
+              fromHome ? { fromHome: true } : fromForYou ? { fromForYou: true } : null
+            }
+            showEpisodeStrip={dramaSheetSource === 'forYou'}
+            repeatPlayback={isFinalEpisode}
+            autoAdvanceOnEnd={!isFinalEpisode}
+            onPlaybackEnd={() => handlePlaybackEnd(index)}
+            // Seek to saved progress on first render of the starting episode
+            initialSeekSec={
+              index === startIndex && !hasSeenRef.current
+                ? startProgressSec || 0
+                : 0
+            }
+            onFirstFrameReady={
+              index === startIndex && !hasSeenRef.current
+                ? () => { hasSeenRef.current = true; }
+                : null
+            }
+            // Progress update for active episode only
+            onProgressUpdate={
+              index === currentIndex && accessToken
+                ? (progressSec) => {
+                    currentProgressSecRef.current = progressSec;
+                    recordWatchHistory(item, progressSec);
+                  }
+                : null
+            }
+            showPlaybackSpeedControl
+          />
             );
           })()
         )}
@@ -440,7 +440,7 @@ export default function ShowPlayerScreen({ navigation }) {
         ListFooterComponent={
           loading ? (
             <View style={[styles.footer, { height: itemHeight }]}>
-              <ActivityIndicator size="small" color={appTheme.primary} />
+              <ActivityIndicator size="small" color={shortVideoTheme.crimson} />
             </View>
           ) : null
         }
@@ -449,22 +449,22 @@ export default function ShowPlayerScreen({ navigation }) {
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
-  screen: { flex: 1 },
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: '#000' },
   centered: {
     flex: 1,
+    backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  backBtnWrapper: {
+  backButton: {
     position: 'absolute',
     left: 12,
     zIndex: 100,
-  },
-  backBtnInner: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
   },

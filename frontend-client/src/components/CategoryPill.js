@@ -2,11 +2,8 @@ import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { theme } from '../constants/theme';
-import { useTheme } from '../context/ThemeContext';
 
 export default function CategoryPill({ label, selected = false, onPress }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
   return (
     <Pressable
       accessibilityRole="button"
@@ -24,29 +21,29 @@ export default function CategoryPill({ label, selected = false, onPress }) {
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
+const styles = StyleSheet.create({
   pill: {
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
   },
   pillSelected: {
-    borderColor: appTheme.primary,
-    backgroundColor: appTheme.border,
+    borderColor: theme.primary,
+    backgroundColor: theme.border,
   },
   pillPressed: {
     opacity: 0.85,
   },
   text: {
-    color: appTheme.white,
+    color: theme.white,
     fontWeight: '700',
     fontSize: 13,
   },
   textSelected: {
-    color: appTheme.blush,
+    color: theme.blush,
   },
 });
 

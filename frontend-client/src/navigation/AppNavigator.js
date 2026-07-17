@@ -9,17 +9,18 @@ import AssignmentDetailScreen from '../screens/AssignmentDetailScreen';
 import QuizTakingScreen from '../screens/QuizTakingScreen';
 import PackageDetailScreen from '../screens/PackageDetailScreen';
 import { ROUTES } from '../constants/routes';
-import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
+  const { theme: appTheme } = useTheme();
+
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: theme.deepBlack }, // FIX: prevent white flash
+        contentStyle: { backgroundColor: appTheme.deepBlack }, // FIX: prevent white flash
       }}
     >
       <Stack.Screen name={ROUTES.MAIN_TABS} component={BottomTabNavigator} />
@@ -45,8 +46,8 @@ export default function AppNavigator() {
         component={TopUpScreen}
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: theme.deepBlack },
-          headerTintColor: theme.white,
+          headerStyle: { backgroundColor: appTheme.deepBlack },
+          headerTintColor: appTheme.white,
           headerShadowVisible: false,
           title: 'Top Up',
           animation: 'slide_from_bottom',

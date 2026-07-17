@@ -28,8 +28,8 @@ const iosClientIdPrefix = iosClientId.split('.').shift() || '';
 
 module.exports = {
   expo: {
-    name: "AplhaMinds",
-    slug: "7k",
+    name: "7K",
+    slug: "7K",
     scheme: [
       "7k",
       androidClientIdPrefix ? `com.googleusercontent.apps.${androidClientIdPrefix}` : null,
@@ -37,10 +37,10 @@ module.exports = {
     ].filter(Boolean),
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/AlphaMinds.png",
+    icon: "./assets/logo.png",
     userInterfaceStyle: "light",
     splash: {
-      image: "./assets/AlphaMinds.png",
+      image: "./assets/splash-icon.png",
       resizeMode: "contain",
       backgroundColor: "#ffffff"
     },
@@ -54,7 +54,7 @@ module.exports = {
     android: {
       package: "com.samyak_8505.x7K",
       adaptiveIcon: {
-        foregroundImage: "./assets/AlphaMinds.png",
+        foregroundImage: "./assets/logo.png",
         backgroundColor: "#ffffff"
       },
       permissions: [
@@ -126,9 +126,9 @@ module.exports = {
     ],
     extra: {
       eas: {
-        projectId: "5dd61ee9-e865-46d2-bda6-9064e3107aa3"
+        projectId: "7b621b6c-0a23-411c-bf10-5b72fba2f608"
       }
     },
-    owner: "prasen_10"
+    owner: "samyak_8505"
   }
 };

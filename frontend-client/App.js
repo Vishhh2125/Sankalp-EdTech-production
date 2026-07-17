@@ -1,4 +1,3 @@
-import { StatusBar } from 'expo-status-bar';
 import { Provider } from 'react-redux';
 //import { CaptureProtectionProvider } from 'react-native-capture-protection';
 import { LogBox } from 'react-native';
@@ -30,8 +29,6 @@ setAuthActions({
 setFeedStore(store);
 setShowPlayerStore(store);
 
-import { ThemeProvider } from './src/context/ThemeContext';
-
 export default function App() {
   return (
     <NetworkProvider>
@@ -41,9 +38,7 @@ export default function App() {
           <PlaybackVolumeProvider>
             <VideoQualityProvider>
               <LandscapePlaybackProvider>
-                <ThemeProvider>
-                  <RootStackNavigator />
-                </ThemeProvider>
+              <RootStackNavigator />
               </LandscapePlaybackProvider>
             </VideoQualityProvider>
           </PlaybackVolumeProvider>

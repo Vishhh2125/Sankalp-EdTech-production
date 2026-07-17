@@ -14,7 +14,6 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { formatCount } from './shortVideoPlayer/utils';
 import { theme } from '../constants/theme';
-import { useTheme } from '../context/ThemeContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SHEET_HEIGHT = Math.round(SCREEN_HEIGHT * 0.9);
@@ -66,12 +65,12 @@ function EpisodeCell({ episode, isCurrentEpisode, onPress }) {
       onPress={() => onPress && onPress(episode)}
       disabled={!onPress}
     >
-      <Text style={[styles.episodeNumber, { color: appTheme.textPrimary }]}>{episode.episode_num}</Text>
+      <Text style={styles.episodeNumber}>{episode.episode_num}</Text>
       {locked ? (
         <Ionicons
           name="lock-closed"
           size={15}
-          color={appTheme.textSecondary}
+          color="rgba(255,255,255,0.6)"
           style={styles.lockIcon}
         />
       ) : null}
@@ -90,8 +89,6 @@ export default function DramaDetailsSheet({
   onRangeChange,
   onEpisodePress,
 }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
   const [tab, setTab] = useState(initialTab);
   const [activeRangeStart, setActiveRangeStart] = useState(1);
   const scrollRef = useRef(null);
@@ -117,7 +114,16 @@ export default function DramaDetailsSheet({
     return list;
   }, [item]);
 
-  const ranges = useMemo(() => buildRanges(item?.episodeCount), [item]);
+  const scrollToRange = (rangeKey) => {
+    setRange(rangeKey);
+    if (rangeKey === '1-30') {
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+    } else {
+      // 30 episodes / 6 columns = 5 full rows.
+      // Each row is approx 65px (cell height + gap)
+      scrollRef.current?.scrollTo({ y: 320, animated: true });
+    }
+  };
 
   if (!item) return null;
 
@@ -131,36 +137,36 @@ export default function DramaDetailsSheet({
       <View style={styles.backdropWrap}>
         <Pressable style={styles.backdrop} onPress={onClose} />
 
-        <View style={[styles.sheet, { backgroundColor: appTheme.background, borderColor: appTheme.border }]}>
+        <View style={styles.sheet}>
           {/* Header */}
           <View style={styles.topRow}>
             <View style={styles.posterRow}>
               <Image source={item.image} style={styles.poster} resizeMode="cover" />
               <View style={styles.posterMeta}>
-                <Text style={[styles.title, { color: appTheme.textPrimary }]} numberOfLines={1}>
+                <Text style={styles.title} numberOfLines={1}>
                   {item.title}
                 </Text>
-                <Text style={[styles.metaText, { color: appTheme.textSecondary }]}>{item.views} Views</Text>
+                <Text style={styles.metaText}>{item.views} Views</Text>
               </View>
             </View>
-            <TouchableOpacity style={[styles.closeBtn, { backgroundColor: appTheme.elevatedSurface }]} onPress={onClose}>
-              <Ionicons name="close" size={26} color={appTheme.textPrimary} />
-            </TouchableOpacity>
+            <Pressable onPress={onClose} hitSlop={15}>
+              <Ionicons name="close" size={26} color={theme.white} />
+            </Pressable>
           </View>
 
           {/* Tabs */}
-          <View style={[styles.tabsRow, { borderBottomColor: appTheme.border }]}>
+          <View style={styles.tabsRow}>
             <Pressable onPress={() => setTab('synopsis')} style={styles.tabBtn}>
-              <Text style={[styles.tabText, { color: tab === 'synopsis' ? appTheme.textPrimary : appTheme.textSecondary }]}>
+              <Text style={[styles.tabText, tab === 'synopsis' && styles.tabTextActive]}>
                 Synopsis
               </Text>
-              {tab === 'synopsis' && <View style={[styles.tabUnderline, { backgroundColor: appTheme.primary }]} />}
+              {tab === 'synopsis' && <View style={styles.tabUnderline} />}
             </Pressable>
             <Pressable onPress={() => setTab('episodes')} style={styles.tabBtn}>
-              <Text style={[styles.tabText, { color: tab === 'episodes' ? appTheme.textPrimary : appTheme.textSecondary }]}>
+              <Text style={[styles.tabText, tab === 'episodes' && styles.tabTextActive]}>
                 Episodes
               </Text>
-              {tab === 'episodes' && <View style={[styles.tabUnderline, { backgroundColor: appTheme.primary }]} />}
+              {tab === 'episodes' && <View style={styles.tabUnderline} />}
             </Pressable>
           </View>
 
@@ -171,8 +177,8 @@ export default function DramaDetailsSheet({
           >
             {tab === 'synopsis' ? (
               <View>
-                <Text style={[styles.sectionTitle, { color: appTheme.textPrimary }]}>Synopsis</Text>
-                <Text style={[styles.synopsis, { color: appTheme.textSecondary }]}>{synopsisText}</Text>
+                <Text style={styles.sectionTitle}>Synopsis</Text>
+                <Text style={styles.synopsis}>{synopsisText}</Text>
                 <View style={styles.tagsRow}>
                   {tags.map((t) => (
                     <Tag key={t} label={t} />
@@ -182,23 +188,26 @@ export default function DramaDetailsSheet({
             ) : (
               <View>
                 <View style={styles.rangeRow}>
-                  {ranges.map((r) => (
-                    <Pressable key={r.key} onPress={() => setActiveRangeStart(r.start)}>
-                      <Text style={[styles.rangeText, { color: activeRangeStart === r.start ? appTheme.textPrimary : appTheme.textSecondary }]}>
-                        {r.label}
-                      </Text>
-                      {activeRangeStart === r.start && <View style={[styles.rangeUnderline, { backgroundColor: appTheme.primary }]} />}
-                    </Pressable>
-                  ))}
+                  <Pressable onPress={() => scrollToRange('1-30')}>
+                    <Text style={[styles.rangeText, range === '1-30' && styles.rangeTextActive]}>
+                      1-30
+                    </Text>
+                    {range === '1-30' && <View style={styles.rangeUnderline} />}
+                  </Pressable>
+                  <Pressable onPress={() => scrollToRange('31-57')}>
+                    <Text style={[styles.rangeText, range === '31-57' && styles.rangeTextActive]}>
+                      31-57
+                    </Text>
+                    {range === '31-57' && <View style={styles.rangeUnderline} />}
+                  </Pressable>
                 </View>
 
                 <View style={styles.episodesGrid}>
-                  {allEpisodes
-                    .filter((n) => n >= activeRangeStart && n < activeRangeStart + EPISODES_PER_PAGE)
-                    .map((n) => {
-                      const epData = { episode_num: n, is_locked: n > (item?.unlockedUntil || 0), status: 'ready' };
-                      return <EpisodeCell key={n} episode={epData} isCurrentEpisode={n === item.episode_num} onPress={onEpisodePress} />;
-                    })}
+                  {allEpisodes.map((n) => {
+                    const unlockedUntil = item?.unlockedUntil ?? 2;
+                    const locked = n > unlockedUntil;
+                    return <EpisodeCell key={n} number={n} locked={locked} />;
+                  })}
                 </View>
               </View>
             )}
@@ -209,21 +218,23 @@ export default function DramaDetailsSheet({
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
+const styles = StyleSheet.create({
   backdropWrap: {
     flex: 1,
     justifyContent: 'flex-end',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
   },
   sheet: {
     height: SHEET_HEIGHT,
+    backgroundColor: theme.deepBlack,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderWidth: 1,
-    paddingHorizontal: 16,
+    borderColor: theme.border,
+    paddingHorizontal: 16, // Reduced slightly for more grid space
     paddingTop: 16,
   },
   topRow: {
@@ -231,10 +242,6 @@ const useStyles = (appTheme) => StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     marginBottom: 20,
-  },
-  closeBtn: {
-    padding: 6,
-    borderRadius: 20,
   },
   posterRow: {
     flexDirection: 'row',
@@ -245,16 +252,19 @@ const useStyles = (appTheme) => StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 10,
+    backgroundColor: theme.surface,
   },
   posterMeta: {
     flex: 1,
     justifyContent: 'flex-start',
   },
   title: {
+    color: theme.white,
     fontSize: 21,
     fontWeight: '800',
   },
   metaText: {
+    color: theme.gray,
     fontSize: 13,
     fontWeight: '600',
     marginTop: 4,
@@ -263,14 +273,18 @@ const useStyles = (appTheme) => StyleSheet.create({
     flexDirection: 'row',
     gap: 24,
     borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
   },
   tabBtn: {
     paddingVertical: 12,
   },
   tabText: {
+    color: theme.gray,
+    fontSize: 22,
+    fontWeight: '700',
   },
   tabTextActive: {
-    color: theme.textPrimary,
+    color: theme.white,
   },
   tabUnderline: {
     position: 'absolute',
@@ -278,7 +292,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: theme.textPrimary,
+    backgroundColor: theme.white,
     borderRadius: 2,
   },
   content: {
@@ -286,13 +300,13 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingBottom: 50,
   },
   sectionTitle: {
-    color: theme.background,
+    color: theme.white,
     fontSize: 26,
     fontWeight: '800',
     marginBottom: 14,
   },
   synopsis: {
-    color: theme.textSecondary,
+    color: 'rgba(255,255,255,0.65)',
     fontSize: 21,
     lineHeight: 33,
   },
@@ -326,12 +340,12 @@ const useStyles = (appTheme) => StyleSheet.create({
     fontWeight: '700',
   },
   rangeTextActive: {
-    color: theme.textPrimary,
+    color: theme.white,
   },
   rangeUnderline: {
     marginTop: 4,
     height: 2,
-    backgroundColor: theme.textPrimary,
+    backgroundColor: theme.white,
     width: '100%',
   },
   episodesGrid: {
@@ -351,7 +365,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     marginBottom: 2, // Vertical gap
   },
   episodeNumber: {
-    color: theme.textPrimary,
+    color: theme.white,
     fontWeight: '900',
     fontSize: 22,
   },

@@ -1,4 +1,3 @@
-import { useTheme } from '../../context/ThemeContext';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
@@ -26,9 +25,6 @@ function resolveImageUrl(url) {
 }
 
 export default function HomeHeroSlider({ banners = [], onBannerPress }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
-
   const listRef = useRef(null);
   const [index, setIndex] = useState(0);
 
@@ -102,6 +98,15 @@ export default function HomeHeroSlider({ banners = [], onBannerPress }) {
                     {item.show_title || item.title}
                   </Text>
                 </View>
+
+                <View style={styles.heroPlayBtn}>
+                  <Ionicons
+                    name="play"
+                    size={28}
+                    color="#000"
+                    style={styles.heroPlayIcon}
+                  />
+                </View>
               </View>
             </Pressable>
           );
@@ -121,7 +126,7 @@ export default function HomeHeroSlider({ banners = [], onBannerPress }) {
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
+const styles = StyleSheet.create({
   wrap: {
     marginBottom: 20,
   },
@@ -142,7 +147,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     height: '100%',
   },
   imageFallback: {
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -166,12 +171,15 @@ const useStyles = (appTheme) => StyleSheet.create({
     width: 56,      // was 28
     height: 56,     // was 28
     borderRadius: 28,
-    backgroundcolor: appTheme.textPrimary,
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  heroPlayIcon: {
+    marginLeft: 3,
+  },
   heroShowName: {
-    color: '#FFFFFF',
+    color: theme.white,
     fontSize: 30,
     lineHeight: 34,
     fontWeight: '900',
@@ -192,7 +200,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.25)',
   },
   dotActive: {
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.crimson,
     width: 18,
   },
 });

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 
 import CoinIcon from '../components/CoinIcon';
@@ -31,7 +32,6 @@ import {
   PaystackCheckoutModal,
 } from '../components/payment/paystackCheckout';
 import { ROUTES } from '../constants/routes';
-import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { setCoins } from '../redux/slices/authSlice';
 import * as authService from '../services/authService';
@@ -42,9 +42,9 @@ const PAYMENT_GATEWAYS = [
 ];
 
 export default function TopUpScreen() {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
-
+  const { theme, isDarkMode } = useTheme();
+  const insets = useSafeAreaInsets();
+  const styles = useStyles(theme, insets);
   const navigation = useNavigation();
   const route = useRoute();
   const dispatch = useDispatch();
@@ -69,7 +69,7 @@ export default function TopUpScreen() {
       navigation.setOptions({
         headerLeft: () => (
           <Pressable onPress={handleReturnBack} hitSlop={12} style={{ paddingLeft: 4 }}>
-            <Ionicons name="chevron-back" size={26} color={appTheme.white} />
+            <Ionicons name="chevron-back" size={26} color={theme.white} />
           </Pressable>
         ),
       });
@@ -281,7 +281,6 @@ export default function TopUpScreen() {
         <View style={styles.balanceRow}>
           <CoinIcon size={28} color="#FFD700" />
           <Text style={styles.balanceValue}>{String(coins ?? 0)}</Text>
-          <Text style={styles.balanceUnit}>coins</Text>
         </View>
         <Text style={styles.balanceHint}>Select a pack below to top up instantly</Text>
       </View>
@@ -290,7 +289,7 @@ export default function TopUpScreen() {
 
       {loadingPacks ? (
         <View style={{ marginTop: 40, alignItems: 'center' }}>
-          <ActivityIndicator size="large" color={appTheme.primary} />
+          <ActivityIndicator size="large" color={theme.crimson} />
         </View>
       ) : packsError ? (
         <View style={styles.errorBox}>
@@ -329,7 +328,7 @@ export default function TopUpScreen() {
                     <Text style={styles.popularTagText}>BEST VALUE</Text>
                   </View>
                 ) : null}
-                <Ionicons name="chevron-forward" size={20} color={appTheme.gray} />
+                <Ionicons name="chevron-forward" size={20} color={theme.gray} />
               </View>
             </TouchableOpacity>
           ))}
@@ -457,71 +456,71 @@ export default function TopUpScreen() {
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
-  screen: { flex: 1, backgroundColor: appTheme.deepBlack, paddingHorizontal: 16 },
+const useStyles = (theme, insets = {}) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: theme.deepBlack, paddingHorizontal: 16 },
   balanceCard: {
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderRadius: 16,
     padding: 20,
     marginTop: 8,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
   },
-  balanceLabel: { color: appTheme.gray, fontSize: 13, fontWeight: '600' },
+  balanceLabel: { color: theme.gray, fontSize: 13, fontWeight: '600' },
   balanceRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10, gap: 8 },
-  balanceValue: { color: appTheme.white, fontSize: 36, fontWeight: '800' },
-  balanceUnit: { color: appTheme.gray, fontSize: 16, fontWeight: '600', marginTop: 8 },
-  balanceHint: { color: appTheme.darkGray, fontSize: 12, marginTop: 12 },
+  balanceValue: { color: theme.text, fontSize: 36, fontWeight: '800' },
+  balanceUnit: { color: theme.gray, fontSize: 16, fontWeight: '600', marginTop: 8 },
+  balanceHint: { color: theme.darkGray, fontSize: 12, marginTop: 12 },
   sectionTitle: {
-    color: appTheme.white,
+    color: theme.text,
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 12,
   },
   scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 32 },
+  scrollContent: { paddingBottom: 32 + (insets.bottom || 0) },
   packCard: {
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  featuredPack: { borderColor: appTheme.primary },
+  featuredPack: { borderColor: theme.primary },
   packLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   coinBadge: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,45,85,0.15)',
+    backgroundColor: theme.isDark ? 'rgba(255,92,26,0.15)' : 'rgba(255,76,0,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-  packTitle: { color: appTheme.white, fontSize: 16, fontWeight: '700' },
-  packSubtitle: { color: appTheme.gray, fontSize: 12, marginTop: 4 },
+  packTitle: { color: theme.text, fontSize: 16, fontWeight: '700' },
+  packSubtitle: { color: theme.gray, fontSize: 12, marginTop: 4 },
   packRight: { alignItems: 'flex-end' },
   popularTag: {
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.primary,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
     marginBottom: 6,
   },
-  popularTagText: { color: appTheme.textPrimary, fontSize: 9, fontWeight: '800' },
+  popularTagText: { color: '#fff', fontSize: 9, fontWeight: '800' },
   errorBox: { alignItems: 'center', marginTop: 24 },
-  errorText: { color: '#ff6b6b', fontSize: 14, textAlign: 'center' },
+  errorText: { color: theme.red, fontSize: 14, textAlign: 'center' },
   gatewayWrap: {
     marginTop: 16,
     marginBottom: 6,
   },
   gatewayLabel: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 12,
     fontWeight: '600',
     marginBottom: 8,
@@ -535,29 +534,29 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: appTheme.border,
-    backgroundColor: appTheme.deepBlack,
+    borderColor: theme.border,
+    backgroundColor: theme.isDark ? theme.deepBlack : '#FFF7ED',
     alignItems: 'center',
   },
   gatewayChipActive: {
-    borderColor: appTheme.primary,
-    backgroundColor: 'rgba(255,45,85,0.12)',
+    borderColor: theme.primary,
+    backgroundColor: theme.isDark ? 'rgba(255,92,26,0.12)' : 'rgba(255,76,0,0.08)',
   },
   gatewayChipText: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontWeight: '700',
   },
   gatewayChipTextActive: {
-    color: appTheme.white,
+    color: theme.primary,
   },
   retryBtn: {
     marginTop: 12,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.primary,
     borderRadius: 20,
   },
-  retryText: { color: appTheme.textPrimary, fontWeight: '700' },
+  retryText: { color: '#fff', fontWeight: '700' },
   confirmBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.72)',
@@ -565,33 +564,33 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingHorizontal: 24,
   },
   confirmCard: {
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderRadius: 20,
     padding: 22,
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
   },
-  confirmTitle: { color: appTheme.white, fontSize: 20, fontWeight: '700', marginBottom: 16 },
+  confirmTitle: { color: theme.text, fontSize: 20, fontWeight: '700', marginBottom: 16 },
   selectedPackBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: appTheme.deepBlack,
+    backgroundColor: theme.isDark ? theme.deepBlack : '#FFF7ED',
     padding: 14,
     borderRadius: 12,
     marginBottom: 16,
   },
-  selectedPackText: { color: appTheme.white, fontSize: 15, fontWeight: '700' },
-  selectedPackSub: { color: appTheme.gray, fontSize: 12, marginTop: 4 },
+  selectedPackText: { color: theme.text, fontSize: 15, fontWeight: '700' },
+  selectedPackSub: { color: theme.gray, fontSize: 12, marginTop: 4 },
   confirmActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12 },
   btnSecondary: { paddingVertical: 12, paddingHorizontal: 16 },
-  btnSecondaryText: { color: appTheme.gray, fontSize: 16, fontWeight: '600' },
+  btnSecondaryText: { color: theme.gray, fontSize: 16, fontWeight: '600' },
   btnPrimary: {
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.primary,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 12,
     minWidth: 110,
     alignItems: 'center',
   },
-  btnPrimaryText: { color: appTheme.textPrimary, fontSize: 16, fontWeight: '700' },
+  btnPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

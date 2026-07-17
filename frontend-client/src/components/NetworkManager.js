@@ -6,11 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNetwork } from '../context/NetworkContext';
 import { ROUTES } from '../constants/routes';
 import { theme } from '../constants/theme';
-import { useTheme } from '../context/ThemeContext';
 
 export default function NetworkManager({ navigationRef, navReady }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
   const { isOffline } = useNetwork();
   const insets = useSafeAreaInsets();
 
@@ -47,19 +44,19 @@ export default function NetworkManager({ navigationRef, navReady }) {
         }
       }}
     >
-      <Ionicons name="cloud-offline" size={20} color={appTheme.white} style={styles.icon} />
+      <Ionicons name="cloud-offline" size={20} color={theme.white} style={styles.icon} />
       <Text style={styles.text}>You are offline. Tap to view Downloads.</Text>
     </Pressable>
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
+const styles = StyleSheet.create({
   banner: {
     position: 'absolute',
     left: 16,
     right: 16,
     borderRadius: 8,
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.primary,
     paddingVertical: 12,
     paddingHorizontal: 16,
     flexDirection: 'row',
@@ -80,7 +77,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     marginRight: 8,
   },
   text: {
-    color: appTheme.white,
+    color: theme.white,
     fontSize: 14,
     fontWeight: '600',
   },

@@ -2,19 +2,18 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { theme } from '../constants/theme';
-import { useTheme } from '../context/ThemeContext';
 
 export default function AppCard({ children, style }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
-  return <View style={[styles.card, { backgroundColor: appTheme.surface, borderColor: appTheme.border }, style]}>{children}</View>;
+  return <View style={[styles.card, style]}>{children}</View>;
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
+const styles = StyleSheet.create({
   card: {
+    backgroundColor: theme.surface,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
+    borderColor: theme.border,
   },
 });
 

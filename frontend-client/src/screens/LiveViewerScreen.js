@@ -15,14 +15,11 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { theme } from '../constants/theme';
-import { useTheme } from '../context/ThemeContext';
 import { fetchLivePlayUrl, joinStream, leaveStream } from '../components/live/liveApi';
 import LiveProgressBar from '../components/live/LiveProgressBar';
 import useLandscapePlayback from '../components/shortVideoPlayer/useLandscapePlayback';
 
 export default function LiveViewerScreen() {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
   const route = useRoute();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -189,7 +186,7 @@ export default function LiveViewerScreen() {
       {!isLandscapeActive && (
         <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 8) }]}>
           <Pressable onPress={() => navigation.goBack()} hitSlop={12} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={26} color={appTheme.white} />
+            <Ionicons name="chevron-back" size={26} color={theme.white} />
           </Pressable>
           <View style={styles.titleWrap}>
             <Text style={styles.title} numberOfLines={1}>{title || 'Live stream'}</Text>
@@ -205,14 +202,14 @@ export default function LiveViewerScreen() {
             </View>
           ) : error ? (
             <View style={styles.messageBox}>
-              <Ionicons name="alert-circle-outline" size={40} color={appTheme.gray} />
+              <Ionicons name="alert-circle-outline" size={40} color={theme.gray} />
               <Text style={styles.messageText}>{error}</Text>
               <Pressable style={styles.retryBtn} onPress={loadPlayUrl}>
                 <Text style={styles.retryText}>Retry</Text>
               </Pressable>
             </View>
           ) : videoSource === 'YOUTUBE' ? (
-            <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: appTheme.background }]} pointerEvents="auto">
+            <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }]} pointerEvents="auto">
               <YoutubePlayer
                 height={isLandscapeActive ? windowHeight : windowWidth * (9 / 16)}
                 width={isLandscapeActive ? windowWidth : windowWidth}
@@ -292,7 +289,7 @@ export default function LiveViewerScreen() {
                   ]}
                 >
                   <Pressable style={styles.landscapeBackBtn} onPress={videoSource === 'YOUTUBE' ? exitLandscape : exitLandscape} hitSlop={12}>
-                    <Ionicons name="chevron-back" size={26} color={appTheme.white} />
+                    <Ionicons name="chevron-back" size={26} color={theme.white} />
                   </Pressable>
                   <Text style={styles.landscapeTitle} numberOfLines={1}>{title || 'Live stream'}</Text>
                 </Animated.View>
@@ -390,8 +387,8 @@ export default function LiveViewerScreen() {
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
-  screen: { flex: 1, backgroundColor: appTheme.deepBlack },
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: theme.deepBlack },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -400,23 +397,23 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
   backBtn: { padding: 4 },
   titleWrap: { flex: 1, marginLeft: 8 },
-  title: { color: appTheme.white, fontSize: 16, fontWeight: '700' },
+  title: { color: theme.white, fontSize: 16, fontWeight: '700' },
   playerWrap: {
     flex: 1,
-    backgroundColor: appTheme.background,
+    backgroundColor: '#000',
     position: 'relative',
   },
   video: { width: '100%', height: '100%' },
   messageBox: { alignItems: 'center', justifyContent: 'center', flex: 1, padding: 24 },
-  messageText: { color: appTheme.gray, fontSize: 14, marginTop: 12, textAlign: 'center' },
+  messageText: { color: theme.gray, fontSize: 14, marginTop: 12, textAlign: 'center' },
   retryBtn: {
     marginTop: 16,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: appTheme.crimson,
+    backgroundColor: theme.crimson,
     borderRadius: 8,
   },
-  retryText: { color: appTheme.white, fontWeight: '600' },
+  retryText: { color: theme.white, fontWeight: '600' },
   videoError: { position: 'absolute', top: 60, alignSelf: 'center', color: '#ff6b6b', fontSize: 12, padding: 12, textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.7)', borderRadius: 8 },
   loadingShimmer: { flex: 1, backgroundColor: '#1A0020' },
   shimmerBox: { flex: 1, backgroundColor: '#2A0038', opacity: 0.5 },
@@ -452,7 +449,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     zIndex: 10,
   },
   landscapeBackBtn: { padding: 4, marginRight: 12 },
-  landscapeTitle: { color: appTheme.white, fontSize: 18, fontWeight: '700', flex: 1 },
+  landscapeTitle: { color: theme.white, fontSize: 18, fontWeight: '700', flex: 1 },
 
   // Center controls wrapper (absolutely centered)
   centerControlsWrap: {

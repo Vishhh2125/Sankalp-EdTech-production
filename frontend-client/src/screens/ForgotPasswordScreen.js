@@ -11,7 +11,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { theme } from '../constants/theme';
-import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 import {
   clearForgotPasswordState,
@@ -19,8 +18,6 @@ import {
 } from '../redux/slices/authSlice';
 
 export default function ForgotPasswordScreen({ navigation }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
   const [email, setEmail] = useState('');
   const [localError, setLocalError] = useState('');
 
@@ -58,7 +55,7 @@ export default function ForgotPasswordScreen({ navigation }) {
     >
       <View style={styles.logoRow}>
         <View style={styles.logoIcon}>
-          <Ionicons name="play" size={16} color={appTheme.white} />
+          <Ionicons name="play" size={16} color={theme.white} />
         </View>
         <Text style={styles.logoText}>
           7<Text style={styles.logoCrimson}>K</Text>
@@ -79,7 +76,7 @@ export default function ForgotPasswordScreen({ navigation }) {
         }}
         placeholder="user@example.com"
         style={[styles.input, email.length > 0 && styles.inputActive]}
-        placeholderTextColor={appTheme.darkGray}
+        placeholderTextColor={theme.darkGray}
         keyboardType="email-address"
         autoCapitalize="none"
       />
@@ -108,10 +105,10 @@ export default function ForgotPasswordScreen({ navigation }) {
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: appTheme.deepBlack,
+    backgroundColor: theme.deepBlack,
     paddingHorizontal: 24,
     paddingTop: 56,
     paddingBottom: 40,
@@ -125,7 +122,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: appTheme.crimson,
+    backgroundColor: theme.crimson,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -133,44 +130,44 @@ const useStyles = (appTheme) => StyleSheet.create({
   logoText: {
     fontSize: 20,
     fontWeight: '800',
-    color: appTheme.white,
+    color: theme.white,
   },
   logoCrimson: {
-    color: appTheme.crimson,
+    color: theme.crimson,
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: appTheme.white,
+    color: theme.white,
     marginBottom: 6,
   },
   subtitle: {
     fontSize: 15,
-    color: appTheme.gray,
+    color: theme.gray,
     marginBottom: 36,
   },
   label: {
     fontSize: 12,
     fontWeight: '700',
-    color: appTheme.gray,
+    color: theme.gray,
     marginBottom: 8,
     letterSpacing: 1,
   },
   input: {
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: appTheme.white,
+    color: theme.white,
     fontSize: 15,
   },
   inputActive: {
-    borderColor: appTheme.crimson,
+    borderColor: theme.crimson,
   },
   actionBtn: {
-    backgroundColor: appTheme.crimson,
+    backgroundColor: theme.crimson,
     borderRadius: 30,
     paddingVertical: 16,
     alignItems: 'center',
@@ -180,12 +177,12 @@ const useStyles = (appTheme) => StyleSheet.create({
     opacity: 0.85,
   },
   actionBtnText: {
-    color: appTheme.white,
+    color: theme.white,
     fontSize: 17,
     fontWeight: '700',
   },
   errorText: {
-    color: appTheme.red,
+    color: theme.red,
     marginTop: 16,
     textAlign: 'center',
     lineHeight: 20,
@@ -195,7 +192,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     alignItems: 'center',
   },
   backLinkText: {
-    color: appTheme.crimson,
+    color: theme.crimson,
     fontSize: 14,
     fontWeight: '700',
   },

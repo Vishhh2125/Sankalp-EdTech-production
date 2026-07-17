@@ -13,7 +13,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import { formatCount } from './shortVideoPlayer/utils';
-import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { API_BASE_URL } from '../constants/config';
 import { courseworkApi } from '../services/courseworkApi';
@@ -52,8 +51,8 @@ function resolveThumbnailUrl(url) {
 }
 
 function Tag({ label }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   return (
     <View style={styles.tag}>
       <Text style={styles.tagText}>{label}</Text>
@@ -82,8 +81,8 @@ function buildRanges(totalEpisodes) {
 }
 
 function RelatedDramaCard({ drama, onPress, style }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const uri = resolveThumbnailUrl(drama.thumbnail_url);
 
   return (
@@ -112,8 +111,8 @@ function RelatedDramaCard({ drama, onPress, style }) {
 }
 
 function EpisodeRow({ episode, isCurrentEpisode, onPress }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   if (!episode) return null;
 
   const locked = episode.is_locked;
@@ -137,7 +136,7 @@ function EpisodeRow({ episode, isCurrentEpisode, onPress }) {
         <Ionicons
           name={locked ? 'lock-closed' : 'play'}
           size={16}
-          color={locked ? 'rgba(255,255,255,0.5)' : '#fff'}
+          color={locked ? (theme.isDark ? 'rgba(255,255,255,0.5)' : 'rgba(26,26,26,0.5)') : '#fff'}
         />
       </View>
 
@@ -150,11 +149,11 @@ function EpisodeRow({ episode, isCurrentEpisode, onPress }) {
           ]}
           numberOfLines={1}
         >
-          Lecture {episode.episode_num}
+          Episode {episode.episode_num}
           {episode.episode_title ? `  •  ${episode.episode_title}` : ''}
         </Text>
         <Text style={styles.episodeRowMeta} numberOfLines={1}>
-          Lec {episode.episode_num}
+          Ep {episode.episode_num}
           {episode.duration_sec ? `  •  ${Math.round(episode.duration_sec / 60)} min` : ''}
         </Text>
       </View>
@@ -180,9 +179,8 @@ export default function DramaDetailsSheetConnected({
   onRelatedPress,
   onStartWatching,
 }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
-
+  const { theme, isDarkMode } = useTheme();
+  const styles = useStyles(theme);
   // All hooks must be called unconditionally, before any returns
   const [tab, setTab] = useState(initialTab);
   const [activeRangeStart, setActiveRangeStart] = useState(1);
@@ -430,7 +428,7 @@ export default function DramaDetailsSheetConnected({
         <View style={styles.sheet}>
           {loading && !details ? (
             <View style={[styles.stateBlock, { height: SHEET_HEIGHT * 0.8 }]}>
-              <ActivityIndicator size="large" color={appTheme.primary} />
+              <ActivityIndicator size="large" color={theme.crimson} />
             </View>
           ) : (
             <>
@@ -457,7 +455,7 @@ export default function DramaDetailsSheetConnected({
                   </View>
                 </View>
                 <Pressable onPress={onClose} hitSlop={15}>
-                  <Ionicons name="close" size={26} color={appTheme.white} />
+                  <Ionicons name="close" size={26} color={theme.white} />
                 </Pressable>
               </View>
 
@@ -520,10 +518,10 @@ export default function DramaDetailsSheetConnected({
                           disabled={unlockingShow}
                         >
                           {unlockingShow ? (
-                            <ActivityIndicator color={appTheme.white} size="small" />
+                            <ActivityIndicator color={theme.white} size="small" />
                           ) : (
                             <>
-                              <Ionicons name="cart" size={18} color={appTheme.white} />
+                              <Ionicons name="cart" size={18} color={theme.white} />
                               <Text style={styles.buyShowText}>
                                 Buy Full Show · {showDetails?.show_coin_cost} Coins
                               </Text>
@@ -549,7 +547,7 @@ export default function DramaDetailsSheetConnected({
                       ]}
                       onPress={() => onStartWatching && onStartWatching()}
                     >
-                      <Ionicons name="play" size={18} color={appTheme.white} />
+                      <Ionicons name="play" size={18} color={theme.white} />
                       <Text style={styles.startWatchingText}>Start Watching</Text>
                     </Pressable>
                   </View>
@@ -574,7 +572,7 @@ export default function DramaDetailsSheetConnected({
 
                     {loading ? (
                       <View style={styles.stateBlock}>
-                        <ActivityIndicator size="small" color={appTheme.white} />
+                        <ActivityIndicator size="small" color={theme.white} />
                         <Text style={styles.stateText}>Loading lectures...</Text>
                       </View>
                     ) : error ? (
@@ -627,7 +625,7 @@ export default function DramaDetailsSheetConnected({
                   <View style={styles.relatedSection}>
                     <Text style={styles.sectionTitle}>Recommendations</Text>
                     {relatedLoading ? (
-                      <ActivityIndicator size="small" color={appTheme.white} style={styles.relatedLoader} />
+                      <ActivityIndicator size="small" color={theme.primary} style={styles.relatedLoader} />
                     ) : (
                       <View style={styles.relatedGrid}>
                         {relatedShows.map((drama, index) => {
@@ -655,9 +653,9 @@ export default function DramaDetailsSheetConnected({
       </View>
     </Modal>
   );
-}
+};
 
-const useStyles = (appTheme) => StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   backdropWrap: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -668,11 +666,11 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
   sheet: {
     height: SHEET_HEIGHT,
-    backgroundColor: appTheme.deepBlack,
+    backgroundColor: theme.background,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
     paddingHorizontal: 16,
     paddingTop: 16,
   },
@@ -691,23 +689,23 @@ const useStyles = (appTheme) => StyleSheet.create({
     width: 90,
     height: 110,
     borderRadius: 10,
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
   },
   posterFallback: {
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
   },
   posterMeta: {
     flex: 1,
     justifyContent: 'flex-start',
   },
   title: {
-    color: appTheme.white,
+    color: theme.text,
     fontSize: 21,
     fontWeight: '800',
   },
   metaText: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 13,
     fontWeight: '600',
     marginTop: 4,
@@ -716,7 +714,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     flexDirection: 'row',
     gap: 24,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
   },
   tabsScroll: {
     flexGrow: 0,
@@ -728,12 +726,12 @@ const useStyles = (appTheme) => StyleSheet.create({
   tabBtnActive: {
   },
   tabText: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 16,
     fontWeight: '700',
   },
   tabTextActive: {
-    color: appTheme.white,
+    color: theme.text,
   },
   tabUnderline: {
     position: 'absolute',
@@ -741,7 +739,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: appTheme.white,
+    backgroundColor: theme.text,
     borderRadius: 2,
   },
   bodyScroll: {
@@ -752,13 +750,13 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingBottom: 50,
   },
   sectionTitle: {
-    color: appTheme.white,
+    color: theme.text,
     fontSize: 17,
     fontWeight: '800',
     marginBottom: 10,
   },
   synopsis: {
-    color: 'rgba(255,255,255,0.65)',
+    color: theme.gray,
     fontSize: 14,
     lineHeight: 22,
   },
@@ -774,7 +772,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     marginTop: 20,
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.primary,
     borderRadius: 8,
     paddingVertical: 14,
     paddingHorizontal: 20,
@@ -783,7 +781,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     opacity: 0.88,
   },
   startWatchingText: {
-    color: appTheme.white,
+    color: '#fff',
     fontSize: 16,
     fontWeight: '800',
   },
@@ -791,12 +789,12 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 6,
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
   },
   tagText: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 11,
     fontWeight: '600',
   },
@@ -805,20 +803,19 @@ const useStyles = (appTheme) => StyleSheet.create({
     marginBottom: 16,
   },
   rangeText: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 14,
     fontWeight: '700',
   },
   rangeTextActive: {
-    color: appTheme.white,
+    color: theme.text,
   },
   rangeUnderline: {
     marginTop: 4,
     height: 2,
-    backgroundColor: appTheme.white,
+    backgroundColor: theme.text,
     width: '100%',
   },
-  // Episode list rows (replacing the old grid)
   episodesList: {
     gap: 0,
   },
@@ -828,7 +825,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 4,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.07)',
+    borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)',
     gap: 14,
     position: 'relative',
   },
@@ -839,44 +836,44 @@ const useStyles = (appTheme) => StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.primary,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
   episodeIconCircleActive: {
-    backgroundColor: appTheme.primary,
-    shadowColor: appTheme.primary,
+    backgroundColor: theme.primary,
+    shadowColor: theme.primary,
     shadowOpacity: 0.45,
     shadowRadius: 10,
     elevation: 5,
   },
   episodeIconCircleLocked: {
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
   },
   episodeRowText: {
     flex: 1,
   },
   episodeRowTitle: {
-    color: appTheme.white,
+    color: theme.text,
     fontSize: 15,
     fontWeight: '600',
     lineHeight: 20,
   },
   episodeRowTitleActive: {
-    color: appTheme.primary,
+    color: theme.primary,
   },
   episodeRowMeta: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 12,
     marginTop: 2,
   },
   episodeRowActiveBar: {
     width: 4,
     height: 28,
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.primary,
     borderRadius: 2,
     position: 'absolute',
     left: -4,
@@ -890,7 +887,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     gap: 12,
   },
   stateText: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 14,
     textAlign: 'center',
   },
@@ -898,12 +895,12 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 10,
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
   },
   retryButtonText: {
-    color: appTheme.white,
+    color: theme.text,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -911,7 +908,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     marginTop: 28,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.06)',
+    borderTopColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
   },
   relatedLoader: {
     marginVertical: 16,
@@ -929,10 +926,10 @@ const useStyles = (appTheme) => StyleSheet.create({
     width: '100%',
     aspectRatio: 3 / 4,
     borderRadius: 8,
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
   },
   relatedTitle: {
-    color: appTheme.white,
+    color: theme.text,
     fontSize: 12,
     fontWeight: '600',
     marginTop: 6,
@@ -944,16 +941,16 @@ const useStyles = (appTheme) => StyleSheet.create({
     width: '100%',
     padding: 16,
     borderRadius: 8,
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
   },
   buyShowBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: appTheme.primary,
+    backgroundColor: theme.primary,
     borderRadius: 8,
     width: '100%',
     paddingVertical: 14,
@@ -967,7 +964,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     opacity: 0.6,
   },
   buyShowText: {
-    color: appTheme.white,
+    color: '#fff',
     fontSize: 16,
     fontWeight: '800',
   },
@@ -976,7 +973,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     fontSize: 13,
   },
   buyShowErrorText: {
-    color: appTheme.primary,
+    color: theme.primary,
     fontSize: 13,
     marginTop: 6,
     textAlign: 'center',
@@ -987,7 +984,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     paddingHorizontal: 12,
   },
   getCoinsText: {
-    color: appTheme.primary,
+    color: theme.primary,
     fontWeight: '600',
     fontSize: 14,
     textDecorationLine: 'underline',

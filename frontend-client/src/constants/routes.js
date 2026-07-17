@@ -13,7 +13,6 @@ export const ROUTES = {
   TOP_UP: 'TopUp',
   TRANSACTION_HISTORY: 'TransactionHistory',
   EARN_REWARDS: 'EarnRewards',
-  DOWNLOADS: 'Downloads',
   PROFILE: 'Profile',
   SHOW_PLAYER: 'ShowPlayer',
   LIVE: 'Live',

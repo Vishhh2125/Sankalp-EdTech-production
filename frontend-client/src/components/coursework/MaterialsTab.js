@@ -1,4 +1,3 @@
-import { useTheme } from '../../context/ThemeContext';
 import React from 'react';
 import {
   ActivityIndicator,
@@ -14,12 +13,10 @@ import { formatFileSize } from '../../services/courseworkApi';
 import { downloadFile } from '../../utils/fileDownloader';
 
 export default function MaterialsTab({ materials, loading, hasAccess }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
   if (loading) {
     return (
       <View style={styles.stateBlock}>
-        <ActivityIndicator size="small" color={appTheme.primary} />
+        <ActivityIndicator size="small" color={theme.primary} />
         <Text style={styles.stateText}>Loading materials...</Text>
       </View>
     );
@@ -28,7 +25,7 @@ export default function MaterialsTab({ materials, loading, hasAccess }) {
   if (!hasAccess) {
     return (
       <View style={styles.lockedOverlay}>
-        <Ionicons name="lock-closed" size={36} color={appTheme.gray} />
+        <Ionicons name="lock-closed" size={36} color={theme.gray} />
         <Text style={styles.lockedTitle}>Content Locked</Text>
         <Text style={styles.lockedSub}>
           Subscribe or unlock an episode to access course materials.
@@ -58,7 +55,7 @@ export default function MaterialsTab({ materials, loading, hasAccess }) {
             }}
           >
             <View style={styles.iconWrap}>
-              <Ionicons name="document-text" size={22} color={appTheme.primary} />
+              <Ionicons name="document-text" size={22} color={theme.primary} />
             </View>
             <View style={styles.cardBody}>
               <Text style={styles.cardTitle} numberOfLines={1}>{m.title}</Text>
@@ -75,7 +72,7 @@ export default function MaterialsTab({ materials, loading, hasAccess }) {
                 }
               }}
             >
-              <Ionicons name="download-outline" size={20} color={appTheme.white} />
+              <Ionicons name="download-outline" size={20} color={theme.white} />
             </Pressable>
           </Pressable>
         ))
@@ -84,15 +81,15 @@ export default function MaterialsTab({ materials, loading, hasAccess }) {
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
+const styles = StyleSheet.create({
   sectionTitle: {
-    color: appTheme.white,
+    color: theme.white,
     fontSize: 17,
     fontWeight: '800',
     marginBottom: 4,
   },
   subtitle: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 13,
     marginBottom: 18,
   },
@@ -103,7 +100,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     gap: 10,
   },
   stateText: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 13,
     textAlign: 'center',
   },
@@ -114,12 +111,12 @@ const useStyles = (appTheme) => StyleSheet.create({
     gap: 10,
   },
   lockedTitle: {
-    color: appTheme.white,
+    color: theme.white,
     fontSize: 17,
     fontWeight: '800',
   },
   lockedSub: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 13,
     textAlign: 'center',
     maxWidth: 260,
@@ -127,10 +124,10 @@ const useStyles = (appTheme) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
     marginBottom: 10,
     padding: 14,
     gap: 12,
@@ -147,12 +144,12 @@ const useStyles = (appTheme) => StyleSheet.create({
     flex: 1,
   },
   cardTitle: {
-    color: appTheme.white,
+    color: theme.white,
     fontSize: 14,
     fontWeight: '700',
   },
   cardMeta: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 11,
     marginTop: 3,
   },

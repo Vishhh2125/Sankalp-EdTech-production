@@ -11,7 +11,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { theme } from '../constants/theme';
-import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 import {
   clearOtpState,
@@ -40,8 +39,6 @@ function formatCountdown(targetValue, fallbackNow = Date.now()) {
 }
 
 export default function OtpVerificationScreen({ navigation, route }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
   const dispatch = useDispatch();
   const otpState = useSelector((state) => state.auth.otp);
   const pendingRegistration = useSelector((state) => state.auth.pendingRegistration);
@@ -157,7 +154,7 @@ export default function OtpVerificationScreen({ navigation, route }) {
     >
       <View style={styles.logoRow}>
         <View style={styles.logoIcon}>
-          <Ionicons name="play" size={16} color={appTheme.white} />
+          <Ionicons name="play" size={16} color={theme.white} />
         </View>
         <Text style={styles.logoText}>
           7<Text style={styles.logoCrimson}>K</Text>
@@ -178,7 +175,7 @@ export default function OtpVerificationScreen({ navigation, route }) {
         }}
         placeholder="000000"
         style={[styles.input, styles.otpInput]}
-        placeholderTextColor={appTheme.darkGray}
+        placeholderTextColor={theme.darkGray}
         keyboardType="number-pad"
         autoComplete="one-time-code"
         textContentType="oneTimeCode"
@@ -242,10 +239,10 @@ export default function OtpVerificationScreen({ navigation, route }) {
   );
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: appTheme.deepBlack,
+    backgroundColor: theme.deepBlack,
     paddingHorizontal: 24,
     paddingTop: 56,
     paddingBottom: 40,
@@ -259,7 +256,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: appTheme.crimson,
+    backgroundColor: theme.crimson,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -267,37 +264,37 @@ const useStyles = (appTheme) => StyleSheet.create({
   logoText: {
     fontSize: 20,
     fontWeight: '800',
-    color: appTheme.white,
+    color: theme.white,
   },
   logoCrimson: {
-    color: appTheme.crimson,
+    color: theme.crimson,
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: appTheme.white,
+    color: theme.white,
     marginBottom: 6,
   },
   subtitle: {
     fontSize: 15,
-    color: appTheme.gray,
+    color: theme.gray,
     marginBottom: 24,
   },
   label: {
     fontSize: 12,
     fontWeight: '700',
-    color: appTheme.gray,
+    color: theme.gray,
     marginBottom: 8,
     letterSpacing: 1,
   },
   input: {
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: appTheme.white,
+    color: theme.white,
     fontSize: 15,
   },
   otpInput: {
@@ -310,12 +307,12 @@ const useStyles = (appTheme) => StyleSheet.create({
     marginTop: 14,
   },
   metaText: {
-    color: appTheme.gray,
+    color: theme.gray,
     fontSize: 13,
     marginTop: 6,
   },
   actionBtn: {
-    backgroundColor: appTheme.crimson,
+    backgroundColor: theme.crimson,
     borderRadius: 30,
     paddingVertical: 16,
     alignItems: 'center',
@@ -325,7 +322,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     opacity: 0.85,
   },
   actionBtnText: {
-    color: appTheme.white,
+    color: theme.white,
     fontSize: 17,
     fontWeight: '700',
   },
@@ -335,19 +332,19 @@ const useStyles = (appTheme) => StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
     borderWidth: 1,
-    borderColor: appTheme.border,
-    backgroundColor: appTheme.surface,
+    borderColor: theme.border,
+    backgroundColor: theme.surface,
   },
   secondaryBtnPressed: {
     opacity: 0.9,
   },
   secondaryBtnText: {
-    color: appTheme.white,
+    color: theme.white,
     fontSize: 15,
     fontWeight: '700',
   },
   errorText: {
-    color: appTheme.red,
+    color: theme.red,
     marginTop: 16,
     textAlign: 'center',
     lineHeight: 20,
@@ -357,7 +354,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     alignItems: 'center',
   },
   backLinkText: {
-    color: appTheme.crimson,
+    color: theme.crimson,
     fontSize: 14,
     fontWeight: '700',
   },

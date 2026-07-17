@@ -10,7 +10,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 import {
@@ -22,9 +21,7 @@ import { API_BASE_URL } from '../constants/config';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import OrDivider from '../components/OrDivider';
 
-function getPasswordStrength(password) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
+function getPasswordStrength(password, appTheme) {
   if (!password) return { level: 0, label: '', color: appTheme.border };
   let score = 0;
   if (password.length >= 8) score++;
@@ -40,21 +37,20 @@ function getPasswordStrength(password) {
 }
 
 export default function SignUpScreen({ navigation, onGuestAccess }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState('');
-
+  const { theme: appTheme } = useTheme();
+  const styles = useStyles(appTheme);
 
   const dispatch = useDispatch();
   const registerStatus = useSelector((state) => state.auth.register.status);
   const registerError = useSelector((state) => state.auth.register.error);
   const registerData = useSelector((state) => state.auth.register.data);
 
-  const strength = useMemo(() => getPasswordStrength(password), [password]);
+  const strength = useMemo(() => getPasswordStrength(password, appTheme), [password, appTheme]);
   const pendingLoginRef = useRef(null);
 
   const { promptAsync, loading: googleLoading, googleError } = useGoogleAuth();
@@ -92,12 +88,12 @@ export default function SignUpScreen({ navigation, onGuestAccess }) {
           <Ionicons name="play" size={16} color={appTheme.white} />
         </View>
         <Text style={styles.logoText}>
-          Alpha <Text style={styles.logoPrimary}>Minds</Text>
+          7<Text style={styles.logoPrimary}>K</Text>
         </Text>
       </View>
 
       {/* Title */}
-      <Text style={styles.title}>Let's crack it</Text>
+      <Text style={styles.title}>Join the drama</Text>
       <Text style={styles.subtitle}>Create your free account</Text>
 
       {/* Name */}
@@ -428,4 +424,4 @@ const useStyles = (appTheme) => StyleSheet.create({
     fontWeight: '700',
     fontSize: 14,
   },
-});
+});;

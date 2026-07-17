@@ -14,7 +14,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 import { fetchActiveLiveStreams } from '../components/live/liveApi';
@@ -24,11 +23,11 @@ import { API_BASE_URL } from '../constants/config';
 
 
 export default function LiveScreen() {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
+  const { theme, isDarkMode } = useTheme();
+  const insets = useSafeAreaInsets();
+  const styles = useStyles(theme, insets);
   const navigation = useNavigation();
   const isFocused = useIsFocused();
-  const insets = useSafeAreaInsets();
   const { isOffline } = useNetwork();
   const [streams, setStreams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -88,22 +87,22 @@ export default function LiveScreen() {
 
   if (loading && !refreshing) {
     return (
-      <View style={[styles.screen, { paddingTop: insets.top, backgroundColor: appTheme.screenBg }]}>
+      <View style={[styles.screen, { paddingTop: insets.top }]}>
         <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: appTheme.text }]}>Live</Text>
+          <Text style={styles.headerTitle}>Live</Text>
           <Text style={styles.headerSub}>Watch streams happening now</Text>
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color={appTheme.primary} />
+          <ActivityIndicator size="large" color={theme.primary} />
         </View>
       </View>
     );
   }
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top, backgroundColor: appTheme.screenBg }]}>
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: appTheme.text }]}>Live</Text>
+        <Text style={styles.headerTitle}>Live</Text>
         <Text style={styles.headerSub}>Watch streams happening now</Text>
       </View>
 
@@ -120,13 +119,13 @@ export default function LiveScreen() {
         data={streams}
         keyExtractor={(item) => item.id}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={appTheme.crimson} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={theme.primary} />
         }
         contentContainerStyle={streams.length === 0 ? styles.emptyWrap : styles.list}
         ListEmptyComponent={
           !error ? (
             <View style={styles.empty}>
-              <Ionicons name={isOffline ? "cloud-offline-outline" : "radio-outline"} size={48} color={appTheme.gray} />
+              <Ionicons name={isOffline ? "cloud-offline-outline" : "radio-outline"} size={48} color={theme.gray} />
               <Text style={styles.emptyTitle}>{isOffline ? 'You are offline' : 'No live streams right now'}</Text>
               <Text style={styles.emptySub}>{isOffline ? 'Check your internet connection and try again.' : 'Check back soon — new shows go live from the admin panel.'}</Text>
             </View>
@@ -134,11 +133,11 @@ export default function LiveScreen() {
         }
         renderItem={({ item }) => {
           const isLive = item.is_live || item.status === 'LIVE';
-          const badgeBg = isLive ? 'rgba(255,76,0,0.15)' : 'rgba(212,166,0,0.15)'; // primary/accent alpha
-          const badgeDot = isLive ? appTheme.crimson : appTheme.gold;
+          const badgeBg = isLive ? 'rgba(255,76,0,0.15)' : 'rgba(255,214,10,0.15)';
+          const badgeDot = isLive ? theme.primary : theme.gold;
           const badgeText = isLive ? 'LIVE' : 'SCHEDULED';
           const linkText = isLive ? 'Watch now' : '';
-          const linkColor = isLive ? appTheme.crimson : appTheme.gold;
+          const linkColor = isLive ? theme.primary : theme.gold;
 
           const resolvedUrl = resolveThumbnailUrl(item.show?.thumbnail_url || item.thumbnail_url);
 
@@ -164,8 +163,8 @@ export default function LiveScreen() {
                     resizeMode="cover"
                   />
                 ) : (
-                  <View style={[styles.thumbnail, styles.centered, { backgroundColor: appTheme.elevatedSurface }]}>
-                    <Ionicons name="film-outline" size={28} color={appTheme.gray} />
+                  <View style={[styles.thumbnail, styles.centered, { backgroundColor: '#2C2C2E' }]}>
+                    <Ionicons name="film-outline" size={28} color={theme.gray} />
                   </View>
                 )}
               </View>
@@ -223,37 +222,30 @@ function resolveThumbnailUrl(url) {
   return `${API_BASE_URL}${url}`;
 }
 
-const useStyles = (appTheme) => StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: appTheme.background,
-  },
+const useStyles = (theme, insets = {}) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: theme.deepBlack },
   centered: { justifyContent: 'center', alignItems: 'center' },
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 16 },
-  headerTitle: {
-    color: appTheme.textPrimary,
-    fontSize: 28,
-    fontWeight: '800',
-  },
-  headerSub: { color: appTheme.gray, fontSize: 13, marginTop: 4, marginBottom: 16 },
-  list: { paddingHorizontal: 16, paddingBottom: 100, gap: 14 },
-  emptyWrap: { flexGrow: 1, justifyContent: 'center' },
+  headerTitle: { color: theme.text, fontSize: 26, fontWeight: '800' },
+  headerSub: { color: theme.gray, fontSize: 13, marginTop: 4, marginBottom: 16 },
+  list: { paddingHorizontal: 16, paddingBottom: 16 + (insets.bottom || 0), gap: 14 },
+  emptyWrap: { flexGrow: 1, justifyContent: 'center', paddingBottom: insets.bottom || 0 },
   empty: { alignItems: 'center', paddingHorizontal: 32 },
-  emptyTitle: { color: appTheme.textPrimary, fontSize: 17, fontWeight: '700', marginTop: 12 },
-  emptySub: { color: appTheme.gray, fontSize: 13, textAlign: 'center', marginTop: 8, lineHeight: 20 },
+  emptyTitle: { color: theme.text, fontSize: 17, fontWeight: '700', marginTop: 12 },
+  emptySub: { color: theme.gray, fontSize: 13, textAlign: 'center', marginTop: 8, lineHeight: 20 },
   card: {
     flexDirection: 'row',
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.surface,
     borderRadius: 16,
     overflow: 'hidden',
     height: 120,
     borderWidth: 1,
-    borderColor: appTheme.border,
+    borderColor: theme.border,
   },
   thumbnailWrap: {
     width: 95,
     height: '100%',
-    backgroundColor: appTheme.surface,
+    backgroundColor: theme.isDark ? '#1C1C1E' : '#F3F4F6',
   },
   thumbnail: {
     width: '100%',
@@ -280,19 +272,13 @@ const useStyles = (appTheme) => StyleSheet.create({
   },
   liveDot: { width: 8, height: 8, borderRadius: 4 },
   liveBadgeText: { fontSize: 11, fontWeight: '800' },
-  cardCourse: { color: appTheme.lightGray, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
-  cardTitle: { color: appTheme.textPrimary, fontSize: 15, fontWeight: '700', marginTop: 2 },
-  cardSub: { color: appTheme.gray, fontSize: 12, marginTop: 2 },
+  cardCourse: { color: theme.gray, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
+  cardTitle: { color: theme.text, fontSize: 15, fontWeight: '700', marginTop: 2 },
+  cardSub: { color: theme.gray, fontSize: 12, marginTop: 2 },
   watchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
   watchText: { fontWeight: '700', fontSize: 13 },
   errorBox: { padding: 16, alignItems: 'center' },
-  errorText: { color: appTheme.textPrimary, fontSize: 14, textAlign: 'center' },
-  retryBtn: {
-    marginTop: 10,
-    backgroundColor: appTheme.primary,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  retryText: { color: appTheme.textPrimary, fontWeight: '600' },
+  errorText: { color: theme.text, fontSize: 14, textAlign: 'center' },
+  retryBtn: { marginTop: 10, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: theme.primary, borderRadius: 8 },
+  retryText: { color: '#fff', fontWeight: '600' },
 });
