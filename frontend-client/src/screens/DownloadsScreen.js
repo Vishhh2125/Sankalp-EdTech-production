@@ -111,7 +111,7 @@ function ShowCard({ item, onPress, onLongPress, selectionMode, selected, onDelet
           {item.show_title}
         </Text>
         <Text style={cardStyles.epLine}>
-          EP.{item.episode_num} {'/'} EP.{item.total_episodes || '?'}
+          Lec.{item.episode_num} {'/'} Lec.{item.total_episodes || '?'}
         </Text>
       </View>
 

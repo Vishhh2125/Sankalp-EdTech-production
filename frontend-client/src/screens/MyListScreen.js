@@ -165,7 +165,7 @@ function ShowCard({ item, onPress, onLongPress, selectionMode, selected, onDelet
 
         {/* EP.X / EP.TOTAL */}
         <Text style={cardStyles.epLine}>
-          EP.{item.episode_num} {'/'} EP.{item.total_episodes || '?'}
+          Lec.{item.episode_num} {'/'} Lec.{item.total_episodes || '?'}
         </Text>
       </View>
 
@@ -633,7 +633,7 @@ export default function MyListScreen() {
             }}
           />
         )
-      ) : (
+      ) : activeTab === TAB_CONTINUE ? (
         // ── Continue Watching tab ──────────────────────────────
         watchHistory.length === 0 ? (
           <EmptyState
@@ -670,7 +670,7 @@ export default function MyListScreen() {
             )}
           />
         )
-      )}
+      ) : null}
 
       {/* Delete Confirmation Modal */}
       <Modal visible={deleteModalVisible} transparent animationType="fade">

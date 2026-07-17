@@ -82,8 +82,6 @@ export default function ShortVideoReelItem({
   onPlaybackEnd = null,
   enableLandscapeMode = true,
 }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -1005,7 +1003,7 @@ export default function ShortVideoReelItem({
 
                 <View style={styles.epBadge}>
                   <Ionicons name="videocam" size={12} color={shortVideoTheme.crimson} />
-                  <Text style={styles.epBadgeText}>EP.{item.episode_num}</Text>
+                  <Text style={styles.epBadgeText}>Lec.{item.episode_num}</Text>
                 </View>
 
                 <View style={styles.tagsRow}>
@@ -1085,7 +1083,7 @@ export default function ShortVideoReelItem({
                   color={shortVideoTheme.crimson}
                 />
                 <Text style={styles.episodeText}>
-                  EP.{item.episode_num} / EP.{item.total_episodes}
+                  Lec.{item.episode_num} / Lec.{item.total_episodes}
                 </Text>
                 <View style={{ flex: 1 }} />
                 <Text style={styles.watchAllText}>Watch All</Text>

@@ -6,12 +6,13 @@ import {
   StatusBar,
   StyleSheet,
   View,
+  TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
-
+import { useTheme } from '../context/ThemeContext';
 import {
   setForYouDramaSheetSession,
   setForYouReopenSheetAfterPlayer,
@@ -135,7 +136,7 @@ export default function ShowPlayerScreen({ navigation }) {
     if (episodes.length === 0) return;
     const ep = episodes[startIndex];
     recordWatchHistory(ep, startProgressSec || 0);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchedRangesRef = useRef(new Set());
@@ -363,11 +364,11 @@ export default function ShowPlayerScreen({ navigation }) {
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
       {!isLandscape ? (
-      <TouchableOpacity style={[styles.backBtnWrapper, { top: insets.top + 10 }]} onPress={handleClose}>
-        <View style={[styles.backBtnInner, { backgroundColor: appTheme.elevatedSurface }]}>
-          <Ionicons name="chevron-back" size={28} color={appTheme.textPrimary} />
-        </View>
-      </TouchableOpacity>
+        <TouchableOpacity style={[styles.backBtnWrapper, { top: insets.top + 10 }]} onPress={handleClose}>
+          <View style={[styles.backBtnInner, { backgroundColor: appTheme.elevatedSurface }]}>
+            <Ionicons name="chevron-back" size={28} color={appTheme.textPrimary} />
+          </View>
+        </TouchableOpacity>
       ) : null}
 
       <FlatList
@@ -379,44 +380,44 @@ export default function ShowPlayerScreen({ navigation }) {
           (() => {
             const isFinalEpisode = !hasMore && index === episodes.length - 1;
             return (
-          <ShortVideoReelItem
-            item={item}
-            isActive={index === currentIndex && isFocused}
-            shouldPreload={Math.abs(index - currentIndex) === 1}
-            isFocused={isFocused}
-            streamBase=""
-            itemHeight={itemHeight}
-            renderTopOverlay={() => null}
-            onReturnToDramaSheet={detailsSheetSource ? returnToDramaSheet : undefined}
-            walletReturnParams={
-              fromHome ? { fromHome: true } : fromForYou ? { fromForYou: true } : null
-            }
-            showEpisodeStrip={dramaSheetSource === 'forYou'}
-            repeatPlayback={isFinalEpisode}
-            autoAdvanceOnEnd={!isFinalEpisode}
-            onPlaybackEnd={() => handlePlaybackEnd(index)}
-            // Seek to saved progress on first render of the starting episode
-            initialSeekSec={
-              index === startIndex && !hasSeenRef.current
-                ? startProgressSec || 0
-                : 0
-            }
-            onFirstFrameReady={
-              index === startIndex && !hasSeenRef.current
-                ? () => { hasSeenRef.current = true; }
-                : null
-            }
-            // Progress update for active episode only
-            onProgressUpdate={
-              index === currentIndex && accessToken
-                ? (progressSec) => {
-                    currentProgressSecRef.current = progressSec;
-                    recordWatchHistory(item, progressSec);
-                  }
-                : null
-            }
-            showPlaybackSpeedControl
-          />
+              <ShortVideoReelItem
+                item={item}
+                isActive={index === currentIndex && isFocused}
+                shouldPreload={Math.abs(index - currentIndex) === 1}
+                isFocused={isFocused}
+                streamBase=""
+                itemHeight={itemHeight}
+                renderTopOverlay={() => null}
+                onReturnToDramaSheet={detailsSheetSource ? returnToDramaSheet : undefined}
+                walletReturnParams={
+                  fromHome ? { fromHome: true } : fromForYou ? { fromForYou: true } : null
+                }
+                showEpisodeStrip={dramaSheetSource === 'forYou'}
+                repeatPlayback={isFinalEpisode}
+                autoAdvanceOnEnd={!isFinalEpisode}
+                onPlaybackEnd={() => handlePlaybackEnd(index)}
+                // Seek to saved progress on first render of the starting episode
+                initialSeekSec={
+                  index === startIndex && !hasSeenRef.current
+                    ? startProgressSec || 0
+                    : 0
+                }
+                onFirstFrameReady={
+                  index === startIndex && !hasSeenRef.current
+                    ? () => { hasSeenRef.current = true; }
+                    : null
+                }
+                // Progress update for active episode only
+                onProgressUpdate={
+                  index === currentIndex && accessToken
+                    ? (progressSec) => {
+                      currentProgressSecRef.current = progressSec;
+                      recordWatchHistory(item, progressSec);
+                    }
+                    : null
+                }
+                showPlaybackSpeedControl
+              />
             );
           })()
         )}

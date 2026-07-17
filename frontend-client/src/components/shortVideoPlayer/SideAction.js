@@ -6,8 +6,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { styles } from './styles';
 
 export default function SideAction({ icon, label, color, onPress }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
   return (
     <TouchableOpacity style={styles.sideAction} onPress={onPress} activeOpacity={0.7}>
       <Ionicons name={icon} size={28} color={color || '#fff'} />

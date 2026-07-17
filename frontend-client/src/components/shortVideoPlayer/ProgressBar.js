@@ -12,8 +12,6 @@ export default function ProgressBar({
   onScrubStart,
   onScrubEnd,
 }) {
-  const { theme: appTheme } = useTheme();
-  const styles = useStyles(appTheme);
   const { width: windowWidth } = useWindowDimensions();
   const DEFAULT_TRACK_WIDTH = windowWidth - 32;
 
