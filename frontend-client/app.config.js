@@ -28,8 +28,8 @@ const iosClientIdPrefix = iosClientId.split('.').shift() || '';
 
 module.exports = {
   expo: {
-    name: "7K",
-    slug: "7K",
+    name: "AlphaMinds",
+    slug: "7k",
     scheme: [
       "7k",
       androidClientIdPrefix ? `com.googleusercontent.apps.${androidClientIdPrefix}` : null,
