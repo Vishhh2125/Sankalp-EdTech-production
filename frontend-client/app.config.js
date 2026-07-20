@@ -129,6 +129,6 @@ module.exports = {
         projectId: "5dd61ee9-e865-46d2-bda6-9064e3107aa3"
       }
     },
-    owner: "sprasen_10"
+    owner: "prasen_10"
   }
 };
