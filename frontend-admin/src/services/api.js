@@ -216,6 +216,7 @@ export const episodesApi = {
 
 // ── Media Upload ──
 export const mediaApi = {
+  getDownloadUrl: (episodeId) => api.get(`/media/download-url/${episodeId}`),
   getVideoUploadUrl: (showId, episodeId) =>
     api.post('/media/upload-url/video', { show_id: showId, episode_id: episodeId }),
   getImageUploadUrl: (type, entityId) =>

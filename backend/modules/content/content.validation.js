@@ -33,6 +33,7 @@ const createShowSchema = Joi.object({
   coin_cost: Joi.number().integer().min(0).default(0),
   thumbnail_url: Joi.string().max(500).allow('', null),
   banner_url: Joi.string().max(500).allow('', null),
+  approval_status: Joi.string().valid('DRAFT', 'PENDING_REVIEW', 'PUBLISHED', 'REJECTED'),
 });
 
 const updateShowSchema = Joi.object({
@@ -46,6 +47,7 @@ const updateShowSchema = Joi.object({
   coin_cost: Joi.number().integer().min(0),
   thumbnail_url: Joi.string().max(500).allow('', null),
   banner_url: Joi.string().max(500).allow('', null),
+  approval_status: Joi.string().valid('DRAFT', 'PENDING_REVIEW', 'PUBLISHED', 'REJECTED'),
 }).min(1);
 
 const createEpisodeSchema = Joi.object({
@@ -61,6 +63,7 @@ const createEpisodeSchema = Joi.object({
     is: 'YOUTUBE',
     then: Joi.required(),
   }),
+  approval_status: Joi.string().valid('DRAFT', 'PENDING_REVIEW', 'PUBLISHED', 'REJECTED'),
 });
 
 const updateEpisodeSchema = Joi.object({
@@ -75,6 +78,7 @@ const updateEpisodeSchema = Joi.object({
     is: 'YOUTUBE',
     then: Joi.required(),
   }),
+  approval_status: Joi.string().valid('DRAFT', 'PENDING_REVIEW', 'PUBLISHED', 'REJECTED'),
 }).min(1);
 
 export {

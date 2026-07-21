@@ -191,6 +191,7 @@ async function getAllShows({
       include: {
         category: { select: { id: true, name: true } },
         show_tags: { include: { tag: { select: { id: true, name: true } } } },
+        teacher: { select: { id: true, name: true } },
         _count: { select: { episodes: true } },
         episodes: { select: { id: true } }, // needed to count unlocks
       },
@@ -224,6 +225,9 @@ async function getAllShows({
       category: s.category.name,
       category_id: s.category.id,
       status: s.is_active ? 'Published' : 'Draft',
+      approval_status: s.approval_status,
+      teacher_id: s.teacher_id,
+      teacher: s.teacher ? { id: s.teacher.id, name: s.teacher.name } : null,
       tags: s.show_tags.map((st) => st.tag.name),
       tag_ids: s.show_tags.map((st) => st.tag.id),
       view_count: displayedViewCount(s),
@@ -460,6 +464,10 @@ async function updateShow(id, data) {
     }
   }
 
+  if (showData.is_active !== undefined && !showData.approval_status) {
+    showData.approval_status = showData.is_active ? 'PUBLISHED' : 'DRAFT';
+  }
+
   const show = await prisma.show.update({
     where: { id },
     data: showData,
@@ -475,24 +483,21 @@ async function updateShow(id, data) {
 async function deleteShow(id) {
   const show = await prisma.show.findUnique({
     where: { id },
-    include: { episodes: { select: { id: true } } },
+    select: { id: true, feed_position: true },
   });
+
   if (!show) throw new AppError('Show not found', 404);
 
-  // ── MinIO cleanup (best-effort, never blocks DB delete) ──
-  // 1. Delete all transcoded HLS files + thumbnails under dramas/{showId}/
-  await deleteMinioPrefix(`dramas/${id}/`);
-
-  // 2. Delete raw source videos for every episode: raw/{episodeId}/video.mp4
-  for (const ep of show.episodes) {
-    await deleteMinioObject(`raw/${ep.id}/video.mp4`);
+  // If show was in the feed, shift higher feed_positions down to fill gap
+  if (show.feed_position > 0) {
+    await prisma.show.updateMany({
+      where: { feed_position: { gt: show.feed_position } },
+      data: { feed_position: { decrement: 1 } },
+    });
   }
 
-  // ── Delete child rows that lack onDelete: Cascade in the schema ──
-  // These must be removed before prisma.show.delete() or Postgres throws a FK violation.
+  // Manually delete dependent records that aren't on ON DELETE CASCADE
   await prisma.$transaction([
-    prisma.bookmark.deleteMany({ where: { show_id: id } }),
-    prisma.playlistItem.deleteMany({ where: { show_id: id } }),
     prisma.rating.deleteMany({ where: { show_id: id } }),
     prisma.viewCountEvent.deleteMany({ where: { show_id: id } }),
   ]);
@@ -504,9 +509,13 @@ async function deleteShow(id) {
 async function toggleShowPublish(id) {
   const show = await prisma.show.findUnique({ where: { id } });
   if (!show) throw new AppError('Show not found', 404);
+  const newActive = !show.is_active;
   return prisma.show.update({
     where: { id },
-    data: { is_active: !show.is_active },
+    data: {
+      is_active: newActive,
+      approval_status: newActive ? 'PUBLISHED' : 'DRAFT',
+    },
   });
 }
 

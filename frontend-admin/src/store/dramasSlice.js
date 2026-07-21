@@ -128,6 +128,7 @@ export const loadDramas = createAsyncThunk(
                 coin_cost: ep.coin_cost,
                 is_show_only: ep.is_show_only,
                 status: ep.status,
+                approval_status: ep.approval_status,
                 video_source: ep.video_source,
                 youtube_video_id: ep.youtube_video_id,
                 views: 0,

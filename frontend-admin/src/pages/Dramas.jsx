@@ -1265,6 +1265,14 @@ export default function Dramas() {
                         <div style={{ fontSize: 10, color: 'var(--text3)' }}>views</div>
                       </div>
                       <span className={`badge ${d.status==='Published'?'badge-green':'badge-amber'}`} style={{ minWidth: 'fit-content' }}>{d.status}</span>
+                      <span className={`badge ${
+                        d.approval_status === 'PUBLISHED' ? 'badge-green' :
+                        d.approval_status === 'PENDING_REVIEW' ? 'badge-blue' :
+                        d.approval_status === 'DRAFT' ? 'badge-amber' :
+                        'badge-red'
+                      }`} style={{ minWidth: 'fit-content', fontSize: 10 }}>
+                        {d.approval_status === 'PENDING_REVIEW' ? 'Pending Review' : (d.approval_status || 'Draft')}
+                      </span>
                     </div>
 
                     {/* Drama Action Buttons */}
@@ -1279,24 +1287,24 @@ export default function Dramas() {
                           {d.status==='Published'?'Unpublish':'Publish'}
                         </button>
                       )}
-                      {user?.role === 'teacher' && d.approval_status === 'DRAFT' && (
+                      {user?.role === 'teacher' && (d.approval_status === 'DRAFT' || d.approval_status === 'REJECTED' || !d.approval_status) && (
                         <button 
-                          className="btn btn-ghost btn-sm" 
+                          className="btn btn-primary btn-sm" 
                           disabled={!d.episodes || d.episodes.length === 0}
                           onClick={async (e) => { 
                             e.stopPropagation(); 
                             try { 
                               await showsApi.update(d.id, { approval_status: 'PENDING_REVIEW' }); 
-                              alert('Submitted for review'); 
+                              alert('Course submitted for review!'); 
                               await reload(); 
                             } catch (err) { 
                               alert('Failed to submit for review: ' + (err.response?.data?.error || err.message)); 
                             } 
                           }} 
-                          style={{ marginLeft:6 }}
-                          title={(!d.episodes || d.episodes.length === 0) ? "Cannot submit for review with zero episodes" : "Submit for review"}
+                          style={{ marginLeft: 6, fontSize: 10, background: 'var(--accent2)', color: 'white', whiteSpace: 'nowrap' }}
+                          title={(!d.episodes || d.episodes.length === 0) ? "Cannot submit for review with zero episodes" : "Submit Course for Review"}
                         >
-                          Submit for Review
+                          Submit Course for Review
                         </button>
                       )}
                       <button className="btn btn-danger btn-sm" onClick={() => open('delete', d)} title="Delete drama"><Trash2 size={11}/></button>
@@ -1343,16 +1351,27 @@ export default function Dramas() {
                                 </div>
                               </div>
 
-                              {/* Episode Status */}
+                              {/* Episode Status (Transcoding) */}
                               <div style={{ minWidth: 80, flexShrink: 0 }}>
                                 <span className={`badge ${
-                                  ep.status === 'published' ? 'badge-green' : 
-                                  ep.status === 'draft' ? 'badge-amber' :
+                                  ep.status === 'ready' ? 'badge-green' : 
                                   ep.status === 'processing' ? 'badge-blue' :
                                   ep.status === 'uploading' ? 'badge-blue' :
                                   'badge-red'
                                 }`} style={{ fontSize: 10, textTransform: 'capitalize' }}>
                                   {ep.status}
+                                </span>
+                              </div>
+
+                              {/* Episode Approval Status */}
+                              <div style={{ minWidth: 100, flexShrink: 0 }}>
+                                <span className={`badge ${
+                                  ep.approval_status === 'PUBLISHED' ? 'badge-green' : 
+                                  ep.approval_status === 'PENDING_REVIEW' ? 'badge-blue' :
+                                  ep.approval_status === 'DRAFT' ? 'badge-amber' :
+                                  'badge-red'
+                                }`} style={{ fontSize: 10 }}>
+                                  {ep.approval_status === 'PENDING_REVIEW' ? 'Pending' : ep.approval_status === 'PUBLISHED' ? 'Published' : ep.approval_status === 'DRAFT' ? 'Draft' : 'Rejected'}
                                 </span>
                               </div>
 
@@ -1363,7 +1382,25 @@ export default function Dramas() {
                               </div>
 
                               {/* Episode Actions */}
-                              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                              <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
+                                {user?.role === 'teacher' && (ep.approval_status === 'DRAFT' || ep.approval_status === 'REJECTED') && (
+                                  <button
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      try {
+                                        await episodesApi.update(ep.id, { approval_status: 'PENDING_REVIEW' });
+                                        alert('Episode submitted for review');
+                                        await reload();
+                                      } catch (err) {
+                                        alert('Failed to submit episode: ' + (err.response?.data?.error || err.message));
+                                      }
+                                    }}
+                                    style={{ fontSize: 10, padding: '2px 8px', height: 24, background: 'var(--accent2)', color: 'white' }}
+                                  >
+                                    Submit
+                                  </button>
+                                )}
                                 <button className="btn btn-ghost btn-sm" onClick={() => open('edit-ep', { ...d, selectedEpisode: ep })} title="Edit episode">
                                   <Edit2 size={11}/>
                                 </button>

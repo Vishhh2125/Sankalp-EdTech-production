@@ -12,6 +12,12 @@ function toHlsProxyPath(showId, episodeId, filename, childPath) {
   return `/api/media/hls/${showId}/${episodeId}/${resolvedPath}`;
 }
 
+function resolveMinioUrl(urlOrPath) {
+  if (!urlOrPath) return '';
+  if (/^https?:\/\//i.test(urlOrPath)) return urlOrPath;
+  return `http://minio:9000${urlOrPath.startsWith('/') ? '' : '/'}${urlOrPath}`;
+}
+
 async function getVideoUploadUrl(req, res, next) {
   try {
     const result = await mediaService.getVideoUploadUrl(req.body.show_id, req.body.episode_id);
@@ -93,10 +99,11 @@ async function hlsProxy(req, res, next) {
     const objectName = `dramas/${showId}/episodes/${episodeId}/${filename}`;
 
     const presignedUrl = await getPresignedGetUrl(objectName, 7200);
+    const targetUrl = resolveMinioUrl(presignedUrl);
 
     if (filename.endsWith('.m3u8')) {
-      const protocolModule = presignedUrl.startsWith('https') ? https : http;
-      protocolModule.get(presignedUrl, (stream) => {
+      const protocolModule = targetUrl.startsWith('https') ? https : http;
+      protocolModule.get(targetUrl, (stream) => {
         let body = '';
         stream.on('data', chunk => body += chunk);
         stream.on('end', () => {
@@ -121,8 +128,8 @@ async function hlsProxy(req, res, next) {
 
     } else {
       // .ts segments: stream through backend so nginx can cache the 200 response.
-      const protocolModule = presignedUrl.startsWith('https') ? https : http;
-      protocolModule.get(presignedUrl, (stream) => {
+      const protocolModule = targetUrl.startsWith('https') ? https : http;
+      protocolModule.get(targetUrl, (stream) => {
         if (stream.statusCode === 404) {
           return res.status(404).json({ error: 'Segment not found' });
         }
@@ -137,8 +144,6 @@ async function hlsProxy(req, res, next) {
     }
   } catch (e) { next(e); }
 }
-
-
 
 // Image proxy — serves show thumbnails/banners through the backend
 // so the mobile app never needs to reach MinIO directly.
@@ -159,11 +164,12 @@ async function imageProxy(req, res, next) {
     console.log('[imageProxy] Fetching from MinIO:', objectName);
     
     const presignedUrl = await getPresignedGetUrl(objectName, 7200);
-    console.log('[imageProxy] Got presigned URL, streaming to client...');
+    const targetUrl = resolveMinioUrl(presignedUrl);
+    console.log('[imageProxy] Target URL:', targetUrl, 'streaming to client...');
 
     // Stream the image through so the client only ever talks to our backend
-    const protocolModule = presignedUrl.startsWith('https') ? https : http;
-    protocolModule.get(presignedUrl, (stream) => {
+    const protocolModule = targetUrl.startsWith('https') ? https : http;
+    protocolModule.get(targetUrl, (stream) => {
       console.log('[imageProxy] MinIO response status:', stream.statusCode);
       
       if (stream.statusCode === 404) {

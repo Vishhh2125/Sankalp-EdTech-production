@@ -76,7 +76,7 @@ function requireAdminOrTeacher(section = null) {
       const method = req.method.toUpperCase();
       if (method !== 'GET') {
         // 1. Shows (Dramas)
-        if (section === 'dramas') {
+        if (section === 'dramas' && !req.path.includes('/episodes')) {
           if (req.params.id) {
             const show = await prisma.show.findUnique({ where: { id: req.params.id } });
             if (!show) return res.status(404).json({ error: 'Show not found' });
