@@ -9,14 +9,21 @@ export function normalizeAdminUser(user) {
       ? 'admin'
       : user.role === 'SUB_ADMIN' || user.role === 'sub_admin'
         ? 'sub_admin'
-        : user.role
+        : user.role === 'TEACHER' || user.role === 'teacher'
+          ? 'teacher'
+          : user.role
 
   const sections =
     role === 'admin'
       ? [...ADMIN_SECTIONS]
-      : Array.isArray(user.sections)
-        ? user.sections
-        : []
+      : role === 'teacher'
+        ? (
+          // If teacher hasn't completed onboarding, force them to only see the profile page
+          user.is_profile_complete === false ? ['profile'] : (Array.isArray(user.sections) ? user.sections : ['dramas'])
+        )
+        : Array.isArray(user.sections)
+          ? user.sections
+          : []
 
   return { ...user, role, sections }
 }

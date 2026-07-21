@@ -39,11 +39,12 @@ async function getShows(req, res, next) {
       page: parseInt(page) || 1,
       limit: parseInt(limit) || 50,
       include_inactive: req.query.include_inactive === 'true',
+      requesting_user: req.user || null,
     }));
   } catch (e) { next(e); }
 }
 async function getShow(req, res, next) {
-  try { res.json(await service.getShowById(req.params.id)); } catch (e) { next(e); }
+  try { res.json(await service.getShowById(req.params.id, req.user)); } catch (e) { next(e); }
 }
 async function getRelatedShows(req, res, next) {
   try {
@@ -52,7 +53,7 @@ async function getRelatedShows(req, res, next) {
   } catch (e) { next(e); }
 }
 async function createShow(req, res, next) {
-  try { res.status(201).json(await service.createShow(req.body, req.admin.id)); } catch (e) { next(e); }
+  try { res.status(201).json(await service.createShow(req.body, req.admin)); } catch (e) { next(e); }
 }
 async function updateShow(req, res, next) {
   try { res.json(await service.updateShow(req.params.id, req.body)); } catch (e) { next(e); }
@@ -72,10 +73,10 @@ async function updateFeedPosition(req, res, next) {
 
 // ── Episodes ──
 async function getEpisodes(req, res, next) {
-  try { res.json(await service.getEpisodesByShow(req.params.showId)); } catch (e) { next(e); }
+  try { res.json(await service.getEpisodesByShow(req.params.showId, req.user)); } catch (e) { next(e); }
 }
 async function createEpisode(req, res, next) {
-  try { res.status(201).json(await service.createEpisode(req.body)); } catch (e) { next(e); }
+  try { res.status(201).json(await service.createEpisode(req.body, req.admin)); } catch (e) { next(e); }
 }
 async function updateEpisode(req, res, next) {
   try { res.json(await service.updateEpisode(req.params.id, req.body)); } catch (e) { next(e); }

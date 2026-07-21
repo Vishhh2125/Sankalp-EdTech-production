@@ -244,20 +244,26 @@ export async function createStream(data, adminId) {
   }
 }
 
-export async function listStreams({ endedPeriodDays = 7 } = {}) {
+export async function listStreams({ endedPeriodDays = 7, requesting_user = null } = {}) {
   const periodCutoff = new Date();
   periodCutoff.setDate(periodCutoff.getDate() - endedPeriodDays);
 
+  const whereClause = {
+    OR: [
+      { status: { in: ['LIVE', 'SCHEDULED'] } },
+      {
+        status: 'ENDED',
+        ended_at: { gte: periodCutoff },
+      },
+    ],
+  };
+
+  if (requesting_user && requesting_user.role === 'TEACHER') {
+    whereClause.created_by = requesting_user.id;
+  }
+
   const streams = await prisma.liveStream.findMany({
-    where: {
-      OR: [
-        { status: { in: ['LIVE', 'SCHEDULED'] } },
-        {
-          status: 'ENDED',
-          ended_at: { gte: periodCutoff },
-        },
-      ],
-    },
+    where: whereClause,
     orderBy: [
       // Active streams first, then ended by most recent
       { status: 'asc' }, // ENDED < LIVE < SCHEDULED alphabetically — we sort below

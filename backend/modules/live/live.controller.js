@@ -17,7 +17,7 @@ async function listStreams(req, res, next) {
   try {
     const PERIOD_MAP = { '7d': 7, '30d': 30, '90d': 90, '365d': 365, 'all': 36500 };
     const endedPeriodDays = PERIOD_MAP[req.query.ended_period] ?? 7;
-    const streams = await service.listStreams({ endedPeriodDays });
+    const streams = await service.listStreams({ endedPeriodDays, requesting_user: req.admin });
     return res.json(new ApiResponse(200, streams, 'Streams fetched'));
   } catch (e) {
     next(e);

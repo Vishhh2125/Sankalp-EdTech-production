@@ -134,12 +134,26 @@ async function getAllShows({
   page = 1,
   limit = 50,
   include_inactive = false,
+  requesting_user = null,
 } = {}) {
   const where = {};
   if (category_id) where.category_id = category_id;
+
+  if (requesting_user && requesting_user.role === 'TEACHER') {
+    where.teacher_id = requesting_user.id;
+  } else if (!requesting_user || requesting_user.role === 'USER') {
+    where.approval_status = 'PUBLISHED';
+    where.is_active = true;
+  }
+
   if (status === 'Published') where.is_active = true;
   else if (status === 'Draft') where.is_active = false;
-  else if (!include_inactive) where.is_active = true;
+  else if (!include_inactive && (!requesting_user || requesting_user.role === 'USER')) {
+    where.is_active = true;
+    where.approval_status = 'PUBLISHED';
+  } else if (!include_inactive) {
+    where.is_active = true;
+  }
   if (search) {
     const term = String(search).trim();
     const tokens = term.split(/\s+/).filter(Boolean);
@@ -229,7 +243,7 @@ async function getAllShows({
   return { items, total, page, limit };
 }
 
-async function getShowById(id) {
+async function getShowById(id, requesting_user = null) {
   const show = await prisma.show.findUnique({
     where: { id },
     include: {
@@ -239,8 +253,27 @@ async function getShowById(id) {
     },
   });
   if (!show) throw new AppError('Show not found', 404);
+
+  // Check show visibility if requesting_user is student or guest
+  const isAdminOrTeacherOwner = 
+    requesting_user && 
+    (requesting_user.role === 'ADMIN' || 
+     requesting_user.role === 'SUB_ADMIN' ||
+     (requesting_user.role === 'TEACHER' && show.teacher_id === requesting_user.id));
+
+  if (!isAdminOrTeacherOwner && (show.approval_status !== 'PUBLISHED' || !show.is_active)) {
+    throw new AppError('Show not found', 404);
+  }
+
+  // Filter episodes if not admin/teacher owner
+  let episodes = show.episodes;
+  if (!isAdminOrTeacherOwner) {
+    episodes = episodes.filter(e => e.approval_status === 'PUBLISHED');
+  }
+
   return {
     ...show,
+    episodes,
     view_count: displayedViewCount(show),
     thumbnail_url: show.thumbnail_url,
     category_name: show.category.name,
@@ -266,6 +299,7 @@ async function getRelatedShows(showId, limit = 6) {
     where: {
       id: { not: showId },
       is_active: true,
+      approval_status: 'PUBLISHED',
       show_tags: { some: { tag_id: { in: tagIds } } },
     },
     take: Math.min(limit * 4, 24),
@@ -308,7 +342,7 @@ async function getRelatedShows(showId, limit = 6) {
   return { items };
 }
 
-async function createShow(data, adminId) {
+async function createShow(data, admin) {
   const { tag_ids = [], ...showData } = data;
 
   // Verify category exists
@@ -327,22 +361,32 @@ async function createShow(data, adminId) {
     });
   }
 
-  const show = await prisma.show.create({
-    data: {
-      title: showData.title,
-      synopsis: showData.synopsis || null,
-      category_id: showData.category_id,
-      feed_position: showData.feed_position || 0,
-      is_active,
-      is_free: showData.is_free !== undefined ? showData.is_free : true,
-      coin_cost: showData.coin_cost !== undefined ? showData.coin_cost : 0,
-      thumbnail_url: showData.thumbnail_url || null,
-      banner_url: showData.banner_url || null,
-      manual_view_count: showData.manual_view_count || 0,
-      show_tags: {
-        create: tag_ids.map((tag_id) => ({ tag_id })),
-      },
+  const createData = {
+    title: showData.title,
+    synopsis: showData.synopsis || null,
+    category_id: showData.category_id,
+    feed_position: showData.feed_position || 0,
+    is_active,
+    is_free: showData.is_free !== undefined ? showData.is_free : true,
+    coin_cost: showData.coin_cost !== undefined ? showData.coin_cost : 0,
+    thumbnail_url: showData.thumbnail_url || null,
+    banner_url: showData.banner_url || null,
+    manual_view_count: showData.manual_view_count || 0,
+    teacher_id: showData.teacher_id || null,
+    show_tags: {
+      create: tag_ids.map((tag_id) => ({ tag_id })),
     },
+  };
+
+  // If the creator is a teacher, auto-assign ownership and set draft approval
+  if (admin && admin.role === 'TEACHER') {
+    createData.teacher_id = admin.id;
+    createData.is_active = false; // teachers' shows start unpublished
+    createData.approval_status = 'DRAFT';
+  }
+
+  const show = await prisma.show.create({
+    data: createData,
     include: {
       category: { select: { id: true, name: true } },
       show_tags: { include: { tag: { select: { id: true, name: true } } } },
@@ -353,8 +397,15 @@ async function createShow(data, adminId) {
 }
 
 async function updateShow(id, data) {
-  const existing = await prisma.show.findUnique({ where: { id } });
+  const existing = await prisma.show.findUnique({
+    where: { id },
+    include: { _count: { select: { episodes: true } } }
+  });
   if (!existing) throw new AppError('Show not found', 404);
+
+  if (data.approval_status === 'PENDING_REVIEW' && existing._count.episodes === 0) {
+    throw new AppError('Cannot submit a course for review with zero episodes', 400);
+  }
 
   const { tag_ids, ...showData } = data;
 
@@ -517,16 +568,34 @@ async function updateFeedPosition(id, newPosition) {
 // EPISODES
 // ═══════════════════════════════════════
 
-async function getEpisodesByShow(showId) {
+async function getEpisodesByShow(showId, requesting_user = null) {
   const show = await prisma.show.findUnique({ where: { id: showId } });
   if (!show) throw new AppError('Show not found', 404);
+
+  if (requesting_user && requesting_user.role === 'TEACHER' && show.teacher_id !== requesting_user.id) {
+    throw new AppError('Access denied', 403);
+  }
+
+  const where = { show_id: showId };
+
+  // For students and guests, only show published episodes
+  const isAdminOrTeacherOwner = 
+    requesting_user && 
+    (requesting_user.role === 'ADMIN' || 
+     requesting_user.role === 'SUB_ADMIN' ||
+     (requesting_user.role === 'TEACHER' && show.teacher_id === requesting_user.id));
+
+  if (!isAdminOrTeacherOwner) {
+    where.approval_status = 'PUBLISHED';
+  }
+
   return prisma.episode.findMany({
-    where: { show_id: showId },
+    where,
     orderBy: { episode_num: 'asc' },
   });
 }
 
-async function createEpisode(data) {
+async function createEpisode(data, admin) {
   const show = await prisma.show.findUnique({ where: { id: data.show_id } });
   if (!show) throw new AppError('Show not found', 404);
 
@@ -560,6 +629,10 @@ async function createEpisode(data) {
     youtube_video_id: youtubeId,
   };
 
+  if (admin && admin.role === 'TEACHER') {
+    episodeData.approval_status = 'DRAFT';
+  }
+
   return prisma.episode.create({ data: episodeData });
 }
 
@@ -575,13 +648,28 @@ async function updateEpisode(id, data) {
       throw new AppError('Show-only episodes are not allowed on free shows', 400);
     }
   }
+
+  const parentShow = await prisma.show.findUnique({ where: { id: ep.show_id } });
+  const isTeacherShow = !!parentShow?.teacher_id;
   
   if (updateData.video_source === 'YOUTUBE' || (updateData.youtube_video_id && ep.video_source === 'YOUTUBE')) {
     const youtubeId = extractYoutubeVideoId(updateData.youtube_video_id || ep.youtube_video_id);
     if (!youtubeId) throw new AppError('Invalid YouTube video ID or URL', 400);
+    
+    const videoChanged = ep.video_source !== 'YOUTUBE' || ep.youtube_video_id !== youtubeId;
+    if (isTeacherShow && videoChanged) {
+      updateData.approval_status = 'DRAFT';
+    }
+
     updateData.youtube_video_id = youtubeId;
     updateData.status = 'ready';
     updateData.video_source = 'YOUTUBE';
+  } else if (updateData.video_source === 'UPLOAD' && ep.video_source !== 'UPLOAD') {
+    if (isTeacherShow) {
+      updateData.approval_status = 'DRAFT';
+    }
+    updateData.youtube_video_id = null;
+    updateData.status = 'pending';
   }
 
   return prisma.episode.update({ where: { id }, data: updateData });

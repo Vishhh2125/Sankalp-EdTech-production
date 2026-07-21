@@ -5,7 +5,11 @@ const INTERNAL = `http://minio:9000`;
 const PUBLIC = (process.env.MINIO_PUBLIC_HOST || INTERNAL).replace(/\/$/, '');
 
 function toPublic(url) {
-  return url.replace(INTERNAL, PUBLIC);
+  if (!url) return '';
+  // Convert http://minio:9000/ott-media/... or http://<host>:8080/ott-media/... to relative /ott-media/...
+  const match = url.match(/\/ott-media\/.*/);
+  if (match) return match[0];
+  return url.replace(/^https?:\/\/[^/]+/, '');
 }
 
 async function getPresignedPutUrl(objectName, expirySeconds = 900) {

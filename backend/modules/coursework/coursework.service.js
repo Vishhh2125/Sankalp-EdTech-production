@@ -488,6 +488,13 @@ async function getSubmissions(filters, page = 1, limit = 20) {
   if (filters.status) where.status = filters.status;
   if (filters.show_id) where.assignment = { show_id: filters.show_id };
 
+  if (filters.requesting_user && filters.requesting_user.role === 'TEACHER') {
+    where.assignment = {
+      ...where.assignment,
+      show: { teacher_id: filters.requesting_user.id }
+    };
+  }
+
   const skip = (page - 1) * limit;
 
   const [total, items] = await Promise.all([

@@ -79,6 +79,7 @@ function getImageObjectName(type, entityId) {
   if (type === 'collection') return `collections/${entityId}/cover.${ext}`;
   if (type === 'package_thumbnail') return `packages/${entityId}/thumbnail.${ext}`;
   if (type === 'package_banner') return `packages/${entityId}/banner.${ext}`;
+  if (type === 'teacher_profile') return `teachers/${entityId}/profile.${ext}`;
 
   throw new AppError('Invalid upload type', 400);
 }
@@ -92,6 +93,9 @@ async function uploadImageFile(type, entityId, file) {
   } else if (type === 'package_thumbnail' || type === 'package_banner') {
     const pkg = await prisma.package.findUnique({ where: { id: entityId } });
     if (!pkg) throw new AppError('Package not found', 404);
+  } else if (type === 'teacher_profile') {
+    const usr = await prisma.user.findUnique({ where: { id: entityId } });
+    if (!usr) throw new AppError('User not found', 404);
   }
 
   const objectName = getImageObjectName(type, entityId);
@@ -127,14 +131,23 @@ async function confirmVideoUpload(episodeId) {
 
   const objectName = `raw/${episodeId}/video.mp4`;
 
+  const parentShow = await prisma.show.findUnique({ where: { id: episode.show_id } });
+  const isTeacherShow = !!parentShow?.teacher_id;
+
+  const updateData = {
+    status: 'processing',
+    total_profiles: 4,
+    completed_profiles: 0
+  };
+
+  if (isTeacherShow) {
+    updateData.approval_status = 'DRAFT';
+  }
+
   // Update status to processing and initialize profile counters
   await prisma.episode.update({
     where: { id: episodeId },
-    data: {
-      status: 'processing',
-      total_profiles: 4,
-      completed_profiles: 0
-    },
+    data: updateData,
   });
 
   // Create parallel transcode jobs for each profile
@@ -157,6 +170,21 @@ async function confirmImageUpload(type, entityId, objectName) {
     return prisma.package.update({ where: { id: entityId }, data: { thumbnail_url: publicUrl } });
   } else if (type === 'package_banner') {
     return prisma.package.update({ where: { id: entityId }, data: { banner_url: publicUrl } });
+  } else if (type === 'teacher_profile') {
+    return prisma.teacherProfile.upsert({
+      where: { user_id: entityId },
+      update: { profile_photo_url: publicUrl },
+      create: {
+        user_id: entityId,
+        profile_photo_url: publicUrl,
+        full_name: '',
+        professional_headline: '',
+        bio: '',
+        experience_years: 0,
+        qualification: '',
+        is_completed: false
+      }
+    });
   }
 
   return { updated: true, url: publicUrl };

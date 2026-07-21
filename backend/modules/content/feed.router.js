@@ -22,6 +22,7 @@ router.get('/for-you', allowGuest, async (req, res, next) => {
     const readyEpisodeOneWhere = {
       episode_num: 1,
       status: 'ready',
+      approval_status: 'PUBLISHED',
       OR: [
         { video_source: 'YOUTUBE', youtube_video_id: { not: null } },
         { video_source: 'UPLOAD', hls_master_url: { not: null } },
@@ -30,6 +31,7 @@ router.get('/for-you', allowGuest, async (req, res, next) => {
 
     const eligibleShowWhere = {
       is_active: true,
+      approval_status: 'PUBLISHED',
       episodes: {
         some: readyEpisodeOneWhere,
       },
@@ -163,7 +165,7 @@ router.get('/show/:showId', allowGuest, async (req, res, next) => {
       },
     });
     if (!show) return res.status(404).json({ error: 'Show not found' });
-    if (!show.is_active) {
+    if (!show.is_active || show.approval_status !== 'PUBLISHED') {
       return res.status(404).json({ error: 'Show not found' });
     }
 
@@ -172,12 +174,12 @@ router.get('/show/:showId', allowGuest, async (req, res, next) => {
     );
 
     const episodes = await prisma.episode.findMany({
-      where: { show_id: showId, episode_num: { gte: fromEp } },
+      where: { show_id: showId, episode_num: { gte: fromEp }, approval_status: 'PUBLISHED' },
       orderBy: { episode_num: 'asc' },
       take: limit,
     });
 
-    const totalEpisodes = await prisma.episode.count({ where: { show_id: showId } });
+    const totalEpisodes = await prisma.episode.count({ where: { show_id: showId, approval_status: 'PUBLISHED' } });
 
     const items = await Promise.all(episodes.map(async (ep) => {
       const { is_locked, lock_reason } = await checkEpisodeAccess(

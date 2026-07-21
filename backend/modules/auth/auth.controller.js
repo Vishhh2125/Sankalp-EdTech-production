@@ -109,7 +109,7 @@ export const login = asyncHandler(async (req, res, next) => {
 
   // Admin panel: only ADMIN and SUB_ADMIN may sign in
   if (isAdminPanel) {
-    if (result.user.role !== 'ADMIN' && result.user.role !== 'SUB_ADMIN') {
+    if (result.user.role !== 'ADMIN' && result.user.role !== 'SUB_ADMIN' && result.user.role !== 'TEACHER') {
       throw new ApiError(403, 'Admin panel access denied');
     }
     if (result.user.isBlocked) {
@@ -523,6 +523,13 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
       memberships,
       has_all_access: hasAllAccess,
     };
+
+    // If teacher, include teacher profile status
+    if (user.role === 'TEACHER') {
+      const tp = await prisma.teacherProfile.findUnique({ where: { user_id: userId } });
+      profile.is_profile_complete = tp?.is_completed || false;
+      profile.teacher_profile = tp || null;
+    }
 
     return res.json(new ApiResponse(200, profile, 'User profile fetched'));
   } catch (e) {

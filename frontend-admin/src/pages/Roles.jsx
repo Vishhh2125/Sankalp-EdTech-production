@@ -2,10 +2,20 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import { Plus, Edit2, Trash2, RefreshCw, Shield, ShieldCheck, Eye, EyeOff } from 'lucide-react'
 import Modal, { FormGroup, ModalSection } from '../components/ui/Modal.jsx'
-import { Toggle, ConfirmDialog } from '../components/ui/Controls.jsx'
-import { subAdminApi } from '../services/api.js'
+import { Toggle, ConfirmDialog, FileDropzone } from '../components/ui/Controls.jsx'
+import { subAdminApi, teachersApi, mediaApi } from '../services/api.js'
 import { selectIsMainAdmin } from '../store/authSlice.js'
 import { SECTION_OPTIONS } from '../config/permissions.js'
+
+function toArray(value, keys = []) {
+  if (Array.isArray(value)) return value
+  if (value && typeof value === 'object') {
+    for (const key of keys) {
+      if (Array.isArray(value[key])) return value[key]
+    }
+  }
+  return []
+}
 
 function AdminModal({ open, onClose, onSave, initial, saving }) {
   const isEdit = !!initial?.id
@@ -19,7 +29,9 @@ function AdminModal({ open, onClose, onSave, initial, saving }) {
   useEffect(() => {
     if (open) {
       setForm(
-        initial || { name: '', email: '', password: '', role: 'sub_admin', status: 'Active', sections: [] }
+        initial
+          ? { ...initial, sections: Array.isArray(initial.sections) ? initial.sections : [] }
+          : { name: '', email: '', password: '', role: 'sub_admin', status: 'Active', sections: [] }
       )
       setError('')
       setShowPassword(false)
@@ -30,9 +42,13 @@ function AdminModal({ open, onClose, onSave, initial, saving }) {
   const toggleSection = (id) => {
     setForm((p) => ({
       ...p,
-      sections: p.sections.includes(id) ? p.sections.filter((x) => x !== id) : [...p.sections, id],
+      sections: (Array.isArray(p.sections) ? p.sections : []).includes(id)
+        ? (Array.isArray(p.sections) ? p.sections : []).filter((x) => x !== id)
+        : [...(Array.isArray(p.sections) ? p.sections : []), id],
     }))
   }
+
+  const selectedSections = Array.isArray(form.sections) ? form.sections : []
 
   const handleSave = async () => {
     setError('')
@@ -44,7 +60,7 @@ function AdminModal({ open, onClose, onSave, initial, saving }) {
       setError('Password must be at least 8 characters')
       return
     }
-    if (!isMainAdmin && (!form.sections || form.sections.length === 0)) {
+    if (!isMainAdmin && selectedSections.length === 0) {
       setError('At least one section must be selected')
       return
     }
@@ -175,21 +191,21 @@ function AdminModal({ open, onClose, onSave, initial, saving }) {
                   padding: '8px 12px',
                   borderRadius: 6,
                   cursor: 'pointer',
-                  background: form.sections.includes(id) ? 'var(--accent-bg)' : 'var(--bg3)',
-                  border: `1px solid ${form.sections.includes(id) ? 'var(--accent-border)' : 'var(--border)'}`,
+                  background: selectedSections.includes(id) ? 'var(--accent-bg)' : 'var(--bg3)',
+                  border: `1px solid ${selectedSections.includes(id) ? 'var(--accent-border)' : 'var(--border)'}`,
 
                 }}
               >
                 <Toggle
-                  on={form.sections.includes(id)}
+                  on={selectedSections.includes(id)}
                   onChange={() => toggleSection(id)}
 
                 />
                 <span
                   style={{
                     fontSize: 12,
-                    fontWeight: form.sections.includes(id) ? 500 : 400,
-                    color: form.sections.includes(id) ? 'var(--accent2)' : 'var(--text2)',
+                    fontWeight: selectedSections.includes(id) ? 500 : 400,
+                    color: selectedSections.includes(id) ? 'var(--accent2)' : 'var(--text2)',
                   }}
                 >
                   {label}
@@ -198,7 +214,7 @@ function AdminModal({ open, onClose, onSave, initial, saving }) {
             ))}
           </div>
           <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 10 }}>
-            Selected: {form.sections.length} of {SECTION_OPTIONS.length} sections.
+            Selected: {selectedSections.length} of {SECTION_OPTIONS.length} sections.
           </div>
         </ModalSection>
       )}
@@ -206,9 +222,113 @@ function AdminModal({ open, onClose, onSave, initial, saving }) {
   )
 }
 
+function TeacherModal({ open, onClose, onSave, saving }) {
+  const [form, setForm] = useState({ name: '', email: '', password: '' })
+  const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+
+  useEffect(() => {
+    if (open) {
+      setForm({ name: '', email: '', password: '' })
+      setError('')
+      setShowPassword(false)
+    }
+  }, [open])
+
+  const upd = (key, value) => setForm((current) => ({ ...current, [key]: value }))
+
+  const handleSave = async () => {
+    setError('')
+    if (!form.name?.trim() || !form.email?.trim()) {
+      setError('Name and email are required')
+      return
+    }
+    if (form.password && form.password.length < 8) {
+      setError('Temporary password must be at least 8 characters')
+      return
+    }
+
+    try {
+      await onSave(form)
+      onClose()
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Save failed')
+    }
+  }
+
+  if (!open) return null
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Create Teacher"
+      width={540}
+      footer={
+        <>
+          <button className="btn btn-ghost" onClick={onClose} disabled={saving}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+            {saving ? 'Saving…' : 'Create Teacher'}
+          </button>
+        </>
+      }
+    >
+      {error && (
+        <div style={{ color: 'var(--red)', fontSize: 12, marginBottom: 12 }}>{error}</div>
+      )}
+
+      <ModalSection title="Identity & login">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <FormGroup label="Full name *">
+            <input
+              className="input"
+              placeholder="e.g. Sarah Lee"
+              value={form.name}
+              onChange={(e) => upd('name', e.target.value)}
+            />
+          </FormGroup>
+          <FormGroup label="Email *">
+            <input
+              className="input"
+              type="email"
+              placeholder="teacher@ott.com"
+              value={form.email}
+              onChange={(e) => upd('email', e.target.value)}
+            />
+          </FormGroup>
+        </div>
+
+        <FormGroup label="Temporary password">
+          <div style={{ position: 'relative' }}>
+            <input
+              className="input"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Leave blank to auto-generate"
+              value={form.password}
+              onChange={(e) => upd('password', e.target.value)}
+              style={{ paddingRight: 36 }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 0, display: 'flex', alignItems: 'center' }}
+            >
+              {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
+          <div style={{ marginTop: 6, fontSize: 11, color: 'var(--text3)' }}>
+            Leave it blank to generate a secure password automatically and email the teacher their credentials.
+          </div>
+        </FormGroup>
+      </ModalSection>
+    </Modal>
+  )
+}
+
 export default function Roles() {
   const isMainAdmin = useSelector(selectIsMainAdmin)
   const [admins, setAdmins] = useState([])
+  const [teachers, setTeachers] = useState([])
   const [activityLog, setActivityLog] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -218,24 +338,37 @@ export default function Roles() {
   const [tab, setTab] = useState('admins')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [editingTeacher, setEditingTeacher] = useState(null)
+
+  const safeAdmins = Array.isArray(admins) ? admins : []
+  const safeTeachers = Array.isArray(teachers) ? teachers : []
+  const safeActivityLog = Array.isArray(activityLog) ? activityLog : []
 
   const loadAdmins = useCallback(async () => {
     const res = await subAdminApi.list()
-    setAdmins(res.data.data || [])
+    const payload = res.data.data
+    setAdmins(toArray(payload, ['admins', 'subAdmins', 'users']))
+  }, [])
+
+  const loadTeachers = useCallback(async () => {
+    const res = await teachersApi.list()
+    const payload = res.data.data
+    setTeachers(toArray(payload, ['teachers', 'data']))
   }, [])
 
   const loadActivity = useCallback(async () => {
     const res = await subAdminApi.activityLogs()
-    setActivityLog(res.data.data || [])
+    const payload = res.data.data
+    setActivityLog(toArray(payload, ['logs', 'activityLogs', 'activity_logs']))
   }, [])
 
   useEffect(() => {
     if (!isMainAdmin) return
     setLoading(true)
-    Promise.all([loadAdmins(), loadActivity()])
+    Promise.all([loadAdmins(), loadTeachers(), loadActivity()])
       .catch((err) => setError(err.response?.data?.message || 'Failed to load admins'))
       .finally(() => setLoading(false))
-  }, [isMainAdmin, loadAdmins, loadActivity])
+  }, [isMainAdmin, loadAdmins, loadTeachers, loadActivity])
 
   const saveAdmin = async (form) => {
     setSaving(true)
@@ -261,6 +394,63 @@ export default function Roles() {
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Failed to save sub-admin'
       setError(msg)
+      throw err
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const saveTeacher = async (form) => {
+    setSaving(true)
+    setError('')
+    setSuccess('')
+    try {
+      const response = await teachersApi.create({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+      })
+      const teacher = response.data?.data || {}
+      const temporaryPassword = teacher.temporaryPassword
+      setSuccess(
+        temporaryPassword
+          ? `Created teacher ${form.name}. Temporary password: ${temporaryPassword}`
+          : `Created teacher ${form.name}`
+      )
+      await loadTeachers()
+      await loadActivity()
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Failed to save teacher'
+      setError(msg)
+      throw err
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const toggleTeacherStatus = async (teacher) => {
+    setSaving(true)
+    setError('')
+    try {
+      await teachersApi.toggleStatus(teacher.id)
+      await loadTeachers()
+      setSuccess(`${teacher.name} status updated`)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Status update failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const updateTeacherProfile = async (teacherId, data) => {
+    setSaving(true)
+    setError('')
+    try {
+      await teachersApi.saveProfile(teacherId, data)
+      setSuccess('Teacher profile updated successfully')
+      await loadTeachers()
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Failed to update teacher profile')
       throw err
     } finally {
       setSaving(false)
@@ -295,7 +485,7 @@ export default function Roles() {
     )
   }
 
-  const TABS = ['admins', 'activity']
+  const TABS = ['admins', 'teachers', 'activity']
 
   return (
     <div className="page-enter">
@@ -324,7 +514,7 @@ export default function Roles() {
               marginBottom: -1,
             }}
           >
-            {t === 'admins' ? 'Admin & Sub-Admin Users' : 'Activity Logs'}
+            {t === 'admins' ? 'Admin & Sub-Admin Users' : t === 'teachers' ? 'Teachers' : 'Activity Logs'}
           </button>
         ))}
       </div>
@@ -361,7 +551,9 @@ export default function Roles() {
                       </tr>
                     </thead>
                     <tbody>
-                      {admins.map((a) => (
+                      {safeAdmins.map((a) => {
+                        const sections = Array.isArray(a.sections) ? a.sections : []
+                        return (
                         <tr key={a.id}>
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -386,14 +578,14 @@ export default function Roles() {
                               <span style={{ fontSize: 11, color: 'var(--green)' }}>All sections</span>
                             ) : (
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, maxWidth: 200 }}>
-                                {a.sections.slice(0, 3).map((s) => (
+                                {sections.slice(0, 3).map((s) => (
                                   <span key={s} className="badge badge-blue" style={{ fontSize: 9 }}>
                                     {s}
                                   </span>
                                 ))}
-                                {a.sections.length > 3 && (
+                                {sections.length > 3 && (
                                   <span className="badge badge-blue" style={{ fontSize: 9 }}>
-                                    +{a.sections.length - 3}
+                                    +{sections.length - 3}
                                   </span>
                                 )}
                               </div>
@@ -429,7 +621,96 @@ export default function Roles() {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      )})}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+
+          {tab === 'teachers' && (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14 }}>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setModal('teacher-add')
+                  }}
+                >
+                  <Plus size={14} /> Create Teacher
+                </button>
+              </div>
+              <div className="card" style={{ padding: 0 }}>
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Teacher</th>
+                        <th>Email</th>
+                        <th>Profile</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {safeTeachers.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text3)', padding: 24 }}>
+                            No teachers yet
+                          </td>
+                        </tr>
+                      ) : (
+                        safeTeachers.map((teacher) => (
+                          <tr key={teacher.id}>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div className="avatar" style={{ background: 'var(--blue-bg)' }}>
+                                  {teacher.initials || teacher.name?.slice(0, 2)?.toUpperCase()}
+                                </div>
+                                <span style={{ fontWeight: 500 }}>{teacher.name}</span>
+                              </div>
+                            </td>
+                            <td style={{ color: 'var(--text3)', fontSize: 12 }}>{teacher.email}</td>
+                            <td>
+                              <span className={`badge ${teacher.teacherProfile?.is_completed ? 'badge-green' : 'badge-amber'}`}>
+                                {teacher.teacherProfile?.is_completed ? 'Completed' : 'Pending'}
+                              </span>
+                            </td>
+                            <td>
+                              <span className={`badge ${teacher.isBlocked ? 'badge-amber' : 'badge-green'}`}>
+                                {teacher.isBlocked ? 'Inactive' : 'Active'}
+                              </span>
+                            </td>
+                            <td style={{ color: 'var(--text3)', fontSize: 12 }}>
+                              {teacher.createdAt ? new Date(teacher.createdAt).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              }) : '—'}
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: 5 }}>
+                                <button
+                                  className="btn btn-ghost btn-sm"
+                                  onClick={() => { setEditingTeacher(teacher); setModal('teacher-profile-edit') }}
+                                  disabled={saving}
+                                >
+                                  Edit Profile
+                                </button>
+                                <button
+                                  className="btn btn-ghost btn-sm"
+                                  onClick={() => toggleTeacherStatus(teacher)}
+                                  disabled={saving}
+                                >
+                                  {teacher.isBlocked ? 'Activate' : 'Deactivate'}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -453,14 +734,14 @@ export default function Roles() {
                     </tr>
                   </thead>
                   <tbody>
-                    {activityLog.length === 0 ? (
+                    {safeActivityLog.length === 0 ? (
                       <tr>
                         <td colSpan={4} style={{ textAlign: 'center', color: 'var(--text3)', padding: 24 }}>
                           No activity yet
                         </td>
                       </tr>
                     ) : (
-                      activityLog.map((l, i) => (
+                      safeActivityLog.map((l, i) => (
                         <tr key={i}>
                           <td style={{ fontWeight: 500 }}>{l.admin}</td>
                           <td style={{ color: 'var(--text2)' }}>{l.action}</td>
@@ -495,6 +776,19 @@ export default function Roles() {
         initial={selected}
         saving={saving}
       />
+      <TeacherModal
+        open={modal === 'teacher-add'}
+        onClose={() => setModal(null)}
+        onSave={saveTeacher}
+        saving={saving}
+      />
+      <TeacherProfileEditModal
+        open={modal === 'teacher-profile-edit'}
+        onClose={() => setModal(null)}
+        teacher={editingTeacher}
+        onSave={updateTeacherProfile}
+        saving={saving}
+      />
       <ConfirmDialog
         open={!!confirm}
         danger
@@ -504,5 +798,164 @@ export default function Roles() {
         onCancel={() => setConfirm(null)}
       />
     </div>
+  )
+}
+
+function TeacherProfileEditModal({ open, onClose, teacher, onSave, saving }) {
+  const [form, setForm] = useState({
+    profile_photo_url: '',
+    full_name: '',
+    professional_headline: '',
+    bio: '',
+    experience_years: 0,
+    qualification: ''
+  })
+  const [error, setError] = useState('')
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [photoPreview, setPhotoPreview] = useState('')
+
+  useEffect(() => {
+    if (open && teacher) {
+      setError('')
+      setUploadingPhoto(false)
+      teachersApi.getProfile(teacher.id)
+        .then(res => {
+          const profile = res.data?.data || res.data || {}
+          setForm({
+            profile_photo_url: profile.profile_photo_url || '',
+            full_name: profile.full_name || teacher.name || '',
+            professional_headline: profile.professional_headline || '',
+            bio: profile.bio || '',
+            experience_years: profile.experience_years || 0,
+            qualification: profile.qualification || ''
+          })
+          setPhotoPreview(profile.profile_photo_url || '')
+        })
+        .catch(err => {
+          setError('Failed to load profile details: ' + (err.response?.data?.message || err.message))
+        })
+    }
+  }, [open, teacher])
+
+  const upd = (key, value) => setForm((current) => ({ ...current, [key]: value }))
+
+  const handlePhotoChange = async (file) => {
+    if (!file) return
+    setUploadingPhoto(true)
+    setError('')
+    try {
+      const res = await mediaApi.uploadImageFile('teacher_profile', teacher.id, file)
+      const dataPayload = res.data?.data || res.data
+      const publicUrl = dataPayload?.public_url
+      if (publicUrl) {
+        upd('profile_photo_url', publicUrl)
+        setPhotoPreview(publicUrl)
+      } else {
+        setError('Upload succeeded but no public URL was returned.')
+      }
+    } catch (err) {
+      setError('Failed to upload photo: ' + (err.response?.data?.message || err.message))
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }
+
+  const handleSave = async () => {
+    setError('')
+    if (!form.profile_photo_url) {
+      setError('Profile photo is required')
+      return
+    }
+    if (!form.full_name?.trim()) {
+      setError('Full name is required')
+      return
+    }
+    if (!form.professional_headline?.trim()) {
+      setError('Professional headline is required')
+      return
+    }
+    if (!form.bio?.trim()) {
+      setError('Bio is required')
+      return
+    }
+    if (!form.experience_years) {
+      setError('Years of experience is required')
+      return
+    }
+    if (!form.qualification?.trim()) {
+      setError('Qualification is required')
+      return
+    }
+
+    try {
+      await onSave(teacher.id, form)
+      onClose()
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Save failed')
+    }
+  }
+
+  if (!open) return null
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={`Edit Profile — ${teacher?.name}`}
+      width={540}
+      footer={
+        <>
+          <button className="btn btn-ghost" onClick={onClose} disabled={saving || uploadingPhoto}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleSave} disabled={saving || uploadingPhoto}>
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+        </>
+      }
+    >
+      {error && (
+        <div style={{ color: 'var(--red)', fontSize: 12, marginBottom: 12 }}>{error}</div>
+      )}
+      <ModalSection title="Profile Picture">
+        <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 12, alignItems: 'center' }}>
+          <div style={{ width: 120, height: 120, borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--border2)', background: 'var(--bg2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {photoPreview ? (
+              <img src={photoPreview} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <span style={{ color: 'var(--text3)', fontSize: 12 }}>No Photo</span>
+            )}
+          </div>
+          <div>
+            <FileDropzone 
+              label={uploadingPhoto ? 'Uploading...' : 'Upload Photo *'} 
+              accept="image/jpeg,image/png" 
+              hint="Square aspect ratio recommended"
+              onChange={handlePhotoChange}
+              disabled={uploadingPhoto}
+            />
+          </div>
+        </div>
+      </ModalSection>
+      <ModalSection title="Professional Details">
+        <div style={{ display: 'grid', gap: 12 }}>
+          <FormGroup label="Full Name *">
+            <input className="input" placeholder="e.g. Sarah Lee" value={form.full_name} onChange={e => upd('full_name', e.target.value)} />
+          </FormGroup>
+          <FormGroup label="Professional Headline *">
+            <input className="input" placeholder="e.g. Associate Professor of Film" value={form.professional_headline} onChange={e => upd('professional_headline', e.target.value)} />
+          </FormGroup>
+          <FormGroup label="Bio *">
+            <textarea className="input" rows={4} placeholder="About the teacher..." value={form.bio} onChange={e => upd('bio', e.target.value)} />
+          </FormGroup>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <FormGroup label="Years of Experience *">
+              <input className="input" type="number" min={0} value={form.experience_years} onChange={e => upd('experience_years', parseInt(e.target.value)||0)} />
+            </FormGroup>
+            <FormGroup label="Qualification *">
+              <input className="input" placeholder="e.g. MFA" value={form.qualification} onChange={e => upd('qualification', e.target.value)} />
+            </FormGroup>
+          </div>
+        </div>
+      </ModalSection>
+    </Modal>
   )
 }

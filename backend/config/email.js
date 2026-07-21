@@ -135,6 +135,61 @@ export const sendOtpEmail = async (email, otp) => {
 };
 
 /**
+ * Send teacher login credentials email
+ * @param {string} email - Teacher email
+ * @param {string} name - Teacher name
+ * @param {string} temporaryPassword - Temporary login password
+ * @returns {Promise<void>}
+ */
+export const sendTeacherCredentialsEmail = async (email, name, temporaryPassword) => {
+  try {
+    const transporter = await getTransporter();
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || 'vishnu1234@gmail.com',
+      to: email,
+      subject: 'Sankalp OTT - Teacher Account Credentials',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px;">
+            <h2 style="color: #333; text-align: center;">Your Teacher Account Is Ready</h2>
+
+            <p style="color: #666; font-size: 16px; line-height: 1.6;">
+              Hello ${name || 'Teacher'}, your Sankalp OTT teacher account has been created.
+            </p>
+
+            <div style="background-color: #007bff; color: white; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+              <p style="margin: 0 0 8px; font-size: 14px;">Login email</p>
+              <div style="font-size: 18px; font-weight: bold; margin-bottom: 16px;">${email}</div>
+              <p style="margin: 0 0 8px; font-size: 14px;">Temporary password</p>
+              <div style="font-size: 28px; font-weight: bold; letter-spacing: 2px;">${temporaryPassword}</div>
+            </div>
+
+            <p style="color: #666; font-size: 14px; line-height: 1.6;">
+              Please sign in using these credentials and change your password after your first login if your account flow supports it.
+            </p>
+
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+
+            <footer style="text-align: center; color: #999; font-size: 12px;">
+              <p>© 2026 Sankalp OTT. All rights reserved.</p>
+            </footer>
+          </div>
+        </div>
+      `,
+      text: `Hello ${name || 'Teacher'},\n\nYour Sankalp OTT teacher account has been created.\n\nLogin email: ${email}\nTemporary password: ${temporaryPassword}\n\nPlease sign in and change your password after the first login if supported.`
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    logger.info('✓ Teacher credentials email sent', { email, messageId: result.messageId });
+    return result;
+  } catch (error) {
+    logger.error('Failed to send teacher credentials email', { email, error: error.message });
+    throw error;
+  }
+};
+
+/**
  * Verify transporter connection (optional health check)
  */
 export const verifyTransporter = async () => {
@@ -151,6 +206,7 @@ export const verifyTransporter = async () => {
 
 export default {
   sendOtpEmail,
+  sendTeacherCredentialsEmail,
   getTransporter,
   verifyTransporter
 };

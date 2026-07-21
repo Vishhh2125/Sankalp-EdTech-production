@@ -4,6 +4,7 @@ import multer from 'multer';
 import * as ctrl from './media.controller.js';
 import { requireAuth } from '../../middleware/auth.middleware.js';
 import { requireAdmin } from '../../middleware/admin.middleware.js';
+import { requireAdminOrTeacher } from '../../middleware/ownership.middleware.js';
 import { allowGuest } from '../../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -18,12 +19,12 @@ const upload = multer({
 });
 
 // Admin uploads (dramas section)
-router.post('/upload/video', requireAuth, requireAdmin('dramas'), upload.single('video'), ctrl.uploadVideo);
-router.post('/upload/image', requireAuth, requireAdmin('dramas'), upload.single('image'), ctrl.uploadImage);
-router.post('/upload-url/video', requireAuth, requireAdmin('dramas'), ctrl.getVideoUploadUrl);
-router.post('/upload-url/image', requireAuth, requireAdmin('dramas'), ctrl.getImageUploadUrl);
-router.post('/confirm/video', requireAuth, requireAdmin('dramas'), ctrl.confirmVideoUpload);
-router.post('/confirm/image', requireAuth, requireAdmin('dramas'), ctrl.confirmImageUpload);
+router.post('/upload/video', requireAuth, upload.single('video'), requireAdminOrTeacher('dramas'), ctrl.uploadVideo);
+router.post('/upload/image', requireAuth, upload.single('image'), requireAdminOrTeacher('dramas'), ctrl.uploadImage);
+router.post('/upload-url/video', requireAuth, requireAdminOrTeacher('dramas'), ctrl.getVideoUploadUrl);
+router.post('/upload-url/image', requireAuth, requireAdminOrTeacher('dramas'), ctrl.getImageUploadUrl);
+router.post('/confirm/video', requireAuth, requireAdminOrTeacher('dramas'), ctrl.confirmVideoUpload);
+router.post('/confirm/image', requireAuth, requireAdminOrTeacher('dramas'), ctrl.confirmImageUpload);
 
 // Transcode status
 router.get('/status/:episodeId', ctrl.getTranscodeStatus);

@@ -1,7 +1,7 @@
 export const NAV_CONFIG = [
   {
     section: 'Overview',
-    items: [{ id: 'dashboard', label: 'Dashboard', badge: null }],
+    items: [{ id: 'dashboard', label: 'Dashboard', badge: null }, { id: 'profile', label: 'Complete Profile', badge: null }],
   },
   {
     section: 'Users',
@@ -14,6 +14,7 @@ export const NAV_CONFIG = [
       { id: 'categories', label: 'Categories & Tags',  badge: null },
       { id: 'banners',       label: 'Banners & Popups',   badge: null },
       { id: 'hero_banners',  label: 'Hero Section',       badge: null },
+      { id: 'approvals',    label: 'Approvals',          badge: null },
       { id: 'live',          label: 'Live Streaming',     badge: null },
       { id: 'submissions',   label: 'Submissions',        badge: null },
     ],
@@ -58,4 +59,6 @@ export const PAGE_META = {
   cms:           { title: 'CMS Pages',            subtitle: 'Static content pages' },
   live:          { title: 'Live Streaming',       subtitle: 'Broadcast live to viewers' },
   submissions:   { title: 'Submissions',          subtitle: 'Grade student assignment submissions' },
+  approvals:     { title: 'Approvals',             subtitle: 'Pending shows & lectures' },
+  profile:       { title: 'Complete Profile',      subtitle: 'Complete your teacher profile' },
 }

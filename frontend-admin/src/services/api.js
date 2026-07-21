@@ -170,6 +170,7 @@ export const authApi = {
       },
     }),
   getAdminProfile: () => api.get('/v1/admin/me'),
+  updateTeacherProfile: (data) => api.put('/v1/teacher/profile', data),
   logout: () => {
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
@@ -310,6 +311,15 @@ export const subAdminApi = {
   activityLogs: (limit = 50) => api.get('/v1/admin/activity-logs', { params: { limit } }),
 };
 
+// ── Teachers (main admin only) ──
+export const teachersApi = {
+  list: () => api.get('/v1/admin/teachers'),
+  create: (data) => api.post('/v1/admin/teachers', data),
+  toggleStatus: (id) => api.patch(`/v1/admin/teachers/${id}/status`),
+  getProfile: (id) => api.get(`/v1/admin/teachers/${id}/profile`),
+  saveProfile: (id, data) => api.put(`/v1/admin/teachers/${id}/profile`, data),
+};
+
 // ── Banners ──
 export const bannersApi = {
   getAll: () => api.get('/v1/admin/banners'),
@@ -392,4 +402,13 @@ export const packagesApi = {
   create: (data) => api.post('/content/admin/packages', data),
   update: (id, data) => api.put(`/content/admin/packages/${id}`, data),
   delete: (id) => api.delete(`/content/admin/packages/${id}`),
+};
+
+// ── Approvals API ──
+export const approvalsApi = {
+  list: () => api.get('/v1/admin/approvals'),
+  act: (type, id, action) => {
+    const path = type === 'show' ? `/v1/admin/approvals/shows/${id}` : `/v1/admin/approvals/episodes/${id}`;
+    return api.patch(path, { action });
+  }
 };

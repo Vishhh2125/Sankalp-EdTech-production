@@ -5,6 +5,185 @@ import { getRevenueByPlan } from '../membership/membership.service.js';
 import { activeMembershipWhere } from '../membership/membership.helpers.js';
 import { logAdminActivity } from '../../utils/adminActivity.js';
 import { displayedViewCount } from '../user/view-count.service.js';
+import { hashPassword } from '../auth/auth.service.js';
+import { sendTeacherCredentialsEmail } from '../../config/email.js';
+import crypto from 'crypto';
+
+// --- Teacher management & approvals ---
+export async function listTeachers(req, res, next) {
+  try {
+    const teachers = await prisma.user.findMany({
+      where: { role: 'TEACHER' },
+      include: { teacherProfile: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    return res.json(new ApiResponse(200, { teachers }, 'Teachers fetched'));
+  } catch (err) { next(err); }
+}
+
+export async function createTeacher(req, res, next) {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email) throw new AppError('Missing fields', 400);
+    const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    
+    let user;
+    const temporaryPassword = password?.trim() || crypto.randomBytes(8).toString('hex');
+    const passwordHash = await hashPassword(temporaryPassword);
+
+    if (existing) {
+      if (existing.role === 'TEACHER') {
+        throw new AppError('Email already registered', 409);
+      }
+      
+      // Promote existing user to TEACHER
+      user = await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          name: name.trim(),
+          password: passwordHash,
+          role: 'TEACHER',
+          plan: null,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isBlocked: true,
+          createdAt: true,
+        },
+      });
+    } else {
+      user = await prisma.user.create({
+        data: {
+          name: name.trim(),
+          email: email.toLowerCase().trim(),
+          password: passwordHash,
+          role: 'TEACHER',
+          plan: null,
+          coins: 0,
+          isBlocked: false,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isBlocked: true,
+          createdAt: true,
+        },
+      });
+    }
+
+    try {
+      await sendTeacherCredentialsEmail(user.email, user.name, temporaryPassword);
+    } catch (emailError) {
+      // The account is still usable even if email delivery is unavailable.
+      console.error('Failed to send teacher credentials email', emailError);
+    }
+
+    await logAdminActivity({ userId: req.user.id, action: `Created teacher ${user.name}`, entityType: 'Roles', entityId: user.id });
+    return res.status(201).json(new ApiResponse(201, { ...user, temporaryPassword }, 'Teacher created'));
+  } catch (err) { next(err); }
+}
+
+export async function patchTeacherStatus(req, res, next) {
+  try {
+    const { id } = req.params;
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) throw new AppError('Teacher not found', 404);
+    if (user.role !== 'TEACHER') throw new AppError('User is not a teacher', 400);
+    const updated = await prisma.user.update({ where: { id }, data: { isBlocked: !user.isBlocked } });
+    await logAdminActivity({ userId: req.user.id, action: `Updated teacher status ${updated.name}`, entityType: 'Roles', entityId: id });
+    return res.json(new ApiResponse(200, { id: updated.id, isBlocked: updated.isBlocked }, 'Teacher status updated'));
+  } catch (err) { next(err); }
+}
+
+export async function getTeacherProfileAdmin(req, res, next) {
+  try {
+    const { id } = req.params;
+    const profile = await prisma.teacherProfile.findUnique({ where: { user_id: id } });
+    if (!profile) return res.json(new ApiResponse(200, null, 'No profile'));
+    return res.json(new ApiResponse(200, profile, 'Profile fetched'));
+  } catch (err) { next(err); }
+}
+
+export async function putTeacherProfileAdmin(req, res, next) {
+  try {
+    const { id } = req.params; // teacher user id
+    const data = req.body;
+    const existingUser = await prisma.user.findUnique({ where: { id } });
+    if (!existingUser) throw new AppError('User not found', 404);
+    const upsert = await prisma.teacherProfile.upsert({ where: { user_id: id }, update: { ...data, is_completed: data.is_completed ?? false }, create: { ...data, user_id: id } });
+    await logAdminActivity({ userId: req.user.id, action: `Updated teacher profile ${id}`, entityType: 'TeacherProfile', entityId: id });
+    return res.json(new ApiResponse(200, upsert, 'Teacher profile saved'));
+  } catch (err) { next(err); }
+}
+
+export async function listApprovals(req, res, next) {
+  try {
+    const pendingShows = await prisma.show.findMany({
+      where: { approval_status: 'PENDING_REVIEW' },
+      include: { teacher: { select: { id: true, name: true } } },
+      orderBy: { created_at: 'asc' },
+    });
+    const pendingEpisodes = await prisma.episode.findMany({
+      where: { approval_status: 'PENDING_REVIEW' },
+      include: {
+        show: {
+          select: {
+            id: true,
+            title: true,
+            teacher: { select: { id: true, name: true } }
+          }
+        }
+      },
+      orderBy: { created_at: 'asc' },
+    });
+    return res.json(new ApiResponse(200, { shows: pendingShows, episodes: pendingEpisodes }, 'Approvals fetched'));
+  } catch (err) { next(err); }
+}
+
+export async function approveShow(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { action } = req.body; // 'approve' or 'reject'
+    const show = await prisma.show.findUnique({ where: { id } });
+    if (!show) throw new AppError('Show not found', 404);
+    if (action === 'approve') {
+      const updated = await prisma.show.update({ where: { id }, data: { approval_status: 'PUBLISHED', is_active: true } });
+      await logAdminActivity({ userId: req.user.id, action: `Approved show ${updated.title}`, entityType: 'Approvals', entityId: id });
+      return res.json(new ApiResponse(200, updated, 'Show approved'));
+    }
+    if (action === 'reject') {
+      const updated = await prisma.show.update({ where: { id }, data: { approval_status: 'REJECTED', is_active: false } });
+      await logAdminActivity({ userId: req.user.id, action: `Rejected show ${updated.title}`, entityType: 'Approvals', entityId: id });
+      return res.json(new ApiResponse(200, updated, 'Show rejected'));
+    }
+    throw new AppError('Invalid action', 400);
+  } catch (err) { next(err); }
+}
+
+export async function approveEpisode(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { action } = req.body;
+    const ep = await prisma.episode.findUnique({ where: { id }, include: { show: true } });
+    if (!ep) throw new AppError('Episode not found', 404);
+    if (action === 'approve') {
+      const updated = await prisma.episode.update({ where: { id }, data: { approval_status: 'PUBLISHED' } });
+      await logAdminActivity({ userId: req.user.id, action: `Approved episode ${ep.title}`, entityType: 'Approvals', entityId: id });
+      return res.json(new ApiResponse(200, updated, 'Episode approved'));
+    }
+    if (action === 'reject') {
+      const updated = await prisma.episode.update({ where: { id }, data: { approval_status: 'REJECTED' } });
+      await logAdminActivity({ userId: req.user.id, action: `Rejected episode ${ep.title}`, entityType: 'Approvals', entityId: id });
+      return res.json(new ApiResponse(200, updated, 'Episode rejected'));
+    }
+    throw new AppError('Invalid action', 400);
+  } catch (err) { next(err); }
+}
 
 /**
  * GET /api/v1/admin/users
@@ -950,6 +1129,106 @@ export async function getDashboardMetrics(req, res, next) {
     const { period = 'Monthly' } = req.query;
     const { startDate: periodStart } = getDateRange(period);
 
+    if (req.admin && req.admin.role === 'TEACHER') {
+      const periodLabel = period === 'All' ? 'all time' : period.toLowerCase();
+      const teacherId = req.admin.id;
+
+      // 1. Total Shows
+      const dramasCount = await prisma.show.count({
+        where: { teacher_id: teacherId }
+      });
+
+      // 2. Total Episodes
+      const episodesCount = await prisma.episode.count({
+        where: { show: { teacher_id: teacherId } }
+      });
+
+      // 3. Live Sessions
+      const liveCount = await prisma.liveStream.count({
+        where: { created_by: teacherId }
+      });
+
+      // 4. Student Submissions pending grade
+      const pendingSubmissions = await prisma.assignmentSubmission.count({
+        where: { status: 'SUBMITTED', assignment: { show: { teacher_id: teacherId } } }
+      });
+
+      // 5. Graded Submissions
+      const gradedSubmissions = await prisma.assignmentSubmission.count({
+        where: { status: 'GRADED', assignment: { show: { teacher_id: teacherId } } }
+      });
+
+      // 6. Total Coins Earned (unlocked episodes of their shows)
+      const coinsAggregate = await prisma.episodeAccess.aggregate({
+        _sum: { coins_spent: true },
+        where: { unlocked_at: { gte: periodStart }, episode: { show: { teacher_id: teacherId } } }
+      });
+      const coinsEarned = coinsAggregate._sum.coins_spent || 0;
+
+      // 7. Total Views on their dramas
+      const viewsAggregate = await prisma.show.aggregate({
+        _sum: { view_count: true, manual_view_count: true },
+        where: { teacher_id: teacherId }
+      });
+      const totalViews = (viewsAggregate._sum.view_count || 0) + (viewsAggregate._sum.manual_view_count || 0);
+
+      const metrics = [
+        {
+          label: 'Total Dramas',
+          value: formatNumber(dramasCount),
+          sub: 'your courses',
+          trend: null,
+          up: null
+        },
+        {
+          label: 'Total Lectures',
+          value: formatNumber(episodesCount),
+          sub: 'uploaded videos',
+          trend: null,
+          up: null
+        },
+        {
+          label: 'Live Streams',
+          value: formatNumber(liveCount),
+          sub: 'scheduled/run',
+          trend: null,
+          up: null
+        },
+        {
+          label: 'Pending Submissions',
+          value: formatNumber(pendingSubmissions),
+          sub: 'awaiting grading',
+          trend: null,
+          up: null
+        },
+        {
+          label: 'Graded Submissions',
+          value: formatNumber(gradedSubmissions),
+          sub: 'graded coursework',
+          trend: null,
+          up: null
+        },
+        {
+          label: 'Coins Earned',
+          value: formatCoins(coinsEarned),
+          sub: `from content ${periodLabel}`,
+          trend: null,
+          up: null
+        },
+        {
+          label: 'Course Views',
+          value: formatNumber(totalViews),
+          sub: 'total aggregate views',
+          trend: null,
+          up: null
+        }
+      ];
+
+      return res.json(
+        new ApiResponse(200, { metrics, period }, 'Teacher dashboard metrics fetched successfully')
+      );
+    }
+
     // Fetch all metrics from database
     const totalUsers = await prisma.user.count({ where: { role: 'USER' } });
     const activeSubscriptions = await prisma.userMembership.count({
@@ -1357,6 +1636,98 @@ export async function getRevenueChart(req, res, next) {
     const { period = 'Daily' } = req.query;
     const { startDate, endDate } = getDateRange(period);
 
+    if (req.admin && req.admin.role === 'TEACHER') {
+      const teacherId = req.admin.id;
+      // Fetch all episode access unlocks for the teacher's shows in the date range
+      const unlocks = await prisma.episodeAccess.findMany({
+        where: {
+          unlocked_at: { gte: startDate, lte: endDate },
+          episode: { show: { teacher_id: teacherId } }
+        },
+        select: { unlocked_at: true, coins_spent: true },
+        orderBy: { unlocked_at: 'asc' },
+      });
+
+      let chartData;
+
+      if (period === 'Annual') {
+        const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const monthMap = {};
+        const now2 = new Date();
+        const year = now2.getFullYear();
+        const currentMonth = now2.getMonth();
+        for (let m = 0; m <= currentMonth; m++) {
+          const key = `${year}-${String(m + 1).padStart(2, '0')}`;
+          monthMap[key] = { date: key, label: MONTH_NAMES[m], total: 0, membership: 0, topup: 0 };
+        }
+        for (const ul of unlocks) {
+          const d = new Date(ul.unlocked_at);
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          if (!monthMap[key]) continue;
+          monthMap[key].total += ul.coins_spent;
+          monthMap[key].topup += ul.coins_spent;
+        }
+        const todayDay = now2.getDate();
+        const currentMonthKey = `${year}-${String(currentMonth + 1).padStart(2, '0')}`;
+        chartData = Object.values(monthMap).map(d => ({
+          date: d.date,
+          label: d.date === currentMonthKey ? `${d.label} ${todayDay}` : d.label,
+          total: d.total,
+          membership: 0,
+          topup: d.topup,
+        }));
+      } else if (period === 'All') {
+        const yearMap = {};
+        for (const ul of unlocks) {
+          const year = String(new Date(ul.unlocked_at).getFullYear());
+          if (!yearMap[year]) yearMap[year] = { date: year, label: year, total: 0, membership: 0, topup: 0 };
+          yearMap[year].total += ul.coins_spent;
+          yearMap[year].topup += ul.coins_spent;
+        }
+        chartData = Object.values(yearMap)
+          .sort((a, b) => a.date.localeCompare(b.date))
+          .map(d => ({
+            date: d.date,
+            label: d.label,
+            total: d.total,
+            membership: 0,
+            topup: d.topup,
+          }));
+        if (chartData.length === 0) {
+          const y = String(new Date().getFullYear());
+          chartData = [{ date: y, label: y, total: 0, membership: 0, topup: 0 }];
+        }
+      } else {
+        const dayMap = {};
+        const cursor = new Date(startDate);
+        cursor.setHours(0, 0, 0, 0);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        while (cursor <= end) {
+          const key = cursor.toISOString().split('T')[0];
+          dayMap[key] = { date: key, label: key, total: 0, membership: 0, topup: 0 };
+          cursor.setDate(cursor.getDate() + 1);
+        }
+        for (const ul of unlocks) {
+          const key = new Date(ul.unlocked_at).toISOString().split('T')[0];
+          if (!dayMap[key]) continue;
+          dayMap[key].total += ul.coins_spent;
+          dayMap[key].topup += ul.coins_spent;
+        }
+        chartData = Object.values(dayMap).map(d => ({
+          date: d.date,
+          label: d.label,
+          total: d.total,
+          membership: 0,
+          topup: d.topup,
+        }));
+      }
+
+      return res.json(
+        new ApiResponse(200, { chartData, period }, 'Revenue chart data fetched successfully')
+      );
+    }
+
     // Fetch all completed payment transactions in range
     const transactions = await prisma.paymentTransaction.findMany({
       where: {
@@ -1473,10 +1844,15 @@ export async function getTopShowsChart(req, res, next) {
     const { period = 'Daily' } = req.query;
     const { startDate, endDate } = getDateRange(period);
 
+    const whereClause = { created_at: { gte: startDate, lte: endDate } };
+    if (req.admin && req.admin.role === 'TEACHER') {
+      whereClause.show = { teacher_id: req.admin.id };
+    }
+
     // Group ViewCountEvent by show_id, count views
     const topShowViews = await prisma.viewCountEvent.groupBy({
       by: ['show_id'],
-      where: { created_at: { gte: startDate, lte: endDate } },
+      where: whereClause,
       _count: { show_id: true },
       orderBy: { _count: { show_id: 'desc' } },
       take: 5,

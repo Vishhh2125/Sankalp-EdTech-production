@@ -45,13 +45,30 @@ export async function getAdminProfile(userId, role) {
     return formatAdminUser(user, [...ADMIN_SECTIONS]);
   }
 
+  if (role === 'TEACHER') {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { teacherProfile: true },
+    });
+    if (!user) throw new ApiError(404, 'User not found');
+
+    const profile = formatAdminUser(user, ['dashboard', 'dramas', 'live', 'submissions']);
+    return {
+      ...profile,
+      is_profile_complete: user.teacherProfile?.is_completed || false,
+      teacher_profile: user.teacherProfile || null,
+    };
+  }
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: { sub_admin_access: { select: { section: true } } },
   });
   if (!user) throw new ApiError(404, 'User not found');
 
-  const sections = user.sub_admin_access.map((a) => a.section);
+  const sections = Array.isArray(user.sub_admin_access)
+    ? user.sub_admin_access.map((a) => a.section)
+    : [];
   return formatAdminUser(user, sections);
 }
 
@@ -65,7 +82,9 @@ export async function listAdmins() {
   return users.map((u) =>
     formatAdminUser(
       u,
-      u.sub_admin_access.map((a) => a.section)
+      Array.isArray(u.sub_admin_access)
+        ? u.sub_admin_access.map((a) => a.section)
+        : []
     )
   );
 }
@@ -104,7 +123,9 @@ export async function createSubAdmin(actorId, data) {
 
   return formatAdminUser(
     user,
-    user.sub_admin_access.map((a) => a.section)
+    Array.isArray(user.sub_admin_access)
+      ? user.sub_admin_access.map((a) => a.section)
+      : []
   );
 }
 
@@ -155,7 +176,9 @@ export async function updateSubAdmin(actorId, subAdminId, data) {
 
   return formatAdminUser(
     updated,
-    updated.sub_admin_access.map((a) => a.section)
+    Array.isArray(updated.sub_admin_access)
+      ? updated.sub_admin_access.map((a) => a.section)
+      : []
   );
 }
 

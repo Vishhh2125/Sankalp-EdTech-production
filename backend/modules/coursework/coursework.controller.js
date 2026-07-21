@@ -174,7 +174,7 @@ async function getSubmissions(req, res, next) {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 20;
 
-    const result = await service.getSubmissions({ status, show_id }, page, limit);
+    const result = await service.getSubmissions({ status, show_id, requesting_user: req.user }, page, limit);
     res.json(result);
   } catch (e) {
     next(e);

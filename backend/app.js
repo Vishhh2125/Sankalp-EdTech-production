@@ -29,6 +29,7 @@ import userRouter from './modules/user/user.router.js'; // NEW
 import notificationRouter from './modules/notifications/notification.router.js'; // NEW
 import liveRouter from './modules/live/live.router.js';
 import packageRouter from './modules/content/package.router.js';
+import teacherRouter from './modules/teacher/teacher.routes.js';
 import helmet from 'helmet';
 
 import morgan from 'morgan';
@@ -183,6 +184,7 @@ app.use('/api/user', userRouter); // NEW
 app.use('/api/v1/notifications', notificationRouter); // NEW
 app.use('/api/v1/live', liveRouter);
 app.use('/api/live', liveRouter);
+app.use('/api/v1/teacher', teacherRouter);
 
 // ============= 404 HANDLER =============
 

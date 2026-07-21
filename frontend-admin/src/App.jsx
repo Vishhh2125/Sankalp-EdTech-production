@@ -13,6 +13,8 @@ import Login         from './pages/Login.jsx'
 import Dashboard     from './pages/Dashboard.jsx'
 import Users         from './pages/Users.jsx'
 import Dramas        from './pages/Dramas.jsx'
+import Profile       from './pages/Profile.jsx'
+import Approvals     from './pages/Approvals.jsx'
 import Categories    from './pages/Categories.jsx'
 import Banners       from './pages/Banners.jsx'
 import HeroBanners   from './pages/HeroBanners.jsx'
@@ -44,6 +46,8 @@ const ROUTES = {
   live:          LiveStreaming,
   submissions:   Submissions,
   packages:      Packages,
+  profile:       Profile,
+  approvals:     Approvals,
 }
 
 function AccessDenied() {

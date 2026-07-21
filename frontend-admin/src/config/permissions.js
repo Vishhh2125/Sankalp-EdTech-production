@@ -1,7 +1,7 @@
-/** Permission keys — must match backend ADMIN_SECTIONS and nav item ids */
 export const ADMIN_SECTIONS = [
   'dashboard',
   'users',
+  'approvals',
   'dramas',
   'categories',
   'banners',
@@ -22,6 +22,8 @@ export const SECTION_LABELS = {
   dashboard: 'Dashboard',
   users: 'User Management',
   dramas: 'Drama / Content',
+  profile: 'Complete Profile',
+  approvals: 'Approvals',
   categories: 'Categories & Tags',
   banners: 'Banners & Popups',
   hero_banners: 'Hero Section',
@@ -50,24 +52,58 @@ function isMainAdminRole(user) {
 export function canAccessPage(user, pageId) {
   if (!user) return false
   if (isMainAdminRole(user)) return true
+  if (user.role === 'teacher') {
+    if (pageId === 'profile') return true
+    if (user.is_profile_complete === false) return false
+    return ['dashboard', 'dramas', 'live', 'submissions'].includes(pageId)
+  }
   return Array.isArray(user.sections) && user.sections.includes(pageId)
 }
 
 export function getFirstAllowedPage(user) {
   if (!user) return 'dashboard'
   if (isMainAdminRole(user)) return 'dashboard'
+  if (user.role === 'teacher') {
+    if (user.is_profile_complete === false) return 'profile'
+    return 'dashboard'
+  }
   const allowed = ADMIN_SECTIONS.find((id) => user.sections?.includes(id))
   return allowed || 'dashboard'
 }
 
 export function filterNavByPermissions(navConfig, user) {
   if (!user) return []
-  if (isMainAdminRole(user)) return navConfig
+  if (isMainAdminRole(user)) {
+    // Admin doesn't need to see "Complete Profile" page
+    return navConfig
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => item.id !== 'profile'),
+      }))
+      .filter((group) => group.items.length > 0)
+  }
+  
+  if (user.role === 'teacher') {
+    const allowedTeacherSections = []
+    if (user.is_profile_complete === false) {
+      allowedTeacherSections.push('profile')
+    } else {
+      allowedTeacherSections.push('dashboard', 'dramas', 'live', 'submissions', 'profile')
+    }
+    
+    return navConfig
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => allowedTeacherSections.includes(item.id)),
+      }))
+      .filter((group) => group.items.length > 0)
+  }
+
   return navConfig
     .map((group) => ({
       ...group,
       items: group.items.filter(
-        (item) => item.id !== 'roles' && user.sections?.includes(item.id)
+        (item) => item.id !== 'roles' && item.id !== 'profile' && user.sections?.includes(item.id)
       ),
     }))
     .filter((group) => group.items.length > 0)

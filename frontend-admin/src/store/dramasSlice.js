@@ -13,15 +13,17 @@ function parseDuration(str) {
 }
 
 async function uploadEpisodeVideo(showId, episodeId, file) {
-  // 1. Get presigned URL pointing to uat.ventaott.com
-  const urlRes = await mediaApi.getVideoUploadUrl(showId, episodeId);
-  const uploadUrl = urlRes.data.upload_url;
-
-  // 2. PUT file directly to MinIO
-  await mediaApi.uploadToMinio(uploadUrl, file);
-
-  // 3. Confirm upload with backend to queue transcode jobs
-  await mediaApi.confirmVideo(episodeId);
+  try {
+    // 1. Try direct presigned upload to MinIO
+    const urlRes = await mediaApi.getVideoUploadUrl(showId, episodeId);
+    const uploadUrl = urlRes.data.upload_url;
+    await mediaApi.uploadToMinio(uploadUrl, file);
+    await mediaApi.confirmVideo(episodeId);
+  } catch (err) {
+    console.warn('Presigned MinIO upload failed, using backend upload fallback:', err);
+    await mediaApi.uploadVideoFile(showId, episodeId, file);
+    await mediaApi.confirmVideo(episodeId);
+  }
 }
 
 async function uploadShowImage(type, showId, file) {
@@ -168,6 +170,7 @@ export const createDrama = createAsyncThunk(
         is_active: true,
         is_free: formData.is_free !== undefined ? formData.is_free : true,
         coin_cost: formData.coin_cost !== undefined ? formData.coin_cost : 0,
+        teacher_id: formData.teacher_id || null,
       })
 
       const show = showRes.data
@@ -225,6 +228,7 @@ export const updateDrama = createAsyncThunk(
         is_active: true,
         is_free: formData.is_free !== undefined ? formData.is_free : true,
         coin_cost: formData.coin_cost !== undefined ? formData.coin_cost : 0,
+        teacher_id: formData.teacher_id || null,
       })
 
       if (formData.thumbnailFile) {

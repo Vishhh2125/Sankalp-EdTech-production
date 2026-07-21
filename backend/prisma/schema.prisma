@@ -17,7 +17,15 @@ datasource db {
 enum Role {
   ADMIN
   SUB_ADMIN
+  TEACHER
   USER
+}
+
+enum ApprovalStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  REJECTED
 }
 
 enum Plan {
@@ -57,6 +65,8 @@ model User {
   updatedAt    DateTime @updatedAt
 
   sub_admin_access       SubAdminAccess[]
+  teacherProfile         TeacherProfile?
+  teacherShows           Show[] @relation("TeacherShows")
   memberships            UserMembership[]
   coin_transactions      CoinTransaction[]
   watch_history          WatchHistory[]
@@ -262,6 +272,9 @@ model Show {
   is_free             Boolean  @default(true)
   coin_cost           Int      @default(0)
   created_at          DateTime @default(now())
+  teacher_id          String?  @db.Uuid
+  teacher             User?    @relation("TeacherShows", fields: [teacher_id], references: [id], onDelete: SetNull)
+  approval_status     ApprovalStatus @default(PUBLISHED)
 
   category          Category         @relation(fields: [category_id], references: [id])
   episodes          Episode[]
@@ -316,6 +329,7 @@ model Episode {
   video_source       VideoSource     @default(UPLOAD)
   youtube_video_id   String?         @db.VarChar(20)
   created_at         DateTime        @default(now())
+  approval_status    ApprovalStatus  @default(PUBLISHED)
 
   show               Show            @relation(fields: [show_id], references: [id], onDelete: Cascade)
   watch_history      WatchHistory[]
@@ -881,4 +895,21 @@ model PackagePurchase {
 
   @@unique([user_id, package_id], name: "idx_pp_user_package")
   @@map("package_purchases")
+}
+
+model TeacherProfile {
+  id                    String   @id @default(uuid()) @db.Uuid
+  user_id               String   @unique @db.Uuid
+  user                  User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  profile_photo_url     String?  @db.VarChar(500)
+  full_name             String   @db.VarChar(100)
+  professional_headline String   @db.VarChar(255)
+  bio                   String   @db.Text
+  experience_years      Int
+  qualification         String   @db.VarChar(255)
+  is_completed          Boolean  @default(false)
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+
+  @@map("teacher_profiles")
 }

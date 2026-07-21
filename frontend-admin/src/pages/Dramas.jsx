@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
+import { useSelector } from 'react-redux'
+import { selectUser } from '../store/authSlice'
 import { Search, Plus, Edit2, Trash2, BarChart2, ChevronUp, ChevronDown, Lock, Unlock, Star, Video, X, CheckCircle2, Loader, TrendingUp, BookOpen, Notebook, FileText, Check } from 'lucide-react'
 import Modal, { ModalSection, FormGroup } from '../components/ui/Modal.jsx'
 import { Toggle, StepBar, FileDropzone, ConfirmDialog } from '../components/ui/Controls.jsx'
 import { useDramas } from '../services/useDramas.js'
-import { episodesApi, showsApi, courseworkApi } from '../services/api.js'
+import { episodesApi, showsApi, courseworkApi, teachersApi } from '../services/api.js'
 
 // Helper function to convert MM:SS duration string to seconds
 function durationToSeconds(durationStr) {
@@ -96,7 +98,8 @@ function extractYoutubeVideoId(urlOrId) {
   return match ? match[1] : null;
 }
 
-function DramaModal({ open, onClose, onSave, initial, initialStep = 0, autoAddEp = false, categories = [] }) {
+function DramaModal({ open, onClose, onSave, initial, initialStep = 0, autoAddEp = false, categories = [], teachers = [] }) {
+  const user = useSelector(selectUser)
   const isEdit = !!initial?.id
   const [step, setStep] = useState(initialStep)
   const [form, setForm] = useState(() => initial || emptyDrama)
@@ -233,6 +236,16 @@ function DramaModal({ open, onClose, onSave, initial, initialStep = 0, autoAddEp
                 {categories.map(c => <option key={c.id}>{c.name}</option>)}
               </select>
             </FormGroup>
+            {user?.role !== 'teacher' && (
+              <FormGroup label="Assign Teacher (optional)">
+                <select className="select" style={{ width:'100%' }} value={form.teacher_id || ''} onChange={e => upd('teacher_id', e.target.value || null)}>
+                  <option value="">No Teacher (Admin Course)</option>
+                  {teachers.map(t => (
+                    <option key={t.id} value={t.id}>{t.name} ({t.email})</option>
+                  ))}
+                </select>
+              </FormGroup>
+            )}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
               <FormGroup label="Show Price Model">
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -796,6 +809,21 @@ function ViewCountModal({ open, onClose, drama, onSave }) {
 
 export default function Dramas() {
   const { dramas, categories, loading, createDrama, updateDrama, deleteDrama: apiDeleteDrama, togglePublish: apiTogglePublish, reload } = useDramas()
+  const user = useSelector(selectUser)
+  const canCreate = !(user?.role === 'teacher' && user?.is_profile_complete === false)
+
+  const [teachers, setTeachers] = useState([])
+  useEffect(() => {
+    if (user?.role !== 'teacher') {
+      teachersApi.list()
+        .then(res => {
+          const payload = res.data?.data || res.data || {}
+          const list = Array.isArray(payload) ? payload : (payload.teachers || payload.data || [])
+          setTeachers(list)
+        })
+        .catch(err => console.error('Failed to load teachers:', err))
+    }
+  }, [user])
   const ALL_CATEGORIES = categories.map(c => c.name)
   const [q, setQ] = useState('')
   const [catF, setCatF] = useState('All')
@@ -1147,7 +1175,7 @@ export default function Dramas() {
           <div style={{ fontWeight:600 }}>{dramas.length} dramas total</div>
           <div style={{ fontSize:12, color:'var(--text3)' }}>{dramas.filter(d=>d.status==='Published').length} published · {dramas.filter(d=>d.status==='Draft').length} drafts</div>
         </div>
-        <button className="btn btn-primary" onClick={() => open('add')}><Plus size={14}/> Add Drama</button>
+        <button className="btn btn-primary" onClick={() => open('add')} disabled={!canCreate}><Plus size={14}/> Add Drama</button>
       </div>
 
       <div className="metrics-grid" style={{ gridTemplateColumns:'repeat(4,1fr)', marginBottom:16 }}>
@@ -1242,13 +1270,35 @@ export default function Dramas() {
                     {/* Drama Action Buttons */}
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0, marginLeft: 16 }}>
                       <button className="btn btn-ghost btn-sm" onClick={() => open('edit', d)} title="Edit drama details"><Edit2 size={11}/></button>
-                      <button className="btn btn-ghost btn-sm" onClick={() => open('add-ep', d)} style={{ color: 'var(--accent2)' }} title="Add new episode"><Plus size={11}/></button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => open('add-ep', d)} style={{ color: 'var(--accent2)' }} title="Add new episode" disabled={!canCreate}><Plus size={11}/></button>
                       <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); openCoursework(d) }} style={{ color: 'var(--amber)' }} title="Manage Coursework"><BookOpen size={11}/></button>
                       <button className="btn btn-ghost btn-sm" onClick={() => open('stats', d)} title="View analytics"><BarChart2 size={11}/></button>
                       <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setVcDrama(d); setVcModal(true) }} title="Adjust view count" style={{ color: 'var(--green)' }}><TrendingUp size={11}/></button>
-                      <button className={`btn btn-sm ${d.status==='Published'?'btn-danger':'btn-primary'}`} onClick={() => togglePublish(d.id)} style={{ fontSize: 10, whiteSpace: 'nowrap' }} title={d.status==='Published' ? 'Unpublish drama' : 'Publish drama'}>
-                        {d.status==='Published'?'Unpublish':'Publish'}
-                      </button>
+                      {user?.role !== 'teacher' && (
+                        <button className={`btn btn-sm ${d.status==='Published'?'btn-danger':'btn-primary'}`} onClick={() => togglePublish(d.id)} style={{ fontSize: 10, whiteSpace: 'nowrap' }} title={d.status==='Published' ? 'Unpublish drama' : 'Publish drama'}>
+                          {d.status==='Published'?'Unpublish':'Publish'}
+                        </button>
+                      )}
+                      {user?.role === 'teacher' && d.approval_status === 'DRAFT' && (
+                        <button 
+                          className="btn btn-ghost btn-sm" 
+                          disabled={!d.episodes || d.episodes.length === 0}
+                          onClick={async (e) => { 
+                            e.stopPropagation(); 
+                            try { 
+                              await showsApi.update(d.id, { approval_status: 'PENDING_REVIEW' }); 
+                              alert('Submitted for review'); 
+                              await reload(); 
+                            } catch (err) { 
+                              alert('Failed to submit for review: ' + (err.response?.data?.error || err.message)); 
+                            } 
+                          }} 
+                          style={{ marginLeft:6 }}
+                          title={(!d.episodes || d.episodes.length === 0) ? "Cannot submit for review with zero episodes" : "Submit for review"}
+                        >
+                          Submit for Review
+                        </button>
+                      )}
                       <button className="btn btn-danger btn-sm" onClick={() => open('delete', d)} title="Delete drama"><Trash2 size={11}/></button>
                     </div>
                   </div>
@@ -1334,8 +1384,8 @@ export default function Dramas() {
         </div>
       </div>
 
-      <DramaModal open={modal==='add'} onClose={() => setModal(null)} onSave={saveDrama} initial={null} categories={categories}/>
-      <DramaModal open={modal==='edit'} onClose={() => setModal(null)} onSave={saveDrama} initial={selected} categories={categories}/>
+      <DramaModal open={modal==='add'} onClose={() => setModal(null)} onSave={saveDrama} initial={null} categories={categories} teachers={teachers}/>
+      <DramaModal open={modal==='edit'} onClose={() => setModal(null)} onSave={saveDrama} initial={selected} categories={categories} teachers={teachers}/>
       <DramaModal open={modal==='add-ep'} onClose={() => setModal(null)} onSave={async (data) => {
         try {
           await updateDrama(selected.id, data)

@@ -17,7 +17,7 @@ async function loadSubAdminSections(userId) {
 }
 
 function isAdminRole(role) {
-  return role === 'ADMIN' || role === 'SUB_ADMIN';
+  return role === 'ADMIN' || role === 'SUB_ADMIN' || role === 'TEACHER';
 }
 
 /**
@@ -37,6 +37,8 @@ function requireAnyAdmin() {
       req.admin = decoded;
       if (decoded.role === 'SUB_ADMIN') {
         req.adminSections = await loadSubAdminSections(decoded.id);
+      } else if (decoded.role === 'TEACHER') {
+        req.adminSections = ['dashboard', 'dramas', 'live', 'submissions'];
       } else {
         req.adminSections = [...ADMIN_SECTIONS];
       }
@@ -90,6 +92,16 @@ function requireAdmin(section = null) {
       if (decoded.role === 'ADMIN') {
         req.admin = decoded;
         req.adminSections = [...ADMIN_SECTIONS];
+        return next();
+      }
+
+      if (decoded.role === 'TEACHER') {
+        const teacherSections = ['dashboard', 'dramas', 'live', 'submissions'];
+        if (section && !teacherSections.includes(section)) {
+          return res.status(403).json({ error: `No access to ${section}`, section });
+        }
+        req.admin = decoded;
+        req.adminSections = teacherSections;
         return next();
       }
 

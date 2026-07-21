@@ -27,6 +27,14 @@ import {
   getAnalyticsReport,
   adjustShowViewCount,
   getShowStats,
+  listTeachers,
+  createTeacher,
+  patchTeacherStatus,
+  getTeacherProfileAdmin,
+  putTeacherProfileAdmin,
+  listApprovals,
+  approveShow,
+  approveEpisode,
 } from './admin.controller.js';
 import {
   getAdminMe,
@@ -87,5 +95,17 @@ router.delete('/hero-banners/:id', requireAuth, requireAdmin('hero_banners'), de
 // ── View count (dramas section) --
 router.post('/shows/:showId/view-count-adjust', requireAuth, requireAdmin('dramas'), adjustShowViewCount);
 router.get('/shows/:showId/stats', requireAuth, requireAdmin('dramas'), getShowStats);
+
+// ── Teachers management (roles)
+router.get('/teachers', requireAuth, requireAdmin('roles'), listTeachers);
+router.post('/teachers', requireAuth, requireAdmin('roles'), createTeacher);
+router.patch('/teachers/:id/status', requireAuth, requireAdmin('roles'), patchTeacherStatus);
+router.get('/teachers/:id/profile', requireAuth, requireAdmin('roles'), getTeacherProfileAdmin);
+router.put('/teachers/:id/profile', requireAuth, requireAdmin('roles'), putTeacherProfileAdmin);
+
+// ── Approvals
+router.get('/approvals', requireAuth, requireAdmin('dramas'), listApprovals);
+router.patch('/approvals/shows/:id', requireAuth, requireAdmin('dramas'), approveShow);
+router.patch('/approvals/episodes/:id', requireAuth, requireAdmin('dramas'), approveEpisode);
 
 export default router;

@@ -48,7 +48,13 @@ export function isValidSection(section) {
 
 export function normalizeSections(sections) {
   // Sub-admins cannot be granted roles management (main admin only)
-  const unique = [...new Set(sections.filter((s) => isValidSection(s) && s !== 'roles'))];
+  const list = Array.isArray(sections)
+    ? sections
+    : typeof sections === 'string'
+      ? sections.split(',').map((section) => section.trim()).filter(Boolean)
+      : [];
+
+  const unique = [...new Set(list.filter((s) => isValidSection(s) && s !== 'roles'))];
   return unique;
 }
 
@@ -56,5 +62,6 @@ export function normalizeSections(sections) {
 export function toFrontendRole(role) {
   if (role === 'ADMIN') return 'admin';
   if (role === 'SUB_ADMIN') return 'sub_admin';
+  if (role === 'TEACHER') return 'teacher';
   return 'user';
 }
