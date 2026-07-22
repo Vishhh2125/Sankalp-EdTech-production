@@ -123,25 +123,51 @@ export async function putTeacherProfileAdmin(req, res, next) {
 
 export async function listApprovals(req, res, next) {
   try {
-    const pendingShows = await prisma.show.findMany({
-      where: { approval_status: 'PENDING_REVIEW' },
-      include: { teacher: { select: { id: true, name: true } } },
-      orderBy: { created_at: 'asc' },
-    });
-    const pendingEpisodes = await prisma.episode.findMany({
-      where: { approval_status: 'PENDING_REVIEW' },
-      include: {
-        show: {
-          select: {
-            id: true,
-            title: true,
-            teacher: { select: { id: true, name: true } }
+    const [pendingShows, pendingEpisodes, rejectedShows, rejectedEpisodes] = await Promise.all([
+      prisma.show.findMany({
+        where: { approval_status: 'PENDING_REVIEW' },
+        include: { teacher: { select: { id: true, name: true } } },
+        orderBy: { created_at: 'desc' },
+      }),
+      prisma.episode.findMany({
+        where: { approval_status: 'PENDING_REVIEW' },
+        include: {
+          show: {
+            select: {
+              id: true,
+              title: true,
+              teacher: { select: { id: true, name: true } }
+            }
           }
-        }
-      },
-      orderBy: { created_at: 'asc' },
-    });
-    return res.json(new ApiResponse(200, { shows: pendingShows, episodes: pendingEpisodes }, 'Approvals fetched'));
+        },
+        orderBy: { created_at: 'desc' },
+      }),
+      prisma.show.findMany({
+        where: { approval_status: 'REJECTED' },
+        include: { teacher: { select: { id: true, name: true } } },
+        orderBy: { created_at: 'desc' },
+      }),
+      prisma.episode.findMany({
+        where: { approval_status: 'REJECTED' },
+        include: {
+          show: {
+            select: {
+              id: true,
+              title: true,
+              teacher: { select: { id: true, name: true } }
+            }
+          }
+        },
+        orderBy: { created_at: 'desc' },
+      }),
+    ]);
+
+    return res.json(new ApiResponse(200, {
+      shows: pendingShows,
+      episodes: pendingEpisodes,
+      rejectedShows,
+      rejectedEpisodes,
+    }, 'Approvals fetched'));
   } catch (err) { next(err); }
 }
 

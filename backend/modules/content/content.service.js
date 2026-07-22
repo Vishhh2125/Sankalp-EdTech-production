@@ -139,8 +139,15 @@ async function getAllShows({
   const where = {};
   if (category_id) where.category_id = category_id;
 
+  if (requesting_user && (requesting_user.role === 'ADMIN' || requesting_user.role === 'SUB_ADMIN' || requesting_user.role === 'TEACHER')) {
+    include_inactive = true;
+  }
+
   if (requesting_user && requesting_user.role === 'TEACHER') {
     where.teacher_id = requesting_user.id;
+  } else if (requesting_user && (requesting_user.role === 'ADMIN' || requesting_user.role === 'SUB_ADMIN')) {
+    // Admins see all shows except teacher private drafts (unsubmitted)
+    where.NOT = { teacher_id: { not: null }, approval_status: 'DRAFT' };
   } else if (!requesting_user || requesting_user.role === 'USER') {
     where.approval_status = 'PUBLISHED';
     where.is_active = true;
@@ -151,8 +158,6 @@ async function getAllShows({
   else if (!include_inactive && (!requesting_user || requesting_user.role === 'USER')) {
     where.is_active = true;
     where.approval_status = 'PUBLISHED';
-  } else if (!include_inactive) {
-    where.is_active = true;
   }
   if (search) {
     const term = String(search).trim();
