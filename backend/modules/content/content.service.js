@@ -146,8 +146,7 @@ async function getAllShows({
   if (requesting_user && requesting_user.role === 'TEACHER') {
     where.teacher_id = requesting_user.id;
   } else if (requesting_user && (requesting_user.role === 'ADMIN' || requesting_user.role === 'SUB_ADMIN')) {
-    // Admins see all shows except teacher private drafts (unsubmitted)
-    where.NOT = { teacher_id: { not: null }, approval_status: 'DRAFT' };
+    // Admins see all shows, including teacher drafts
   } else if (!requesting_user || requesting_user.role === 'USER') {
     where.approval_status = 'PUBLISHED';
     where.is_active = true;
@@ -387,9 +386,11 @@ async function createShow(data, admin) {
     },
   };
 
-  // If the creator is a teacher, auto-assign ownership and set draft approval
-  if (admin && admin.role === 'TEACHER') {
-    createData.teacher_id = admin.id;
+  // If the creator is a teacher OR a teacher is assigned by admin, start as unpublished draft
+  if ((admin && admin.role === 'TEACHER') || showData.teacher_id) {
+    if (admin && admin.role === 'TEACHER') {
+      createData.teacher_id = admin.id;
+    }
     createData.is_active = false; // teachers' shows start unpublished
     createData.approval_status = 'DRAFT';
   }
