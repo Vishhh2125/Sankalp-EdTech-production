@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 
 /**
  * SplashScreen Component
@@ -10,19 +10,22 @@ import { theme } from '../constants/theme';
  */
 
 const SplashScreen = () => {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
+
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color={theme.crimson} />
+      <ActivityIndicator size="large" color={theme.primary} />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.deepBlack,
+    backgroundColor: theme.background,
   },
 });
 

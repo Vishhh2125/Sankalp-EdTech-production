@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Modal, View, ActivityIndicator, StyleSheet, Pressable, Text } from 'react-native';
 import React, { useCallback, useRef, useState } from 'react';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 /**
  * Launch Cashfree hosted checkout using payment_session_id.
@@ -144,6 +144,8 @@ export function CashfreeCheckoutModal({
   onSuccess,
   onFailure,
 }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const [loading, setLoading] = useState(true);
   const handledRef = useRef(false);
 
@@ -228,7 +230,7 @@ export function CashfreeCheckoutModal({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.deepBlack },
   header: {
     paddingTop: 48,

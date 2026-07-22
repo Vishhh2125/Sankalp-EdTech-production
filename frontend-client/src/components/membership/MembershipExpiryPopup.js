@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 const CARD_WIDTH = Math.min(Dimensions.get('window').width - 80, 320);
 
@@ -19,6 +19,9 @@ export default function MembershipExpiryPopup({
   onExtend,
   onDismiss,
 }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
+
   if (!visible || !reminder) return null;
 
   const title = (reminder.title || '').trim();
@@ -67,7 +70,7 @@ export default function MembershipExpiryPopup({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.82)',

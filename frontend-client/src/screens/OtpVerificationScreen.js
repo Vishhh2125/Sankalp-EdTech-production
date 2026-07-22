@@ -10,7 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 import {
   clearOtpState,
@@ -39,6 +39,8 @@ function formatCountdown(targetValue, fallbackNow = Date.now()) {
 }
 
 export default function OtpVerificationScreen({ navigation, route }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const dispatch = useDispatch();
   const otpState = useSelector((state) => state.auth.otp);
   const pendingRegistration = useSelector((state) => state.auth.pendingRegistration);
@@ -239,7 +241,7 @@ export default function OtpVerificationScreen({ navigation, route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: theme.deepBlack,

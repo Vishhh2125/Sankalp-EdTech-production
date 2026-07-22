@@ -9,12 +9,16 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../context/ThemeContext';
 import { courseworkApi } from '../services/courseworkApi';
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 export default function QuizTakingScreen({ route, navigation }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
+  const insets = useSafeAreaInsets();
   const quiz = route.params?.quiz;
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -135,14 +139,14 @@ export default function QuizTakingScreen({ route, navigation }) {
 
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: Math.max(insets.top + 8, 48) }]}>
           <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
             <Ionicons name="arrow-back" size={24} color={theme.white} />
           </Pressable>
           <Text style={styles.headerTitle} numberOfLines={1}>Quiz Results</Text>
         </View>
 
-        <ScrollView ref={scrollRef} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView ref={scrollRef} contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 20, 32) }]} showsVerticalScrollIndicator={false}>
           {/* Score Summary */}
           <View style={styles.scoreCard}>
             <Text style={styles.scoreLabel}>Your Score</Text>
@@ -214,7 +218,7 @@ export default function QuizTakingScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top + 8, 48) }]}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
           <Ionicons name="arrow-back" size={24} color={theme.white} />
         </Pressable>
@@ -283,7 +287,7 @@ export default function QuizTakingScreen({ route, navigation }) {
 
       </ScrollView>
 
-      <View style={styles.bottomNav}>
+      <View style={[styles.bottomNav, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
         <Pressable
           style={[styles.navBtn, styles.prevBtn]}
           disabled={currentIdx === 0}
@@ -319,7 +323,7 @@ export default function QuizTakingScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.deepBlack,
@@ -336,12 +340,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 50,
     paddingHorizontal: 16,
     paddingBottom: 14,
     gap: 12,
     borderBottomWidth: 1,
     borderBottomColor: theme.border,
+    backgroundColor: theme.surface,
   },
   headerTitle: {
     flex: 1,
@@ -478,9 +482,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingTop: 14,
     borderTopWidth: 1,
     borderTopColor: theme.border,
+    backgroundColor: theme.surface,
     gap: 12,
   },
   navBtn: {

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 export const HOME_ANNOUNCEMENT_BAR_HEIGHT = 76;
 
@@ -10,6 +10,8 @@ export const HOME_ANNOUNCEMENT_BAR_HEIGHT = 76;
  * Crimson announcement strip (over Home search bar).
  */
 export default function HomeAnnouncementBar({ announcements, onDismiss }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const [index, setIndex] = useState(0);
   const list = Array.isArray(announcements) ? announcements.slice(0, 3) : [];
 
@@ -72,7 +74,7 @@ export default function HomeAnnouncementBar({ announcements, onDismiss }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   wrap: {
     width: '100%',
     zIndex: 1000,

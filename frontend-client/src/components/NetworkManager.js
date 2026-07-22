@@ -5,9 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useNetwork } from '../context/NetworkContext';
 import { ROUTES } from '../constants/routes';
-import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 
 export default function NetworkManager({ navigationRef, navReady }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const { isOffline } = useNetwork();
   const insets = useSafeAreaInsets();
 
@@ -50,7 +52,7 @@ export default function NetworkManager({ navigationRef, navReady }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   banner: {
     position: 'absolute',
     left: 16,

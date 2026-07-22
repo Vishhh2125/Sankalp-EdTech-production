@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import { API_BASE_URL } from '../../constants/config';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -25,6 +25,8 @@ function resolveImageUrl(url) {
 }
 
 export default function HomeHeroSlider({ banners = [], onBannerPress }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const listRef = useRef(null);
   const [index, setIndex] = useState(0);
 
@@ -126,7 +128,7 @@ export default function HomeHeroSlider({ banners = [], onBannerPress }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   wrap: {
     marginBottom: 20,
   },

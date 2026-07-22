@@ -9,11 +9,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 const CARD_WIDTH = Math.min(Dimensions.get('window').width - 80, 320);
 
 export default function AnnouncementPopup({ visible, announcements, onDismiss }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const [index, setIndex] = useState(0);
   const list = Array.isArray(announcements) ? announcements.slice(0, 3) : [];
   const listKey = list.map((a) => a.id).join(',');
@@ -104,7 +106,7 @@ export default function AnnouncementPopup({ visible, announcements, onDismiss })
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.82)',

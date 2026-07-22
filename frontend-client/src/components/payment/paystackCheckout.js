@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 async function loadPaystackScript() {
   if (typeof window === 'undefined') {
@@ -95,6 +95,8 @@ export function PaystackCheckoutModal({
   onSuccess,
   onFailure,
 }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const [loading, setLoading] = useState(true);
   const handledRef = useRef(false);
 
@@ -184,7 +186,7 @@ export function PaystackCheckoutModal({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.deepBlack },
   header: {
     paddingTop: 48,

@@ -14,12 +14,14 @@ import YoutubePlayer from 'react-native-youtube-iframe';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { fetchLivePlayUrl, joinStream, leaveStream } from '../components/live/liveApi';
 import LiveProgressBar from '../components/live/LiveProgressBar';
 import useLandscapePlayback from '../components/shortVideoPlayer/useLandscapePlayback';
 
 export default function LiveViewerScreen() {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const route = useRoute();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -387,7 +389,7 @@ export default function LiveViewerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.deepBlack },
   topBar: {
     flexDirection: 'row',

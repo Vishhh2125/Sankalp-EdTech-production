@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { theme } from '../constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../context/ThemeContext';
 import { courseworkApi, formatFileSize } from '../services/courseworkApi';
 import { downloadFile } from '../utils/fileDownloader';
 
@@ -30,6 +31,9 @@ function getFileNameFromUrl(url) {
 }
 
 export default function AssignmentDetailScreen({ route, navigation }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
+  const insets = useSafeAreaInsets();
   const assignment = route.params?.assignment;
   const [answerText, setAnswerText] = useState('');
   const [pickedFile, setPickedFile] = useState(null);
@@ -129,7 +133,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top + 8, 48) }]}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
           <Ionicons name="arrow-back" size={24} color={theme.white} />
         </Pressable>
@@ -145,7 +149,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 24, 40) }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Title */}
@@ -290,7 +294,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.deepBlack,

@@ -601,9 +601,9 @@ const useStyles = (theme) => StyleSheet.create({
     fontWeight: '700',
   },
   disabledBtn: {
-    backgroundColor: theme.isDark ? '#1E1E24' : '#F1F5F9',
+    backgroundColor: theme.disabledBg,
     borderWidth: 1,
-    borderColor: theme.isDark ? '#303038' : '#CBD5E1',
+    borderColor: theme.disabled,
   },
   disabledBtnText: {
     color: theme.gray,
@@ -642,7 +642,7 @@ const useStyles = (theme) => StyleSheet.create({
     width: 48,
     height: 64,
     borderRadius: 4,
-    backgroundColor: theme.isDark ? '#111' : '#F3F4F6',
+    backgroundColor: theme.inputBackground,
   },
   showPosterFallback: {
     width: 48,

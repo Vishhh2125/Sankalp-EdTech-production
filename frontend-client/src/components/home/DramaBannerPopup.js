@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = Math.min(SCREEN_WIDTH - 48, 360);
@@ -23,6 +23,8 @@ export default function DramaBannerPopup({
   onClose,
   onStartWatching,
 }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const listRef = useRef(null);
   const [index, setIndex] = useState(0);
 
@@ -104,7 +106,7 @@ export default function DramaBannerPopup({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.82)',
@@ -118,7 +120,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: '#0a1628',
+    backgroundColor: theme.card,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.45,
@@ -167,7 +169,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 22,
-    backgroundColor: '#0a1628',
+    backgroundColor: theme.card,
     alignItems: 'center',
   },
   headline: {
@@ -177,7 +179,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   subheadline: {
-    color: 'rgba(255,255,255,0.65)',
+    color: theme.textSecondary,
     fontSize: 14,
     marginBottom: 18,
     textAlign: 'center',

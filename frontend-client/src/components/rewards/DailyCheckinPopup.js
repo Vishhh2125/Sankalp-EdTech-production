@@ -10,9 +10,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import CoinIcon from '../CoinIcon';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
-function MiniDayPill({ day, coins, state }) {
+function MiniDayPill({ day, coins, state, styles, theme }) {
   const isCurrent = state === 'current';
   const isCompleted = state === 'completed';
 
@@ -49,6 +49,9 @@ export default function DailyCheckinPopup({
   onClaim,
   onDismiss,
 }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
+
   if (!status) return null;
 
   const rules = status.rules ?? [];
@@ -93,6 +96,8 @@ export default function DailyCheckinPopup({
                 day={day}
                 coins={coins}
                 state={popupDayState(day, streakDay, claimedToday)}
+                styles={styles}
+                theme={theme}
               />
             ))}
           </View>
@@ -128,7 +133,7 @@ export default function DailyCheckinPopup({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.75)',

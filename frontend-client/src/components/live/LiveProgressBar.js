@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Animated, PanResponder, Pressable } from 'react-native';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 /**
  * Live-aware seekable progress bar — jitter-proof.
@@ -26,6 +26,8 @@ export default function LiveProgressBar({
   paused = false,
   onSeek,
 }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   // ── Pulse animation for LIVE dot ──
@@ -185,7 +187,7 @@ export default function LiveProgressBar({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   container: {
     left: 0,
     right: 0,

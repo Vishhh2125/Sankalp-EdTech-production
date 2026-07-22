@@ -10,7 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 import {
   clearPasswordResetState,
@@ -39,6 +39,8 @@ function formatCountdown(targetValue, fallbackNow = Date.now()) {
 }
 
 export default function ResetPasswordScreen({ navigation, route }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const dispatch = useDispatch();
   const resetState = useSelector((state) => state.auth.passwordReset);
   const pendingPasswordReset = useSelector(
@@ -304,7 +306,7 @@ export default function ResetPasswordScreen({ navigation, route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: theme.deepBlack,

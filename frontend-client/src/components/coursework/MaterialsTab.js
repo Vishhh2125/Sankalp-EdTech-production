@@ -8,11 +8,14 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import { formatFileSize } from '../../services/courseworkApi';
 import { downloadFile } from '../../utils/fileDownloader';
 
 export default function MaterialsTab({ materials, loading, hasAccess }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
+
   if (loading) {
     return (
       <View style={styles.stateBlock}>
@@ -81,7 +84,7 @@ export default function MaterialsTab({ materials, loading, hasAccess }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   sectionTitle: {
     color: theme.white,
     fontSize: 17,

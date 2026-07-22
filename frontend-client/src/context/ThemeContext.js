@@ -50,6 +50,9 @@ const darkTheme = {
   searchBarBg: '#21252F',
   lockedCellBg: '#21252F',
   episodeBg: '#181B23',
+  disabled: '#303541',
+  disabledBg: '#1E1E24',
+  disabledText: '#667085',
 };
 
 /** Premium Light Theme Scheme */
@@ -98,6 +101,9 @@ const lightTheme = {
   searchBarBg: '#FFEDD5',
   lockedCellBg: '#FFF7ED',
   episodeBg: '#FFFFFF',
+  disabled: '#CBD5E1',
+  disabledBg: '#F1F5F9',
+  disabledText: '#A7ADBB',
 };
 
 const ThemeContext = createContext({

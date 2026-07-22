@@ -10,7 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 import {
   clearForgotPasswordState,
@@ -18,6 +18,8 @@ import {
 } from '../redux/slices/authSlice';
 
 export default function ForgotPasswordScreen({ navigation }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const [email, setEmail] = useState('');
   const [localError, setLocalError] = useState('');
 
@@ -105,7 +107,7 @@ export default function ForgotPasswordScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: theme.deepBlack,

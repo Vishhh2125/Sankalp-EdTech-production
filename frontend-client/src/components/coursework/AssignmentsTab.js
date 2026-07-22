@@ -8,10 +8,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import { ROUTES } from '../../constants/routes';
 
 export default function AssignmentsTab({ assignments, loading, showId, onSubmissionSuccess }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const navigation = useNavigation();
 
   if (loading) {
@@ -99,7 +101,7 @@ export default function AssignmentsTab({ assignments, loading, showId, onSubmiss
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   sectionTitle: {
     color: theme.white,
     fontSize: 17,

@@ -13,14 +13,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import { formatCount } from './shortVideoPlayer/utils';
-import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SHEET_HEIGHT = Math.round(SCREEN_HEIGHT * 0.9);
 const EPISODE_GAP = 6;
 const EPISODES_PER_PAGE = 30;
 
-function Tag({ label }) {
+function Tag({ label, styles }) {
   return (
     <View style={styles.tag}>
       <Text style={styles.tagText}>{label}</Text>
@@ -48,7 +48,7 @@ function buildRanges(totalEpisodes) {
   return ranges;
 }
 
-function EpisodeCell({ episode, isCurrentEpisode, onPress }) {
+function EpisodeCell({ episode, isCurrentEpisode, onPress, styles }) {
   if (!episode) return null;
 
   const locked = episode.is_locked;
@@ -89,6 +89,8 @@ export default function DramaDetailsSheet({
   onRangeChange,
   onEpisodePress,
 }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const [tab, setTab] = useState(initialTab);
   const [activeRangeStart, setActiveRangeStart] = useState(1);
   const scrollRef = useRef(null);
@@ -181,7 +183,7 @@ export default function DramaDetailsSheet({
                 <Text style={styles.synopsis}>{synopsisText}</Text>
                 <View style={styles.tagsRow}>
                   {tags.map((t) => (
-                    <Tag key={t} label={t} />
+                    <Tag key={t} label={t} styles={styles} />
                   ))}
                 </View>
               </View>
@@ -206,7 +208,7 @@ export default function DramaDetailsSheet({
                   {allEpisodes.map((n) => {
                     const unlockedUntil = item?.unlockedUntil ?? 2;
                     const locked = n > unlockedUntil;
-                    return <EpisodeCell key={n} number={n} locked={locked} />;
+                    return <EpisodeCell key={n} number={n} locked={locked} styles={styles} />;
                   })}
                 </View>
               </View>
@@ -218,7 +220,7 @@ export default function DramaDetailsSheet({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   backdropWrap: {
     flex: 1,
     justifyContent: 'flex-end',

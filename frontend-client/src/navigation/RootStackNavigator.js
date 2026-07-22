@@ -8,7 +8,6 @@ import AuthWrapper from '../components/AuthWrapper';
 import { ROUTES } from '../constants/routes';
 import { API_BASE_URL } from '../constants/config';
 import { useUserDataSync } from '../hooks/useUserDataSync';
-import { theme as staticTheme } from '../constants/theme';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import NetworkManager from '../components/NetworkManager';
 import {

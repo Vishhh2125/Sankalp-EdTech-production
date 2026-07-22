@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 
 export default function AppButton({
   title,
@@ -11,6 +11,9 @@ export default function AppButton({
   style,
   textStyle,
 }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -31,7 +34,7 @@ export default function AppButton({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   base: {
     paddingVertical: 12,
     paddingHorizontal: 16,

@@ -29,7 +29,7 @@ const iosClientIdPrefix = iosClientId.split('.').shift() || '';
 module.exports = {
   expo: {
     name: "AlphaMinds",
-    slug: "7k",
+    slug: "ott_7k",
     scheme: [
       "7k",
       androidClientIdPrefix ? `com.googleusercontent.apps.${androidClientIdPrefix}` : null,
@@ -126,9 +126,9 @@ module.exports = {
     ],
     extra: {
       eas: {
-        projectId: "5dd61ee9-e865-46d2-bda6-9064e3107aa3"
+        projectId: "f9b1fb0c-aa11-4a05-b20b-f2c88d71fa2f"
       }
     },
-    owner: "prasen_10"
+    owner: "sam0805s-organization"
   }
 };

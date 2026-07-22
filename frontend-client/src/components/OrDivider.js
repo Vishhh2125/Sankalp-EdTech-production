@@ -1,12 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 
 /**
  * A horizontal "─── OR ───" divider used between the primary
  * action button and social login options.
  */
 export default function OrDivider() {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
+
   return (
     <View style={styles.container}>
       <View style={styles.line} />
@@ -16,7 +19,7 @@ export default function OrDivider() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',

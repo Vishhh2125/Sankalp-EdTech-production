@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { theme } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { useGuestAuth } from '../context/GuestAuthContext';
 
 /**
@@ -16,6 +16,8 @@ export default function GuestAccessPrompt({
   showLoginLink = true,
   compact = false,
 }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
   const { openSignUp, openLogin } = useGuestAuth();
 
   const handlePrimary = onPrimaryPress ?? openSignUp;
@@ -44,7 +46,7 @@ export default function GuestAccessPrompt({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = (theme) => StyleSheet.create({
   wrap: {
     alignItems: 'center',
     justifyContent: 'center',
