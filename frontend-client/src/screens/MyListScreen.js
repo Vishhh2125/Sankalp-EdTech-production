@@ -295,7 +295,7 @@ const useEmptyStyles = (appTheme) => StyleSheet.create({
 function GuestScreen() {
   return (
     <GuestAccessPrompt
-      title="Sign in to use My List"
+      title="Sign in to use My Learning"
       subtitle="Bookmark shows and track your watch progress across devices."
     />
   );
@@ -549,7 +549,7 @@ export default function MyListScreen() {
       ) : (
         <>
           <View style={styles.header}>
-            <Text style={styles.title}>My List</Text>
+            <Text style={styles.title}>My Learning</Text>
             <View style={styles.countBadge}>
               <Text style={styles.countText}>{totalCount} Videos</Text>
             </View>
@@ -727,7 +727,7 @@ export default function MyListScreen() {
                   episode_num: item.episodeNum,
                   duration_sec: item.duration,
                   progress_sec: 0,
-                  total_episodes: 1, 
+                  total_episodes: 1,
                   localVideoPath: item.localVideoPath,
                 })}
                 onLongPress={() => handleCardLongPress({

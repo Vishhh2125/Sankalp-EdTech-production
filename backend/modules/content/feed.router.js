@@ -162,6 +162,13 @@ router.get('/show/:showId', allowGuest, async (req, res, next) => {
       where: { id: showId },
       include: {
         show_tags: { include: { tag: { select: { name: true } } } },
+        teacher: {
+          select: {
+            id: true,
+            name: true,
+            teacherProfile: true,
+          },
+        },
       },
     });
     if (!show) return res.status(404).json({ error: 'Show not found' });
@@ -216,6 +223,7 @@ router.get('/show/:showId', allowGuest, async (req, res, next) => {
       tags: show.show_tags.map(st => st.tag.name),
       show_is_free: show.is_free,
       show_coin_cost: show.coin_cost,
+      teacher_profile: show.teacher?.teacherProfile || null,
       is_locked: isShowLocked,
       lock_reason: showLockReason,
       total_episodes: totalEpisodes,
