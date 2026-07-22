@@ -37,10 +37,10 @@ module.exports = {
     ].filter(Boolean),
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/logo.png",
+    icon: "./assets/AlphaMinds.png",
     userInterfaceStyle: "light",
     splash: {
-      image: "./assets/splash-icon.png",
+      image: "./assets/AlphaMinds.png",
       resizeMode: "contain",
       backgroundColor: "#ffffff"
     },
@@ -54,7 +54,7 @@ module.exports = {
     android: {
       package: "com.samyak_8505.x7K",
       adaptiveIcon: {
-        foregroundImage: "./assets/logo.png",
+        foregroundImage: "./assets/AlphaMinds.png",
         backgroundColor: "#ffffff"
       },
       permissions: [

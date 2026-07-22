@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Dimensions,
   Image,
   Modal,
@@ -56,6 +57,75 @@ function Tag({ label }) {
   return (
     <View style={styles.tag}>
       <Text style={styles.tagText}>{label}</Text>
+    </View>
+  );
+}
+
+function TeacherProfileCard({ profile }) {
+  const { theme } = useTheme();
+  const styles = useStyles(theme);
+  const [expanded, setExpanded] = useState(false);
+  const animation = useRef(new Animated.Value(0)).current;
+
+  if (!profile) return null;
+
+  const toggleExpand = () => {
+    const toValue = expanded ? 0 : 1;
+    setExpanded(!expanded);
+    Animated.timing(animation, {
+      toValue,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const bodyHeight = animation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 180], // Approximate height
+  });
+
+  const arrowRotation = animation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
+
+  return (
+    <View style={styles.teacherCardRoot}>
+      <Text style={styles.teacherCardTitle}>About Teacher</Text>
+      <Pressable style={styles.teacherCardHeader} onPress={toggleExpand}>
+        {profile.profile_photo_url ? (
+          <Image source={{ uri: resolveThumbnailUrl(profile.profile_photo_url) }} style={styles.teacherAvatar} />
+        ) : (
+          <View style={styles.teacherAvatarPlaceholder}>
+            <Ionicons name="person" size={24} color={theme.textMuted} />
+          </View>
+        )}
+        <View style={styles.teacherCardHeaderRight}>
+          <View style={styles.teacherNameRow}>
+            <Text style={styles.teacherName}>{profile.full_name}</Text>
+            <Animated.View style={{ transform: [{ rotate: arrowRotation }] }}>
+              <Ionicons name="chevron-down" size={20} color={theme.textMuted} />
+            </Animated.View>
+          </View>
+          <Text style={styles.teacherHeadline} numberOfLines={2}>{profile.professional_headline}</Text>
+        </View>
+      </Pressable>
+
+      <Animated.View style={[styles.teacherCardBody, { height: bodyHeight }]}>
+        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+          <Text style={styles.teacherBioTitle}>Bio</Text>
+          <Text style={styles.teacherBioText}>{profile.bio}</Text>
+
+          <View style={styles.teacherInfoRow}>
+            <Text style={styles.teacherInfoLabel}>Years of experience:</Text>
+            <Text style={styles.teacherInfoValue}>{profile.experience_years}</Text>
+          </View>
+          <View style={styles.teacherInfoRow}>
+            <Text style={styles.teacherInfoLabel}>Qualification:</Text>
+            <Text style={styles.teacherInfoValue}>{profile.qualification}</Text>
+          </View>
+        </ScrollView>
+      </Animated.View>
     </View>
   );
 }
@@ -149,11 +219,11 @@ function EpisodeRow({ episode, isCurrentEpisode, onPress }) {
           ]}
           numberOfLines={1}
         >
-          Episode {episode.episode_num}
+          Lectures {episode.episode_num}
           {episode.episode_title ? `  •  ${episode.episode_title}` : ''}
         </Text>
         <Text style={styles.episodeRowMeta} numberOfLines={1}>
-          Ep {episode.episode_num}
+          Lec {episode.episode_num}
           {episode.duration_sec ? `  •  ${Math.round(episode.duration_sec / 60)} min` : ''}
         </Text>
       </View>
@@ -496,7 +566,6 @@ export default function DramaDetailsSheetConnected({
               >
                 {tab === 'synopsis' ? (
                   <View>
-                    <Text style={styles.sectionTitle}>Synopsis</Text>
                     <Text style={styles.synopsis}>{synopsisText}</Text>
                     {tags.length > 0 ? (
                       <View style={styles.tagsRow}>
@@ -539,6 +608,8 @@ export default function DramaDetailsSheetConnected({
                         )}
                       </View>
                     )}
+
+                    <TeacherProfileCard profile={showDetails?.teacher_profile} />
 
                     <Pressable
                       style={({ pressed }) => [
@@ -988,5 +1059,98 @@ const useStyles = (theme) => StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
     textDecorationLine: 'underline',
+  },
+  teacherCardRoot: {
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  teacherCardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.text,
+    marginBottom: 12,
+  },
+  teacherCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.surface,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  teacherAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: theme.background,
+  },
+  teacherAvatarPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: theme.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  teacherCardHeaderRight: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  teacherNameRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  teacherName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.text,
+    flex: 1,
+  },
+  teacherHeadline: {
+    fontSize: 13,
+    color: theme.textMuted,
+    marginTop: 4,
+  },
+  teacherCardBody: {
+    overflow: 'hidden',
+    backgroundColor: theme.surface,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    marginTop: -8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderTopWidth: 0,
+    paddingTop: 8, // space below the overlap
+  },
+  teacherBioTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.text,
+    marginBottom: 4,
+    marginTop: 8,
+  },
+  teacherBioText: {
+    fontSize: 13,
+    color: theme.textMuted,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  teacherInfoRow: {
+    flexDirection: 'row',
+    marginBottom: 6,
+  },
+  teacherInfoLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: theme.text,
+    marginRight: 6,
+  },
+  teacherInfoValue: {
+    fontSize: 13,
+    color: theme.textMuted,
+    flex: 1,
   },
 });

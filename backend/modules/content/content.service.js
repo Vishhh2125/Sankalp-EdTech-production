@@ -258,6 +258,13 @@ async function getShowById(id, requesting_user = null) {
       category: { select: { id: true, name: true } },
       show_tags: { include: { tag: { select: { id: true, name: true } } } },
       episodes: { orderBy: { episode_num: 'asc' } },
+      teacher: {
+        select: {
+          id: true,
+          name: true,
+          teacherProfile: true,
+        },
+      },
     },
   });
   if (!show) throw new AppError('Show not found', 404);
@@ -288,6 +295,8 @@ async function getShowById(id, requesting_user = null) {
     tags: show.show_tags.map((st) => st.tag.name),
     tag_ids: show.show_tags.map((st) => st.tag.id),
     status: show.is_active ? 'Published' : 'Draft',
+    teacher: show.teacher ? { id: show.teacher.id, name: show.teacher.name } : null,
+    teacher_profile: show.teacher?.teacherProfile || null,
   };
 }
 

@@ -51,40 +51,40 @@ export default function BottomTabNavigator() {
           tabBarStyle: (isLandscape || shouldHide)
             ? { display: 'none' }
             : {
-                position: 'absolute',
-                bottom: Math.max(insets.bottom, 24),
-                left: 20,
-                right: 20,
-                height: 68,
-                borderRadius: 34,
-                borderWidth: 1,
-                borderColor: isDarkMode ? 'rgba(255, 92, 26, 0.3)' : 'rgba(255, 76, 0, 0.2)',
-                backgroundColor: 'transparent',
-                elevation: 0,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 10 },
-                shadowOpacity: 0.15,
-                shadowRadius: 20,
-                paddingBottom: 0,
-              },
+              position: 'absolute',
+              bottom: Math.max(insets.bottom, 24),
+              left: 20,
+              right: 20,
+              height: 68,
+              borderRadius: 34,
+              borderWidth: 1,
+              borderColor: isDarkMode ? 'rgba(255, 92, 26, 0.3)' : 'rgba(255, 76, 0, 0.2)',
+              backgroundColor: 'transparent',
+              elevation: 0,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 10 },
+              shadowOpacity: 0.15,
+              shadowRadius: 20,
+              paddingBottom: 0,
+            },
           tabBarBackground: (isLandscape || shouldHide)
             ? undefined
             : () => (
-                <View style={StyleSheet.absoluteFill}>
-                  <BlurView
-                    tint={isDarkMode ? 'dark' : 'light'}
-                    intensity={100}
-                    style={[
-                      StyleSheet.absoluteFill,
-                      {
-                        borderRadius: 34,
-                        overflow: 'hidden',
-                        backgroundColor: isDarkMode ? 'rgba(28, 28, 30, 0.4)' : 'rgba(255, 255, 255, 0.4)',
-                      },
-                    ]}
-                  />
-                </View>
-              ),
+              <View style={StyleSheet.absoluteFill}>
+                <BlurView
+                  tint={isDarkMode ? 'dark' : 'light'}
+                  intensity={100}
+                  style={[
+                    StyleSheet.absoluteFill,
+                    {
+                      borderRadius: 34,
+                      overflow: 'hidden',
+                      backgroundColor: isDarkMode ? 'rgba(28, 28, 30, 0.4)' : 'rgba(255, 255, 255, 0.4)',
+                    },
+                  ]}
+                />
+              </View>
+            ),
           tabBarLabelStyle: {
             fontSize: 11,
             fontWeight: '600',
@@ -119,7 +119,7 @@ export default function BottomTabNavigator() {
       <Tab.Screen
         name={ROUTES.MY_LIST}
         component={MyListScreen}
-        options={{ tabBarLabel: 'My List' }}
+        options={{ tabBarLabel: 'My Learning' }}
       />
       <Tab.Screen
         name={ROUTES.PROFILE}
