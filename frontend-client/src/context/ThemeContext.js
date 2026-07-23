@@ -59,27 +59,27 @@ const darkTheme = {
 const lightTheme = {
   isDark: false,
   // Core Semantic Colors
-  background: '#FFF7ED', // Warm Ivory (orange-50/100 tint)
+  background: '#F5F5F5', // Soft Light Neutral Gray
   surface: '#FFFFFF',    // Pure White Card/Surface
   elevatedSurface: '#FFFFFF',
   card: '#FFFFFF',
   textPrimary: '#1A1A1A', // Soft Near-black primary text
   textSecondary: '#6B6B6B', // Warm Gray secondary text
   textMuted: '#A7ADBB',
-  border: '#FFEDD5',     // Warm Light Orange Tint (orange-100 border)
+  border: '#E5E7EB',     // Clean Light Gray Border
   primary: '#FF4C00',    // Warm Orange Brand Accent
   primaryHover: '#E64400',
-  primarySoft: '#FFF7ED',
+  primarySoft: '#F5F5F5',
   accent: '#D4A600',
   success: '#16A34A',
   warning: '#F59E0B',
   error: '#DC2626',
   info: '#2563EB',
   tabBarBackground: '#FFFFFF',
-  inputBackground: '#FFF7ED',
+  inputBackground: '#F5F5F5',
   
   // Specific Component Backwards Compatibility / Legacy Primitives
-  deepBlack: '#FFF7ED',
+  deepBlack: '#F5F5F5',
   black: '#FFFFFF',
   white: '#1A1A1A',
   gray: '#6B6B6B',
@@ -91,15 +91,15 @@ const lightTheme = {
   red: '#DC2626',
   crimson: '#FF4C00',
   blush: '#FF6584',
-  surfaceLight: '#FFEDD5',
+  surfaceLight: '#E5E7EB',
   text: '#1A1A1A',
-  screenBg: '#FFF7ED',
+  screenBg: '#F5F5F5',
   cardBg: '#FFFFFF',
   modalBg: '#FFFFFF',
-  inputBg: '#FFF7ED',
+  inputBg: '#F5F5F5',
   tabBarBg: '#FFFFFF',
-  searchBarBg: '#FFEDD5',
-  lockedCellBg: '#FFF7ED',
+  searchBarBg: '#E5E7EB',
+  lockedCellBg: '#F5F5F5',
   episodeBg: '#FFFFFF',
   disabled: '#CBD5E1',
   disabledBg: '#F1F5F9',

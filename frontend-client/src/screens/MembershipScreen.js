@@ -852,7 +852,7 @@ const useStyles = (theme, insets = {}) => StyleSheet.create({
   confirmPlanBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.isDark ? theme.deepBlack : '#FFF7ED',
+    backgroundColor: theme.background,
     padding: 14,
     borderRadius: 12,
     marginBottom: 16,
@@ -880,7 +880,7 @@ const useStyles = (theme, insets = {}) => StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: theme.border,
-    backgroundColor: theme.isDark ? theme.deepBlack : '#FFF7ED',
+    backgroundColor: theme.background,
     alignItems: 'center',
   },
   gatewayChipActive: {

@@ -481,7 +481,7 @@ const useStyles = (theme) => StyleSheet.create({
   },
 
   packCard: {
-    backgroundColor: theme.isDark ? '#1A1A1A' : '#FFF7ED',
+    backgroundColor: theme.card,
     borderRadius: 22,
     paddingVertical: 18,
     paddingHorizontal: 18,
@@ -588,7 +588,7 @@ const useStyles = (theme) => StyleSheet.create({
   selectedPackContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.isDark ? '#202020' : '#FFF7ED',
+    backgroundColor: theme.background,
     padding: 16,
     borderRadius: 18,
     marginBottom: 20,
