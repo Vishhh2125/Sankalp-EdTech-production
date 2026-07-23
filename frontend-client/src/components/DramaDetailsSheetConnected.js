@@ -619,7 +619,7 @@ export default function DramaDetailsSheetConnected({
                       onPress={() => onStartWatching && onStartWatching()}
                     >
                       <Ionicons name="play" size={18} color={theme.white} />
-                      <Text style={styles.startWatchingText}>Start Watching</Text>
+                      <Text style={styles.startWatchingText}>Start Learning</Text>
                     </Pressable>
                   </View>
                 ) : tab === 'episodes' ? (

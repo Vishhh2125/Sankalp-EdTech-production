@@ -7,7 +7,6 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   Dimensions,
   StatusBar,
 } from 'react-native';
@@ -23,6 +22,7 @@ import { packageApi } from '../services/packageApi';
 import { setCoins } from '../redux/slices/authSlice';
 import * as authService from '../services/authService';
 import { initShowPlayer } from '../redux/slices/showPlayerSlice';
+import { showAlert } from '../services/alertService';
 import DramaDetailsSheetConnected from '../components/DramaDetailsSheetConnected';
 import CoinIcon from '../components/CoinIcon';
 import { createAuthenticatedApi } from '../services/api';
@@ -92,7 +92,7 @@ export default function PackageDetailScreen() {
 
   const handleBuyPackage = async () => {
     if (!accessToken) {
-      Alert.alert('Login Required', 'Please log in to purchase this package.', [
+      showAlert('Login Required', 'Please log in to purchase this package.', [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Log In', onPress: () => navigation.navigate(ROUTES.LOGIN) },
       ]);
@@ -102,7 +102,7 @@ export default function PackageDetailScreen() {
     if (!pkg) return;
 
     if (userCoins < pkg.coin_price) {
-      Alert.alert(
+      showAlert(
         'Insufficient Coins',
         `This package costs ${pkg.coin_price} coins, but you only have ${userCoins} coins. Would you like to buy more?`,
         [
@@ -116,9 +116,9 @@ export default function PackageDetailScreen() {
       return;
     }
 
-    Alert.alert(
+    showAlert(
       'Confirm Purchase',
-      `Unlock all shows in "${pkg.title}" for ${pkg.coin_price} coins?`,
+      `Unlock all Courses in "${pkg.title}" for ${pkg.coin_price} coins?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -135,11 +135,11 @@ export default function PackageDetailScreen() {
                 await authService.patchUserDataInStore({ coins: data.coins });
               }
 
-              Alert.alert('Success', 'Package purchased successfully! All shows are now unlocked.');
+              showAlert('Success', 'Package purchased successfully! All courses are now unlocked.');
               loadPackageDetail();
             } catch (err) {
               console.error('Purchase failed:', err);
-              Alert.alert(
+              showAlert(
                 'Purchase Failed',
                 err?.response?.data?.message || err?.message || 'Transaction could not be completed'
               );
@@ -293,7 +293,7 @@ export default function PackageDetailScreen() {
               {pkg.title}
             </Text>
             <Text style={styles.packageMetaText}>
-              {pkg.shows?.length || 0} {pkg.shows?.length === 1 ? 'Show' : 'Shows'} Included
+              {pkg.shows?.length || 0} {pkg.shows?.length === 1 ? 'Course' : 'Courses'} Included
             </Text>
           </View>
         </View>
@@ -305,7 +305,7 @@ export default function PackageDetailScreen() {
           {!(pkg.is_owned || pkg.is_membership_covered) && (
             <View style={styles.pricingCard}>
               <View style={styles.priceRow}>
-                <Text style={styles.priceLabel}>Individual Shows Total:</Text>
+                <Text style={styles.priceLabel}>Individual Course Total:</Text>
                 <View style={styles.coinWrap}>
                   <Text style={styles.individualPriceText}>
                     {pkg.individual_price_sum || 0}
@@ -370,7 +370,7 @@ export default function PackageDetailScreen() {
             </TouchableOpacity>
           )}
 
-          <Text style={styles.showsHeader}>Included Shows ({pkg.shows?.length || 0})</Text>
+          <Text style={styles.showsHeader}>Included Courses ({pkg.shows?.length || 0})</Text>
 
           <View style={styles.showsList}>
             {pkg.shows?.map((show, index) => (

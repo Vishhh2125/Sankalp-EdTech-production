@@ -364,7 +364,7 @@ export default function ForYouScreen() {
       <View style={styles.loadingScreen}>
         <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
         <Ionicons name={isOffline ? "cloud-offline-outline" : "videocam-off-outline"} size={48} color="#555" />
-        <Text style={styles.emptyTitle}>{isOffline ? 'You are offline' : 'No shows available'}</Text>
+        <Text style={styles.emptyTitle}>{isOffline ? 'You are offline' : 'No courses available'}</Text>
         <Text style={styles.emptySubtitle}>{isOffline ? 'Check your internet connection and try again' : 'Check back soon for new content'}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
           <Text style={styles.retryText}>Retry</Text>

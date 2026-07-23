@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, Alert } from 'react-native';
+import { AppState } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 
 import DailyCheckinPopup from './DailyCheckinPopup';
@@ -15,6 +15,7 @@ import {
 } from './dailyCheckinStorage';
 import { setCoins } from '../../redux/slices/authSlice';
 import * as authService from '../../services/authService';
+import { showAlert } from '../../services/alertService';
 
 /**
  * Shows daily check-in popup on first app open of the day (logged-in users only).
@@ -95,12 +96,12 @@ export default function DailyCheckinGate({ children }) {
       await clearCheckinPopupDismissed();
       setVisible(false);
       setStatus((s) => (s ? { ...s, claimed_today: true, coins: data.coins } : s));
-      Alert.alert(
+      showAlert(
         'Reward claimed',
         `You received ${data.coins_awarded} coins for Day ${data.streak_day}!`
       );
     } catch (err) {
-      Alert.alert(
+      showAlert(
         'Check-in failed',
         walletApiErrorMessage(err, 'Could not claim reward')
       );

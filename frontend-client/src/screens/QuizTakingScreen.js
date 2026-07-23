@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { courseworkApi } from '../services/courseworkApi';
+import { showAlert } from '../services/alertService';
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
@@ -37,7 +38,7 @@ export default function QuizTakingScreen({ route, navigation }) {
       const res = await courseworkApi.getQuizQuestions(quiz.id);
       setQuestions(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      Alert.alert('Error', 'Failed to load quiz questions.');
+      showAlert('Error', 'Failed to load quiz questions.');
       navigation.goBack();
     } finally {
       setLoading(false);
@@ -75,14 +76,14 @@ export default function QuizTakingScreen({ route, navigation }) {
     // Validate all questions answered
     const unanswered = questions.filter(q => !selectedOptions[q.id]);
     if (unanswered.length > 0) {
-      Alert.alert(
+      showAlert(
         'Unanswered Questions',
         `You have ${unanswered.length} unanswered question(s). Please answer all questions before submitting.`
       );
       return;
     }
 
-    Alert.alert(
+    showAlert(
       'Submit Quiz',
       'Are you sure you want to submit? You cannot retake this quiz.',
       [
@@ -112,7 +113,7 @@ export default function QuizTakingScreen({ route, navigation }) {
               scrollRef.current?.scrollTo({ y: 0, animated: true });
             } catch (err) {
               const msg = err.response?.data?.message || err.message;
-              Alert.alert('Submission Failed', msg);
+              showAlert('Submission Failed', msg);
             } finally {
               setSubmitting(false);
             }

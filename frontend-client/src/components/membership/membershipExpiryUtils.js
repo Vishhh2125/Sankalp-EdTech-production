@@ -64,8 +64,8 @@ export function getMembershipExpiryReminder({ plan, memberships }) {
     daysLeft: 2,
     title: '2 days left on your membership',
     body: planName
-      ? `Your ${planName}${categorySuffix} plan ends on ${endLabel}. Extend now so you don't lose access to locked episodes.`
-      : `Your membership ends on ${endLabel}. Extend now so you don't lose access to locked episodes.`,
+      ? `Your ${planName}${categorySuffix} plan ends on ${endLabel}. Extend now so you don't lose access to locked lectures.`
+      : `Your membership ends on ${endLabel}. Extend now so you don't lose access to locked lectures.`,
     cta: 'Extend now',
   };
 }

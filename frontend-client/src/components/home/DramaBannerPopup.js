@@ -63,7 +63,7 @@ export default function DramaBannerPopup({
           onPress={() => onStartWatching(item)}
         >
           <Ionicons name="play" size={18} color="#000" style={{ marginRight: 8 }} />
-          <Text style={styles.watchBtnText}>Start Watching</Text>
+          <Text style={styles.watchBtnText}>Start Learning</Text>
         </Pressable>
       </View>
     </View>

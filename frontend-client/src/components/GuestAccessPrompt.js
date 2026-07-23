@@ -10,7 +10,7 @@ import { useGuestAuth } from '../context/GuestAuthContext';
  */
 export default function GuestAccessPrompt({
   title = 'Sign in to continue',
-  subtitle = 'Create an account to unlock episodes, save your list, and use your wallet.',
+  subtitle = 'Create an account to unlock lectures, save your list, and use your wallet.',
   primaryLabel = 'Sign Up',
   onPrimaryPress,
   showLoginLink = true,

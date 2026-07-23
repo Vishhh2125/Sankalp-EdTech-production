@@ -38,14 +38,15 @@ import {
 } from '../components/payment/paystackCheckout';
 import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
+import { showAlert } from '../services/alertService';
 import { patchUserProfile } from '../redux/slices/authSlice';
 import * as authService from '../services/authService';
 
 const BENEFITS = [
 
-  { icon: 'star-outline', title: 'Members-only dramas', sub: null },
+  { icon: 'star-outline', title: 'Members-only courses', sub: null },
   { icon: 'infinite-outline', title: 'Unlimited Access' },
-  { icon: 'lock-open-outline', title: 'Unlock Episodes' },
+  { icon: 'lock-open-outline', title: 'Unlock Lectures' },
 
 ];
 
@@ -239,10 +240,10 @@ export default function MembershipScreen({ navigation }) {
       ? purchased.category_name
       : getPlanUnlockScopeLabel(selectedPlanData);
     setTimeout(() => {
-      Alert.alert(
+      showAlert(
         'Membership active',
         purchased?.end_date
-          ? `${scope} dramas are unlocked until ${formatMembershipEnd(purchased.end_date)}.`
+          ? `${scope} courses are unlocked until ${formatMembershipEnd(purchased.end_date)}.`
           : `You now have lifetime access to ${scope}.`
       );
     }, 100);
@@ -385,7 +386,7 @@ export default function MembershipScreen({ navigation }) {
       <View style={[styles.screen, styles.centered]}>
         <GuestAccessPrompt
           title="Sign in to join membership"
-          subtitle="Create an account to unlock all episodes and enjoy member benefits for the plan you choose."
+          subtitle="Create an account to unlock all lectures and enjoy member benefits for the plan you choose."
         />
       </View>
     );

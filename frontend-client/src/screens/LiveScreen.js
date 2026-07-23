@@ -18,6 +18,7 @@ import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 import { fetchActiveLiveStreams } from '../components/live/liveApi';
 import { useNetwork } from '../context/NetworkContext';
+import { showAlert } from '../services/alertService';
 import { useGuestAuth } from '../context/GuestAuthContext';
 import { API_BASE_URL } from '../constants/config';
 
@@ -59,7 +60,7 @@ export default function LiveScreen() {
 
   const openViewer = (stream) => {
     if (isGuest) {
-      Alert.alert(
+      showAlert(
         'Login Required',
         'Please log in to join live streams.',
         [
@@ -72,7 +73,7 @@ export default function LiveScreen() {
     }
     const isLive = stream.is_live || stream.status === 'LIVE';
     if (!isLive && stream.status === 'SCHEDULED') {
-      Alert.alert(
+      showAlert(
         'Stream Scheduled',
         `This stream is scheduled for ${new Date(stream.scheduled_at).toLocaleString()}. Please check back then!`,
         [{ text: 'OK' }]
@@ -127,7 +128,7 @@ export default function LiveScreen() {
             <View style={styles.empty}>
               <Ionicons name={isOffline ? "cloud-offline-outline" : "radio-outline"} size={48} color={theme.gray} />
               <Text style={styles.emptyTitle}>{isOffline ? 'You are offline' : 'No live streams right now'}</Text>
-              <Text style={styles.emptySub}>{isOffline ? 'Check your internet connection and try again.' : 'Check back soon — new shows go live from the admin panel.'}</Text>
+              <Text style={styles.emptySub}>{isOffline ? 'Check your internet connection and try again.' : 'Check back soon — new sessions go live from the admin panel.'}</Text>
             </View>
           ) : null
         }
@@ -136,7 +137,7 @@ export default function LiveScreen() {
           const badgeBg = isLive ? 'rgba(255,76,0,0.15)' : 'rgba(255,214,10,0.15)';
           const badgeDot = isLive ? theme.primary : theme.gold;
           const badgeText = isLive ? 'LIVE' : 'SCHEDULED';
-          const linkText = isLive ? 'Watch now' : '';
+          const linkText = isLive ? 'Join now' : '';
           const linkColor = isLive ? theme.primary : theme.gold;
 
           const resolvedUrl = resolveThumbnailUrl(item.show?.thumbnail_url || item.thumbnail_url);

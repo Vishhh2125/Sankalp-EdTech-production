@@ -155,7 +155,7 @@ function ShowCard({ item, onPress, onLongPress, selectionMode, selected, onDelet
       <View style={cardStyles.info}>
         {/* Category / tags */}
         <Text style={cardStyles.category} numberOfLines={1}>
-          {item.tags?.length > 0 ? item.tags[0] : (item.category || 'Drama')}
+          {item.tags?.length > 0 ? item.tags[0] : (item.category || 'Course')}
         </Text>
 
         {/* Title */}
@@ -165,7 +165,7 @@ function ShowCard({ item, onPress, onLongPress, selectionMode, selected, onDelet
 
         {/* EP.X / EP.TOTAL */}
         <Text style={cardStyles.epLine}>
-          EP.{item.episode_num} {'/'} EP.{item.total_episodes || '?'}
+          LEC.{item.episode_num} {'/'} LEC.{item.total_episodes || '?'}
         </Text>
       </View>
 
@@ -296,7 +296,7 @@ function GuestScreen() {
   return (
     <GuestAccessPrompt
       title="Sign in to use My Learning"
-      subtitle="Bookmark shows and track your watch progress across devices."
+      subtitle="Bookmark courses and track your study progress across devices."
     />
   );
 }
@@ -605,8 +605,8 @@ export default function MyListScreen() {
         bookmarks.length === 0 ? (
           <EmptyState
             icon="bookmark-outline"
-            title="No saved shows yet"
-            subtitle="Tap the bookmark icon while watching to save a show"
+            title="No saved courses yet"
+            subtitle="Tap the bookmark icon while learning to save a course"
           />
         ) : (
           <FlatList
@@ -656,7 +656,7 @@ export default function MyListScreen() {
           <EmptyState
             icon="play-circle-outline"
             title="Nothing in progress yet"
-            subtitle="Start watching an episode and it will appear here"
+            subtitle="Start learning a lecture and it will appear here"
           />
         ) : (
           <FlatList
@@ -693,7 +693,7 @@ export default function MyListScreen() {
           <EmptyState
             icon="download-outline"
             title="No downloads yet"
-            subtitle="Download episodes to watch them offline"
+            subtitle="Download lectures to learn offline"
           />
         ) : (
           <FlatList

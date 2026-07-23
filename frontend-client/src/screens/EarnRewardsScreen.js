@@ -23,6 +23,7 @@ import {
 } from '../components/rewards/dailyCheckinApi';
 import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
+import { showAlert } from '../services/alertService';
 import { setCoins } from '../redux/slices/authSlice';
 import * as authService from '../services/authService';
 
@@ -163,13 +164,13 @@ export default function EarnRewardsScreen({ navigation }) {
       const data = await claimDailyCheckin(accessToken);
       dispatch(setCoins(data.coins));
       await authService.patchUserDataInStore({ coins: data.coins });
-      Alert.alert(
+      showAlert(
         'Reward claimed',
         `You received ${data.coins_awarded} coins for Day ${data.streak_day}!`
       );
       await loadStatus(true);
     } catch (err) {
-      Alert.alert('Check-in failed', walletApiErrorMessage(err, 'Could not claim reward'));
+      showAlert('Check-in failed', walletApiErrorMessage(err, 'Could not claim reward'));
     } finally {
       setClaiming(false);
     }

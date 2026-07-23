@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, AppState } from 'react-native';
+import { AppState } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
+import { showAlert } from '../../services/alertService';
 
 import DailyCheckinPopup from '../rewards/DailyCheckinPopup';
 import DramaBannerPopup from '../home/DramaBannerPopup';
@@ -272,13 +273,13 @@ export default function PromoFlowGate({ children }) {
       setCheckinStatus((s) =>
         s ? { ...s, claimed_today: true, coins: data.coins } : s
       );
-      Alert.alert(
+      showAlert(
         'Reward claimed',
         `You received ${data.coins_awarded} coins for Day ${data.streak_day}!`
       );
       advance();
     } catch (err) {
-      Alert.alert(
+      showAlert(
         'Check-in failed',
         walletApiErrorMessage(err, 'Could not claim reward')
       );

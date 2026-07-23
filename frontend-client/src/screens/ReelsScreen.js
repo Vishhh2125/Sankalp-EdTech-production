@@ -153,7 +153,7 @@ const PackageCard = ({ item, onPress }) => {
       </View>
       <Text style={styles.dramaTitle} numberOfLines={2}>{item.title}</Text>
       <Text style={styles.dramaTagsText} numberOfLines={1}>
-        {item.shows_count} {item.shows_count === 1 ? 'Show' : 'Shows'}
+        {item.shows_count} {item.shows_count === 1 ? 'Course' : 'Courses'}
       </Text>
     </TouchableOpacity>
   );
@@ -707,7 +707,7 @@ export default function PopularScreen() {
                 <TextInput
                   ref={searchInputRef}
                   style={styles.searchInput}
-                  placeholder="Search dramas or tags..."
+                  placeholder="Search courses or tags..."
                   placeholderTextColor="#666"
                   value={searchQuery}
                   onChangeText={handleSearchTextChange}
@@ -844,7 +844,7 @@ export default function PopularScreen() {
           ListEmptyComponent={
             <View style={{ alignItems: 'center', marginTop: 40 }}>
               <Ionicons name={isOffline ? "cloud-offline-outline" : "search-outline"} size={48} color="#555" />
-              <Text style={styles.emptyText}>{isOffline ? 'You are offline' : 'No dramas found.'}</Text>
+              <Text style={styles.emptyText}>{isOffline ? 'You are offline' : 'No courses found.'}</Text>
             </View>
           }
         />
@@ -863,7 +863,7 @@ export default function PopularScreen() {
             categoryTabs={tabs}
             activeCategoryId={activeTab}
             onCategoryPress={(tab) => setActiveTab(tab.id)}
-            emptyText="No dramas found."
+            emptyText="No courses found."
           />
 
           {packages.length > 0 && (
@@ -889,7 +889,7 @@ export default function PopularScreen() {
 
           {accessToken && watchHistory.length > 0 ? (
             <HomeShowSection
-              title="Continue Watching"
+              title="Continue Learning"
               items={buildMyListPreviewItems(watchHistory)}
               onItemPress={(item) => openMyListEntry(item._entry)}
               onExpand={() => setExpandedSection('continue')}
@@ -918,9 +918,9 @@ export default function PopularScreen() {
         <View style={[styles.expandModal, { paddingTop: insets.top }]}>
           <View style={styles.expandHeader}>
             <Text style={styles.expandTitle}>
-              {expandedSection === 'all' && 'All Dramas'}
+              {expandedSection === 'all' && 'All Courses'}
               {expandedSection === 'trending' && 'Trending'}
-              {expandedSection === 'continue' && 'Continue Watching'}
+              {expandedSection === 'continue' && 'Continue Learning'}
               {expandedSection === 'saved' && 'Saved'}
             </Text>
             <TouchableOpacity

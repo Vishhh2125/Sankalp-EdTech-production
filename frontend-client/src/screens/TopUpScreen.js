@@ -33,6 +33,7 @@ import {
 } from '../components/payment/paystackCheckout';
 import { ROUTES } from '../constants/routes';
 import { useTheme } from '../context/ThemeContext';
+import { showAlert } from '../services/alertService';
 import { setCoins } from '../redux/slices/authSlice';
 import * as authService from '../services/authService';
 
@@ -130,7 +131,7 @@ export default function TopUpScreen() {
       handleReturnBack();
     } else {
       setTimeout(() => {
-        Alert.alert('Success', 'Coins have been added to your wallet.');
+        showAlert('Success', 'Coins have been added to your wallet.');
       }, 100);
     }
   };

@@ -22,6 +22,7 @@ import { useNavigation } from '@react-navigation/native';
 import Video from 'react-native-video';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { CaptureProtection, useCaptureProtection } from 'react-native-capture-protection';
+import { showAlert } from '../../services/alertService';
 
 import ProgressBar from './ProgressBar';
 import SideAction from './SideAction';
@@ -170,9 +171,9 @@ export default function ShortVideoReelItem({
     }
 
     if (downloadState === 'downloaded') {
-      Alert.alert(
+      showAlert(
         'Remove Download',
-        'Do you want to remove this episode from your device?',
+        'Do you want to remove this lecture from your device?',
         [
           { text: 'Cancel', style: 'cancel' },
           {
@@ -200,7 +201,7 @@ export default function ShortVideoReelItem({
         console.error('[Download] Error during download process:', e);
         setDownloadState('none');
         if (!e.isOfflineError) {
-          Alert.alert('Download Failed', e?.response?.data?.message || e.message || 'Something went wrong');
+          showAlert('Download Failed', e?.response?.data?.message || e.message || 'Something went wrong');
         }
       }
     }
@@ -965,7 +966,7 @@ export default function ShortVideoReelItem({
             />
             <SideAction
               icon="list"
-              label="Episodes"
+              label="Lectures"
               onPress={handleOpenEpisodesOrReturn}
             />
             {!isYouTube && (
@@ -1002,7 +1003,7 @@ export default function ShortVideoReelItem({
 
                 <View style={styles.epBadge}>
                   <Ionicons name="videocam" size={12} color={shortVideoTheme.crimson} />
-                  <Text style={styles.epBadgeText}>EP.{item.episode_num}</Text>
+                  <Text style={styles.epBadgeText}>LEC.{item.episode_num}</Text>
                 </View>
 
                 <View style={styles.tagsRow}>
@@ -1082,10 +1083,10 @@ export default function ShortVideoReelItem({
                   color={shortVideoTheme.crimson}
                 />
                 <Text style={styles.episodeText}>
-                  EP.{item.episode_num} / EP.{item.total_episodes}
+                  LEC.{item.episode_num} / LEC.{item.total_episodes}
                 </Text>
                 <View style={{ flex: 1 }} />
-                <Text style={styles.watchAllText}>Watch All</Text>
+                <Text style={styles.watchAllText}>Learn All</Text>
                 <Ionicons
                   name="chevron-forward"
                   size={16}

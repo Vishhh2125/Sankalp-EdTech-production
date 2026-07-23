@@ -23,10 +23,11 @@ import { useTheme } from '../context/ThemeContext';
 import { fetchCheckinStatus } from '../components/rewards/dailyCheckinApi';
 import { formatMembershipEnd } from '../components/membership/membershipApi';
 import { logoutUser, clearLogoutError } from '../redux/slices/authSlice';
+import { showAlert } from '../services/alertService';
 
 const FEATURE_ICONS = [
   { icon: 'infinite-outline', label: 'Unlimited Access' },
-  { icon: 'lock-open-outline', label: 'Unlock Episodes' },
+  { icon: 'lock-open-outline', label: 'Unlock Lectures' },
 ];
 
 const MENU_ITEMS = [
@@ -97,7 +98,7 @@ function GuestProfileScreen({ insets }) {
         <GuestAccessPrompt
           compact
           title="Sign in to access your profile"
-          subtitle="Create a free account to use My Wallet, save your list, earn rewards, and unlock episodes with coins."
+          subtitle="Create a free account to use My Wallet, save your list, earn rewards, and unlock lectures with coins."
           showLoginLink
         />
       </View>
@@ -178,7 +179,7 @@ export default function ProfileScreen({ navigation }) {
 
   useEffect(() => {
     if (logoutState.error && !logoutState.isLoading) {
-      Alert.alert('Logout Failed', logoutState.error, [
+      showAlert('Logout Failed', logoutState.error, [
         { text: 'Retry', onPress: () => dispatch(logoutUser()) },
         { text: 'Dismiss', onPress: () => dispatch(clearLogoutError()) },
       ]);
@@ -212,7 +213,7 @@ export default function ProfileScreen({ navigation }) {
   }
 
   function handleLogout() {
-    Alert.alert(
+    showAlert(
       'Log out',
       'Are you sure you want to log out?',
       [

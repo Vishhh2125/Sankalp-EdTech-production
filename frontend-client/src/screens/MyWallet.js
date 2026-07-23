@@ -27,6 +27,7 @@ import { ROUTES } from '../constants/routes';
 import { setCoins } from '../redux/slices/authSlice';
 import * as authService from '../services/authService';
 import { useTheme } from '../context/ThemeContext';
+import { showAlert } from '../services/alertService';
 
 const WalletScreen = () => {
   const { theme, isDarkMode } = useTheme();
@@ -132,7 +133,7 @@ const WalletScreen = () => {
       setListOpen(false);
       setSelectedPack(null);
 
-      Alert.alert('Success', 'Coins have been added to your wallet.');
+      showAlert('Success', 'Coins have been added to your wallet.');
       loadRecentTransactions();
     } catch (err) {
       const msg =

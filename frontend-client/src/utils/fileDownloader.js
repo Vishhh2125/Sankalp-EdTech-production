@@ -1,6 +1,7 @@
-import { Platform, Alert } from 'react-native';
+import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import { showAlert } from '../services/alertService';
 
 // Conditional dynamic import for react-native-blob-util to avoid loading errors on iOS/Web
 let ReactNativeBlobUtil = null;
@@ -23,7 +24,7 @@ if (Platform.OS === 'android') {
  */
 export const downloadFile = async (url, title, fileType) => {
   if (!url) {
-    Alert.alert('Error', 'Invalid download URL');
+    showAlert('Error', 'Invalid download URL');
     return;
   }
 
@@ -46,7 +47,7 @@ export const downloadFile = async (url, title, fileType) => {
   // 2. Platform specific download
   if (Platform.OS === 'android') {
     // Alert the user that the download is starting
-    Alert.alert(
+    showAlert(
       'Downloading',
       `Starting download for "${title || 'file'}". You can check the notification bar for progress.`
     );
@@ -71,7 +72,7 @@ export const downloadFile = async (url, title, fileType) => {
         console.log(`[fileDownloader] Android download completed successfully to ${destPath}`);
       } catch (error) {
         console.error('[fileDownloader] Android native download failed:', error);
-        Alert.alert('Download Failed', 'Could not complete the download via Download Manager.');
+        showAlert('Download Failed', 'Could not complete the download via Download Manager.');
       }
     } else {
       // Fallback to expo-file-system and sharing if react-native-blob-util is not built/linked yet
@@ -84,12 +85,12 @@ export const downloadFile = async (url, title, fileType) => {
         await Sharing.shareAsync(uri);
       } catch (error) {
         console.error('[fileDownloader] Fallback download failed:', error);
-        Alert.alert('Download Failed', 'Could not download the file.');
+        showAlert('Download Failed', 'Could not download the file.');
       }
     }
   } else {
     // iOS and other platforms
-    Alert.alert('Downloading', `Preparing "${title || 'file'}"...`);
+    showAlert('Downloading', `Preparing "${title || 'file'}"...`);
 
     try {
       const localUri = `${FileSystem.documentDirectory}${filename}`;
@@ -104,7 +105,7 @@ export const downloadFile = async (url, title, fileType) => {
       }
     } catch (error) {
       console.error('[fileDownloader] iOS download failed:', error);
-      Alert.alert('Download Failed', 'Could not open the save dialog.');
+      showAlert('Download Failed', 'Could not open the save dialog.');
     }
   }
 };

@@ -10,6 +10,7 @@ import { API_BASE_URL } from '../constants/config';
 import { useUserDataSync } from '../hooks/useUserDataSync';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import NetworkManager from '../components/NetworkManager';
+import AppAlertModal from '../components/AppAlertModal';
 import {
   clearShowPlayer,
   fetchShowPlayerPage,
@@ -181,6 +182,7 @@ export default function RootStackNavigator() {
   return (
     <ThemeProvider>
       <AppNavigator />
+      <AppAlertModal />
     </ThemeProvider>
   );
 }

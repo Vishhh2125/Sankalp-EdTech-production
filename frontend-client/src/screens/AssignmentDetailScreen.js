@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { courseworkApi, formatFileSize } from '../services/courseworkApi';
 import { downloadFile } from '../utils/fileDownloader';
+import { showAlert } from '../services/alertService';
 
 const ANSWER_LIMIT = 1000;
 
@@ -80,7 +81,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
         const file = result.assets[0];
         // Enforce 5MB limit
         if (file.size > 5 * 1024 * 1024) {
-          Alert.alert('File Too Large', 'Maximum file size is 5MB.');
+          showAlert('File Too Large', 'Maximum file size is 5MB.');
           return;
         }
         setPickedFile(file);
@@ -92,7 +93,7 @@ export default function AssignmentDetailScreen({ route, navigation }) {
 
   const handleSubmit = async () => {
     if (!answerText.trim() && !pickedFile && !submission?.attachment_url) {
-      Alert.alert('Missing Content', 'Please write an answer or attach a file.');
+      showAlert('Missing Content', 'Please write an answer or attach a file.');
       return;
     }
 
@@ -119,12 +120,12 @@ export default function AssignmentDetailScreen({ route, navigation }) {
         route.params.onSubmitted(assignment.id, updatedSubmission);
       }
 
-      Alert.alert('Success', 'Your assignment has been submitted!', [
+      showAlert('Success', 'Your assignment has been submitted!', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (err) {
       const msg = err.response?.data?.message || err.message;
-      Alert.alert('Submission Failed', msg);
+      showAlert('Submission Failed', msg);
     } finally {
       setSubmitting(false);
     }
