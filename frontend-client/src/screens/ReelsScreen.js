@@ -1186,62 +1186,89 @@ const useStyles = (appTheme) => StyleSheet.create({
     fontWeight: '800',
   },
   tagFilterPanel: {
-    paddingTop: 8,
-    paddingBottom: 2,
-    backgroundColor: 'transparent',
+    marginTop: 8,
+    padding: 10,
+
     width: TAG_GRID_WIDTH,
+
+    backgroundColor: appTheme.surface,
+
+    borderRadius: 14,
+
+    borderWidth: 1,
+    borderColor: appTheme.border,
+
+    // Gives the panel separation from the page
+    elevation: 8,
+
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: appTheme.isDark ? 0.35 : 0.12,
+    shadowRadius: 10,
   },
+
   tagFilterScroll: {
     maxHeight: TAG_FILTER_MAX_HEIGHT,
   },
-  tagSearchBackdrop: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    zIndex: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+
   tagSearchWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    width: TAG_GRID_WIDTH,
+    width: '100%',
   },
+
   tagSearchItem: {
-    width: TAG_GRID_ITEM_WIDTH,
+    width: `31.8%`,
     height: TAG_FILTER_ITEM_HEIGHT,
-    paddingHorizontal: 10,
+
+    paddingHorizontal: 8,
+
     marginRight: TAG_GRID_GAP,
     marginBottom: TAG_FILTER_ROW_GAP,
+
     borderRadius: 8,
-    backgroundColor: appTheme.surface,
+
+    backgroundColor: appTheme.isDark
+      ? appTheme.surfaceLight
+      : appTheme.background,
+
     borderWidth: 1,
     borderColor: appTheme.border,
+
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   tagSearchItemLastInRow: {
     marginRight: 0,
   },
+
   tagSearchItemActive: {
-    backgroundColor: appTheme.surfaceLight,
-    borderColor: '#5A0068',
+    backgroundColor: appTheme.primary,
+    borderColor: appTheme.primary,
   },
+
   tagSearchItemText: {
-    color: appTheme.gray,
+    color: appTheme.text,
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
   },
+
   tagSearchItemTextActive: {
     color: appTheme.white,
+    fontWeight: '700',
   },
+
   tagSearchEmpty: {
     color: appTheme.gray,
     fontSize: 13,
-    paddingVertical: 8,
+    paddingVertical: 12,
+    textAlign: 'center',
+    width: '100%',
   },
   headerIcons: {
     flexDirection: 'row',
