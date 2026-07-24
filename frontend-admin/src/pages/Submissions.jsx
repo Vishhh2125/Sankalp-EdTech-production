@@ -187,7 +187,7 @@ export default function Submissions() {
                           {sub.assignment?.title || 'Unknown Assignment'}
                         </div>
                         <div style={{ fontSize: 11, color: 'var(--text3)' }}>
-                          Drama ID: {sub.assignment?.show_id?.slice(0, 8)}...
+                          Course ID: {sub.assignment?.show_id?.slice(0, 8)}...
                         </div>
                       </td>
 

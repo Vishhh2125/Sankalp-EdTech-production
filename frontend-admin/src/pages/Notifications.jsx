@@ -13,7 +13,7 @@ const AUDIENCE_MAP = {
 }
 
 const NOTIF_TYPES = [
-  { label: 'New drama release', value: 'drama' },
+  { label: 'New course release', value: 'drama' },
   { label: 'Membership offer', value: 'membership' },
   { label: 'Reward coins', value: 'reward' },
   { label: 'Reminder', value: 'reminder' },

@@ -97,7 +97,7 @@ function BannerModal({ open, onClose, onSave, initial, shows, showsLoading }) {
           <input
             className="input"
             style={{ width: '100%' }}
-            placeholder="e.g. New Drama Launch"
+            placeholder="e.g. New Course Launch"
             value={form.title}
             onChange={e => upd('title', e.target.value)}
           />
@@ -127,7 +127,7 @@ function BannerModal({ open, onClose, onSave, initial, shows, showsLoading }) {
             background: 'rgba(245,158,11,0.1)', borderRadius: 6,
             padding: '8px 10px', marginTop: 4,
           }}>
-            ⚠️ This show has no banner image yet. Upload one in the Dramas section first.
+            ⚠️ This show has no banner image yet. Upload one in the Courses section first.
           </div>
         )}
 

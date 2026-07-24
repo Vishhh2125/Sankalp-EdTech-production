@@ -7,7 +7,7 @@ import api from '../services/api'
 
 const PERIODS = ['Today', 'Weekly', 'Monthly', 'Annual', 'All']
 
-// 9 cards: Total Revenue, Membership Revenue, Top-Up Revenue, Total Users, Active Subscriptions, Dramas Uploaded, Coins Earned, Coins Spent, Check-ins
+// 9 cards: Total Revenue, Membership Revenue, Top-Up Revenue, Total Users, Active Subscriptions, Courses Uploaded, Coins Earned, Coins Spent, Check-ins
 const metricIcons = [DollarSign, CreditCard, Wallet, Users, CreditCard, Film, Coins, Coins, AlertTriangle]
 
 const alerts = []

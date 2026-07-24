@@ -25,7 +25,7 @@ async function getPresignedGetUrl(objectName, expirySeconds = 7200) {
 function getPublicUrl(objectName) {
 
   return `${PUBLIC}/${config.minio.bucket}/${objectName}`;
-  
+
   // Return relative path so Nginx can proxy to MinIO seamlessly
 
 }

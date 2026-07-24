@@ -7,7 +7,7 @@ const initPages = [
   { id:1, name:'Privacy Policy',     slug:'privacy-policy',     updated:'Mar 15, 2025', status:'Published', content:'Your privacy is important to us. This policy explains how we collect, use, and protect your personal information…', versioned:true, version:3 },
   { id:2, name:'Terms & Conditions', slug:'terms-conditions',   updated:'Mar 15, 2025', status:'Published', content:'By using our platform you agree to the following terms and conditions…', versioned:true, version:2 },
   { id:3, name:'Help / FAQ',         slug:'help-faq',           updated:'Feb 28, 2025', status:'Published', content:'Q: How do I subscribe?\nA: Go to Plans and choose a plan…', versioned:true, version:5 },
-  { id:4, name:'About Us',           slug:'about-us',           updated:'Jan 10, 2025', status:'Published', content:'We are a premier drama streaming platform…', versioned:true, version:1 },
+  { id:4, name:'About Us',           slug:'about-us',           updated:'Jan 10, 2025', status:'Published', content:'We are a premier course streaming platform…', versioned:true, version:1 },
   { id:5, name:'Coin Policy',        slug:'coin-policy',        updated:'Apr 1, 2025',  status:'Draft',     content:'Coins are a virtual currency used on our platform…', versioned:false, version:1 },
   { id:6, name:'Referral Terms',     slug:'referral-terms',     updated:'Not set',      status:'Draft',     content:'', versioned:false, version:1 },
 ]

@@ -140,7 +140,7 @@ export default function Coins() {
             { label:'Day 5 check-in', key:'day5', hint:'Coins on day 5' },
             { label:'Day 6 check-in', key:'day6', hint:'Coins on day 6' },
             { label:'Day 7 check-in (bonus)', key:'day7', hint:'Coins on day 7 (streak reset after)' },
-            { label:'Default episode coin cost', key:'defaultCoinCost', hint:'Default cost to unlock a paid episode' },
+            { label:'Default lecture coin cost', key:'defaultCoinCost', hint:'Default cost to unlock a paid episode' },
           ].map(r => (
             <div key={r.key} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 0', borderBottom:'1px solid var(--border)' }}>
               <div>

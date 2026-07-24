@@ -10,7 +10,7 @@ const feedApi = createAuthenticatedApi({
   timeout: 15000,
 });
 
-export const setShowPlayerStore = () => {};
+export const setShowPlayerStore = () => { };
 
 const PLAYER_PAGE_SIZE = 30;
 

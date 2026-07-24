@@ -270,7 +270,7 @@ export const updateDrama = createAsyncThunk(
       // Create new episodes
       const newEpisodes = (formData.episodes || []).filter(ep => !existingEpIds.includes(ep.id))
       if (newEpisodes.length > 0) {
-        console.log(`Creating ${newEpisodes.length} new episodes for show ${id}`)
+        console.log(`Creating ${newEpisodes.length} new lectures for show ${id}`)
         await createNewEpisodes(id, newEpisodes, existingEpIds)
       }
 

@@ -10,7 +10,7 @@ export const NAV_CONFIG = [
   {
     section: 'Content',
     items: [
-      { id: 'dramas',     label: 'Drama / Content',   badge: null },
+      { id: 'dramas',     label: 'Course / Content',   badge: null },
       { id: 'categories', label: 'Categories & Tags',  badge: null },
       { id: 'banners',       label: 'Banners & Popups',   badge: null },
       { id: 'hero_banners',  label: 'Hero Section',       badge: null },
@@ -45,7 +45,7 @@ export const NAV_CONFIG = [
 export const PAGE_META = {
   dashboard:     { title: 'Dashboard',            subtitle: 'Platform overview' },
   users:         { title: 'User Management',      subtitle: 'Manage all registered users' },
-  dramas:        { title: 'Drama / Content',      subtitle: 'Manage content library' },
+  dramas:        { title: 'Course / Content',      subtitle: 'Manage content library' },
   categories:    { title: 'Categories & Tags',    subtitle: 'Organise and tag content' },
   banners:       { title: 'Banners & Popups',     subtitle: 'Homepage promotions' },
   hero_banners:  { title: 'Hero Section',         subtitle: 'Home page hero slider banners' },

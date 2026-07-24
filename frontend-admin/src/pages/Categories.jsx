@@ -73,7 +73,7 @@ function TagModal({ open, onClose, onSave, initial }) {
       footer={<><button className="btn btn-ghost" onClick={onClose}>Cancel</button><button className="btn btn-primary" onClick={handle} disabled={saving}>{saving?'Saving...':isEdit?'Save':'Create Tag'}</button></>}
     >
       <FormGroup label="Tag name *"><input className="input" style={{ width:'100%' }} placeholder="e.g. Strong Heroine, Billionaire" value={name} onChange={e=>setName(e.target.value)}/></FormGroup>
-      <div style={{ fontSize:12, color:'var(--text3)' }}>Tags are drama genre/type labels used for filtering and discovery. One drama can have multiple tags.</div>
+      <div style={{ fontSize:12, color:'var(--text3)' }}>Tags are course genre/type labels used for filtering and discovery. One course can have multiple tags.</div>
     </Modal>
   )
 }
@@ -235,7 +235,7 @@ export default function Categories() {
       <TagModal open={modal==='tag-add'} onClose={() => setModal(null)} onSave={saveTag} initial={null}/>
       <TagModal open={modal==='tag-edit'} onClose={() => setModal(null)} onSave={saveTag} initial={selected}/>
       <ConfirmDialog open={!!confirm} danger title={`Delete ${confirm?.type==='cat'?'Category':'Tag'}`}
-        message={`Remove "${confirm?.name}"? ${confirm?.type==='cat'?'All dramas will be unmapped.':'Tag will be removed from all dramas.'}`}
+        message={`Remove "${confirm?.name}"? ${confirm?.type==='cat'?'All courses will be unmapped.':'Tag will be removed from all dramas.'}`}
         onConfirm={() => confirm?.type==='cat'?deleteCat(confirm.id):deleteTag(confirm.id)}
         onCancel={() => setConfirm(null)}
       />

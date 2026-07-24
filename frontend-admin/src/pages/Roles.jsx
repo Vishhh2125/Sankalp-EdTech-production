@@ -554,74 +554,75 @@ export default function Roles() {
                       {safeAdmins.map((a) => {
                         const sections = Array.isArray(a.sections) ? a.sections : []
                         return (
-                        <tr key={a.id}>
-                          <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <div
-                                className="avatar"
-                                style={{ background: a.role === 'admin' ? 'var(--accent-bg)' : 'var(--blue-bg)' }}
-                              >
-                                {a.initials}
+                          <tr key={a.id}>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div
+                                  className="avatar"
+                                  style={{ background: a.role === 'admin' ? 'var(--accent-bg)' : 'var(--blue-bg)' }}
+                                >
+                                  {a.initials}
+                                </div>
+                                <span style={{ fontWeight: 500 }}>{a.name}</span>
                               </div>
-                              <span style={{ fontWeight: 500 }}>{a.name}</span>
-                            </div>
-                          </td>
-                          <td style={{ color: 'var(--text3)', fontSize: 12 }}>{a.email}</td>
-                          <td>
-                            <span className={`badge ${roleBadge[a.role]}`}>
-                              {a.role === 'admin' && <ShieldCheck size={10} style={{ marginRight: 3 }} />}
-                              {roleLabel[a.role]}
-                            </span>
-                          </td>
-                          <td>
-                            {a.role === 'admin' ? (
-                              <span style={{ fontSize: 11, color: 'var(--green)' }}>All sections</span>
-                            ) : (
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, maxWidth: 200 }}>
-                                {sections.slice(0, 3).map((s) => (
-                                  <span key={s} className="badge badge-blue" style={{ fontSize: 9 }}>
-                                    {s}
-                                  </span>
-                                ))}
-                                {sections.length > 3 && (
-                                  <span className="badge badge-blue" style={{ fontSize: 9 }}>
-                                    +{sections.length - 3}
-                                  </span>
+                            </td>
+                            <td style={{ color: 'var(--text3)', fontSize: 12 }}>{a.email}</td>
+                            <td>
+                              <span className={`badge ${roleBadge[a.role]}`}>
+                                {a.role === 'admin' && <ShieldCheck size={10} style={{ marginRight: 3 }} />}
+                                {roleLabel[a.role]}
+                              </span>
+                            </td>
+                            <td>
+                              {a.role === 'admin' ? (
+                                <span style={{ fontSize: 11, color: 'var(--green)' }}>All sections</span>
+                              ) : (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, maxWidth: 200 }}>
+                                  {sections.slice(0, 3).map((s) => (
+                                    <span key={s} className="badge badge-blue" style={{ fontSize: 9 }}>
+                                      {s}
+                                    </span>
+                                  ))}
+                                  {sections.length > 3 && (
+                                    <span className="badge badge-blue" style={{ fontSize: 9 }}>
+                                      +{sections.length - 3}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+                            <td>
+                              <span className={`badge ${a.status === 'Active' ? 'badge-green' : 'badge-amber'}`}>
+                                {a.status}
+                              </span>
+                            </td>
+                            <td style={{ color: 'var(--text3)', fontSize: 12 }}>{a.lastActive}</td>
+                            <td>
+                              <div style={{ display: 'flex', gap: 5 }}>
+                                {a.role !== 'admin' && (
+                                  <button
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={() => {
+                                      setSelected(a)
+                                      setModal('admin-edit')
+                                    }}
+                                  >
+                                    <Edit2 size={11} /> Edit
+                                  </button>
+                                )}
+                                {a.role !== 'admin' && (
+                                  <button
+                                    className="btn btn-danger btn-sm"
+                                    onClick={() => setConfirm({ id: a.id, name: a.name })}
+                                  >
+                                    <Trash2 size={11} />
+                                  </button>
                                 )}
                               </div>
-                            )}
-                          </td>
-                          <td>
-                            <span className={`badge ${a.status === 'Active' ? 'badge-green' : 'badge-amber'}`}>
-                              {a.status}
-                            </span>
-                          </td>
-                          <td style={{ color: 'var(--text3)', fontSize: 12 }}>{a.lastActive}</td>
-                          <td>
-                            <div style={{ display: 'flex', gap: 5 }}>
-                              {a.role !== 'admin' && (
-                                <button
-                                  className="btn btn-ghost btn-sm"
-                                  onClick={() => {
-                                    setSelected(a)
-                                    setModal('admin-edit')
-                                  }}
-                                >
-                                  <Edit2 size={11} /> Edit
-                                </button>
-                              )}
-                              {a.role !== 'admin' && (
-                                <button
-                                  className="btn btn-danger btn-sm"
-                                  onClick={() => setConfirm({ id: a.id, name: a.name })}
-                                >
-                                  <Trash2 size={11} />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )})}
+                            </td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -925,9 +926,9 @@ function TeacherProfileEditModal({ open, onClose, teacher, onSave, saving }) {
             )}
           </div>
           <div>
-            <FileDropzone 
-              label={uploadingPhoto ? 'Uploading...' : 'Upload Photo *'} 
-              accept="image/jpeg,image/png" 
+            <FileDropzone
+              label={uploadingPhoto ? 'Uploading...' : 'Upload Photo *'}
+              accept="image/jpeg,image/png"
               hint="Square aspect ratio recommended"
               onChange={handlePhotoChange}
               disabled={uploadingPhoto}
@@ -948,7 +949,7 @@ function TeacherProfileEditModal({ open, onClose, teacher, onSave, saving }) {
           </FormGroup>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <FormGroup label="Years of Experience *">
-              <input className="input" type="number" min={0} value={form.experience_years} onChange={e => upd('experience_years', parseInt(e.target.value)||0)} />
+              <input className="input" type="number" min={0} value={form.experience_years} onChange={e => upd('experience_years', parseInt(e.target.value) || 0)} />
             </FormGroup>
             <FormGroup label="Qualification *">
               <input className="input" placeholder="e.g. MFA" value={form.qualification} onChange={e => upd('qualification', e.target.value)} />
