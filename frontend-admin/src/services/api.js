@@ -197,6 +197,7 @@ export const tagsApi = {
 export const showsApi = {
   getStats: (showId) => api.get(`/v1/admin/shows/${showId}/stats`),
   getAll: (params) => api.get('/content/shows', { params }),
+  list: (params) => api.get('/content/shows', { params }),
   getById: (id) => api.get(`/content/shows/${id}`),
   create: (data) => api.post('/content/shows', data),
   update: (id, data) => api.put(`/content/shows/${id}`, data),
@@ -205,6 +206,7 @@ export const showsApi = {
   updateFeedPosition: (id, position) => api.patch(`/content/shows/${id}/feed-position`, { feed_position: position }),
   adjustViewCount: (id, data) => api.post(`/v1/admin/shows/${id}/view-count-adjust`, data),
 };
+export const dramasApi = showsApi;
 
 // ── Episodes ──
 export const episodesApi = {
@@ -412,4 +414,19 @@ export const approvalsApi = {
     const path = type === 'show' ? `/v1/admin/approvals/shows/${id}` : `/v1/admin/approvals/episodes/${id}`;
     return api.patch(path, { action });
   }
+};
+
+// ── Geo API ──
+export const geoApi = {
+  getCountries: () => api.get('/v1/geo/countries'),
+  getStates: (countryCode) => api.get('/v1/geo/states', { params: { country: countryCode } }),
+  getCities: (countryCode, stateCode) => api.get('/v1/geo/cities', { params: { country: countryCode, state: stateCode } }),
+};
+
+// ── Student Onboarding & Course Assignment API ──
+export const studentsApi = {
+  list: (params) => api.get('/v1/admin/students', { params }),
+  onboard: (data) => api.post('/v1/admin/students', data),
+  assignCourses: (userId, showIds) => api.post(`/v1/admin/students/${userId}/courses`, { show_ids: showIds }),
+  revokeCourse: (userId, showId) => api.delete(`/v1/admin/students/${userId}/courses/${showId}`),
 };

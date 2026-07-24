@@ -2,11 +2,11 @@ import { prisma } from '../../prisma/client.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 import { AppError } from '../../middleware/error.middleware.js';
 import { getRevenueByPlan } from '../membership/membership.service.js';
-import { activeMembershipWhere } from '../membership/membership.helpers.js';
+import { activeMembershipWhere, membershipPlanInclude } from '../membership/membership.helpers.js';
 import { logAdminActivity } from '../../utils/adminActivity.js';
 import { displayedViewCount } from '../user/view-count.service.js';
 import { hashPassword } from '../auth/auth.service.js';
-import { sendTeacherCredentialsEmail } from '../../config/email.js';
+import { sendTeacherCredentialsEmail, sendStudentCredentialsEmail } from '../../config/email.js';
 import crypto from 'crypto';
 
 // --- Teacher management & approvals ---
@@ -2081,5 +2081,345 @@ export async function getShowStats(req, res, next) {
     );
   } catch (error) {
     next(error);
+  }
+}
+
+// ──────────────────────────────────────
+// STUDENT ONBOARDING (ADMIN)
+// ──────────────────────────────────────
+
+export async function onboardStudent(req, res, next) {
+  try {
+    const { email, name, password, student_id, dob, gender, country, state, city, mobile_no } = req.body;
+
+    if (!email || !name || !password) {
+      throw new AppError('Email, name, and password are mandatory', 400);
+    }
+
+    const sanitizedEmail = String(email).toLowerCase().trim();
+    const sanitizedName = String(name).trim();
+    const sanitizedPassword = String(password).trim();
+
+    if (sanitizedPassword.length < 6) {
+      throw new AppError('Password must be at least 6 characters', 400);
+    }
+
+    // 1. Hard Reject on Duplicate Email (Rule 4.2 / 5.3)
+    const existing = await prisma.user.findUnique({ where: { email: sanitizedEmail } });
+    if (existing) {
+      throw new AppError('A user with this email address already exists', 409);
+    }
+
+    // Validate gender if provided
+    let validGender = null;
+    if (gender) {
+      const validGenders = ['MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY'];
+      const upperGender = String(gender).toUpperCase().trim();
+      if (!validGenders.includes(upperGender)) {
+        throw new AppError(`Invalid gender. Must be one of: ${validGenders.join(', ')}`, 400);
+      }
+      validGender = upperGender;
+    }
+
+    // Validate DOB if provided
+    let parsedDob = null;
+    if (dob) {
+      const d = new Date(dob);
+      if (isNaN(d.getTime())) {
+        throw new AppError('Invalid date of birth format', 400);
+      }
+      parsedDob = d;
+    }
+
+    const passwordHash = await hashPassword(sanitizedPassword);
+
+    // Create student user
+    const student = await prisma.user.create({
+      data: {
+        name: sanitizedName,
+        email: sanitizedEmail,
+        password: passwordHash,
+        role: 'USER',
+        coins: 0,
+        onboarded_by: req.user.id,
+        student_id: student_id ? String(student_id).trim() : null,
+        dob: parsedDob,
+        gender: validGender,
+        country: country ? String(country).trim() : null,
+        state: state ? String(state).trim() : null,
+        city: city ? String(city).trim() : null,
+        mobile_no: mobile_no ? String(mobile_no).trim() : null,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        student_id: true,
+        mobile_no: true,
+        dob: true,
+        gender: true,
+        country: true,
+        state: true,
+        city: true,
+        onboarded_by: true,
+        createdAt: true,
+      },
+    });
+
+    // Dispatch credentials email
+    try {
+      await sendStudentCredentialsEmail(student.email, student.name, sanitizedPassword);
+    } catch (emailError) {
+      console.error('Failed to send student credentials email', emailError);
+    }
+
+    // Log admin activity
+    await logAdminActivity({
+      userId: req.user.id,
+      action: `Onboarded student ${student.name} (${student.email})`,
+      entityType: 'User',
+      entityId: student.id,
+    });
+
+    return res.status(201).json(new ApiResponse(201, { student }, 'Student onboarded successfully'));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function listStudents(req, res, next) {
+  try {
+    const page = Math.max(1, parseInt(req.query.page || '1', 10));
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '20', 10)));
+    const skip = (page - 1) * limit;
+    const search = req.query.search ? String(req.query.search).trim() : '';
+
+    const where = {
+      role: 'USER',
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search, mode: 'insensitive' } },
+              { email: { contains: search, mode: 'insensitive' } },
+              { student_id: { contains: search, mode: 'insensitive' } },
+              { mobile_no: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const [total, students] = await Promise.all([
+      prisma.user.count({ where }),
+      prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          coins: true,
+          student_id: true,
+          mobile_no: true,
+          dob: true,
+          gender: true,
+          country: true,
+          state: true,
+          city: true,
+          onboarded_by: true,
+          isBlocked: true,
+          createdAt: true,
+          memberships: {
+            where: activeMembershipWhere(new Date()),
+            include: membershipPlanInclude,
+            orderBy: { end_date: 'desc' },
+          },
+          show_access: {
+            where: { revoked_at: null },
+            select: {
+              id: true,
+              show_id: true,
+              access_type: true,
+              purchased_at: true,
+              show: {
+                select: {
+                  id: true,
+                  title: true,
+                  thumbnail_url: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+    return res.json(
+      new ApiResponse(
+        200,
+        {
+          students,
+          pagination: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+          },
+        },
+        'Students fetched successfully'
+      )
+    );
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ──────────────────────────────────────
+// ASSIGN & REVOKE COURSES (ADMIN)
+// ──────────────────────────────────────
+
+export async function assignCoursesToStudent(req, res, next) {
+  try {
+    const { userId } = req.params;
+    const { show_ids } = req.body;
+
+    if (!Array.isArray(show_ids) || show_ids.length === 0) {
+      throw new AppError('show_ids must be a non-empty array of course IDs', 400);
+    }
+
+    // 1. Verify student user exists
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true, role: true },
+    });
+    if (!user) {
+      throw new AppError('Student user not found', 404);
+    }
+
+    // 2. Validate valid show IDs in database
+    const uniqueShowIds = [...new Set(show_ids.filter(Boolean))];
+    const existingShows = await prisma.show.findMany({
+      where: { id: { in: uniqueShowIds } },
+      select: { id: true, title: true },
+    });
+
+    if (existingShows.length === 0) {
+      throw new AppError('No valid courses found for provided IDs', 400);
+    }
+
+    const validShowIds = existingShows.map((s) => s.id);
+    const assignedShows = [];
+
+    // 3. Process show assignment for each valid show ID
+    await prisma.$transaction(async (tx) => {
+      for (const showId of validShowIds) {
+        // Check existing record
+        const existingRecord = await tx.showAccess.findFirst({
+          where: { user_id: userId, show_id: showId },
+        });
+
+        if (existingRecord) {
+          if (existingRecord.revoked_at !== null) {
+            // Un-revoke and update to ADMIN_GRANTED
+            await tx.showAccess.update({
+              where: { id: existingRecord.id },
+              data: {
+                revoked_at: null,
+                access_type: 'ADMIN_GRANTED',
+                coins_spent: 0,
+                purchased_at: new Date(),
+              },
+            });
+          }
+          // If already active, leave as-is (idempotent)
+        } else {
+          // Create new ADMIN_GRANTED record
+          await tx.showAccess.create({
+            data: {
+              user_id: userId,
+              show_id: showId,
+              coins_spent: 0,
+              access_type: 'ADMIN_GRANTED',
+              revoked_at: null,
+            },
+          });
+        }
+        assignedShows.push(showId);
+      }
+    });
+
+    await logAdminActivity({
+      userId: req.user.id,
+      action: `Assigned ${assignedShows.length} course(s) to user ${user.name} (${user.email})`,
+      entityType: 'User',
+      entityId: userId,
+      details: JSON.stringify({ show_ids: assignedShows }),
+    });
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        { userId, assigned_show_ids: assignedShows },
+        'Courses assigned successfully'
+      )
+    );
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function revokeCourseFromStudent(req, res, next) {
+  try {
+    const { userId, showId } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true },
+    });
+    if (!user) throw new AppError('Student user not found', 404);
+
+    const show = await prisma.show.findUnique({
+      where: { id: showId },
+      select: { id: true, title: true },
+    });
+
+    // Check ShowAccess record
+    const accessRecord = await prisma.showAccess.findFirst({
+      where: { user_id: userId, show_id: showId, revoked_at: null },
+    });
+
+    if (!accessRecord) {
+      throw new AppError('Active course access record not found', 404);
+    }
+
+    // Protection Check (Guardrail 4): Only ADMIN_GRANTED access can be revoked
+    if (accessRecord.access_type !== 'ADMIN_GRANTED') {
+      throw new AppError(
+        `Only admin-granted course access can be revoked. Current access type is ${accessRecord.access_type}.`,
+        403
+      );
+    }
+
+    // Soft delete via revoked_at timestamp
+    await prisma.showAccess.update({
+      where: { id: accessRecord.id },
+      data: { revoked_at: new Date() },
+    });
+
+    await logAdminActivity({
+      userId: req.user.id,
+      action: `Revoked admin course access for "${show?.title || showId}" from ${user.name}`,
+      entityType: 'User',
+      entityId: userId,
+    });
+
+    return res.status(200).json(
+      new ApiResponse(200, { userId, showId }, 'Course access revoked successfully')
+    );
+  } catch (err) {
+    next(err);
   }
 }

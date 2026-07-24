@@ -190,6 +190,61 @@ export const sendTeacherCredentialsEmail = async (email, name, temporaryPassword
 };
 
 /**
+ * Send student login credentials email (Student Onboarding)
+ * @param {string} email - Student email
+ * @param {string} name - Student name
+ * @param {string} temporaryPassword - Account password
+ * @returns {Promise<void>}
+ */
+export const sendStudentCredentialsEmail = async (email, name, temporaryPassword) => {
+  try {
+    const transporter = await getTransporter();
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || 'vishnu1234@gmail.com',
+      to: email,
+      subject: 'Welcome to Sankalp - Student Account Credentials',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px;">
+            <h2 style="color: #333; text-align: center;">Welcome to Sankalp</h2>
+
+            <p style="color: #666; font-size: 16px; line-height: 1.6;">
+              Hello ${name || 'Student'}, your student account has been created by your institute administrator.
+            </p>
+
+            <div style="background-color: #007bff; color: white; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+              <p style="margin: 0 0 8px; font-size: 14px;">Login Email</p>
+              <div style="font-size: 18px; font-weight: bold; margin-bottom: 16px;">${email}</div>
+              <p style="margin: 0 0 8px; font-size: 14px;">Password</p>
+              <div style="font-size: 28px; font-weight: bold; letter-spacing: 2px;">${temporaryPassword}</div>
+            </div>
+
+            <p style="color: #666; font-size: 14px; line-height: 1.6;">
+              Log into the app using these credentials to access your assigned courses immediately.
+            </p>
+
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+
+            <footer style="text-align: center; color: #999; font-size: 12px;">
+              <p>© 2026 Sankalp. All rights reserved.</p>
+            </footer>
+          </div>
+        </div>
+      `,
+      text: `Hello ${name || 'Student'},\n\nYour student account has been created.\n\nLogin email: ${email}\nPassword: ${temporaryPassword}\n\nPlease sign in to access your assigned courses.`
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    logger.info('✓ Student credentials email sent', { email, messageId: result.messageId });
+    return result;
+  } catch (error) {
+    logger.error('Failed to send student credentials email', { email, error: error.message });
+    throw error;
+  }
+};
+
+/**
  * Verify transporter connection (optional health check)
  */
 export const verifyTransporter = async () => {
@@ -207,6 +262,7 @@ export const verifyTransporter = async () => {
 export default {
   sendOtpEmail,
   sendTeacherCredentialsEmail,
+  sendStudentCredentialsEmail,
   getTransporter,
   verifyTransporter
 };

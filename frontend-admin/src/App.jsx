@@ -28,26 +28,30 @@ import LiveStreaming from './pages/LiveStreaming.jsx'
 import CMS           from './pages/CMS.jsx'
 import Submissions   from './pages/Submissions.jsx'
 import Packages      from './pages/Packages.jsx'
+import StudentOnboarding from './pages/StudentOnboarding.jsx'
+import AssignCourses     from './pages/AssignCourses.jsx'
 
 const ROUTES = {
-  dashboard:     Dashboard,
-  users:         Users,
-  dramas:        Dramas,
-  categories:    Categories,
-  banners:       Banners,
-  hero_banners:  HeroBanners,
-  membership:    Membership,
-  topup:         TopUp,
-  coins:         Coins,
-  notifications: Notifications,
-  analytics:     Analytics,
-  roles:         Roles,
-  cms:           CMS,
-  live:          LiveStreaming,
-  submissions:   Submissions,
-  packages:      Packages,
-  profile:       Profile,
-  approvals:     Approvals,
+  dashboard:          Dashboard,
+  users:              Users,
+  student_onboarding: StudentOnboarding,
+  assign_courses:     AssignCourses,
+  dramas:             Dramas,
+  categories:         Categories,
+  banners:            Banners,
+  hero_banners:       HeroBanners,
+  membership:         Membership,
+  topup:              TopUp,
+  coins:              Coins,
+  notifications:      Notifications,
+  analytics:          Analytics,
+  roles:              Roles,
+  cms:                CMS,
+  live:               LiveStreaming,
+  submissions:        Submissions,
+  packages:           Packages,
+  profile:            Profile,
+  approvals:          Approvals,
 }
 
 function AccessDenied() {

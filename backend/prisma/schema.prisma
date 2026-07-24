@@ -44,6 +44,19 @@ enum LiveStreamStatus {
   ENDED
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum ShowAccessType {
+  PURCHASED
+  PACKAGE_BUNDLE
+  ADMIN_GRANTED
+}
+
 // ──────────────────────────────────────
 // USERS
 // ──────────────────────────────────────
@@ -59,14 +72,24 @@ model User {
   refreshToken String?
   fcm_token    String?  @db.VarChar(500)
   google_id    String?  @unique @db.VarChar(255)
-  avatar_url   String?  @db.VarChar(500)
-  isBlocked    Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  avatar_url         String?   @db.VarChar(500)
+  isBlocked          Boolean   @default(false)
+  mobile_no          String?   @db.VarChar(20)
+  dob                DateTime? @db.Date
+  gender             Gender?
+  country            String?   @db.VarChar(100)
+  state              String?   @db.VarChar(100)
+  city               String?   @db.VarChar(100)
+  onboarded_by       String?   @db.Uuid
+  student_id         String?   @db.VarChar(50)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
+  onboarder              User?                  @relation("UserOnboarder", fields: [onboarded_by], references: [id], onDelete: SetNull)
+  onboarded_students     User[]                 @relation("UserOnboarder")
   sub_admin_access       SubAdminAccess[]
   teacherProfile         TeacherProfile?
-  teacherShows           Show[] @relation("TeacherShows")
+  teacherShows           Show[]                 @relation("TeacherShows")
   memberships            UserMembership[]
   coin_transactions      CoinTransaction[]
   watch_history          WatchHistory[]
@@ -833,11 +856,13 @@ model QuizAnswer {
 // ──────────────────────────────────────
 
 model ShowAccess {
-  id           String   @id @default(uuid()) @db.Uuid
-  user_id      String   @db.Uuid
-  show_id      String   @db.Uuid
+  id           String         @id @default(uuid()) @db.Uuid
+  user_id      String         @db.Uuid
+  show_id      String         @db.Uuid
   coins_spent  Int
-  purchased_at DateTime @default(now())
+  access_type  ShowAccessType @default(PURCHASED)
+  revoked_at   DateTime?
+  purchased_at DateTime       @default(now())
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
   show Show @relation(fields: [show_id], references: [id], onDelete: Cascade)

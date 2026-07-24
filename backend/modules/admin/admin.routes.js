@@ -35,6 +35,10 @@ import {
   listApprovals,
   approveShow,
   approveEpisode,
+  onboardStudent,
+  listStudents,
+  assignCoursesToStudent,
+  revokeCourseFromStudent,
 } from './admin.controller.js';
 import {
   getAdminMe,
@@ -107,5 +111,11 @@ router.put('/teachers/:id/profile', requireAuth, requireAdmin('roles'), putTeach
 router.get('/approvals', requireAuth, requireAdmin('dramas'), listApprovals);
 router.patch('/approvals/shows/:id', requireAuth, requireAdmin('dramas'), approveShow);
 router.patch('/approvals/episodes/:id', requireAuth, requireAdmin('dramas'), approveEpisode);
+
+// ── Student Onboarding & Course Assignment ──
+router.post('/students', requireAuth, requireAdmin('student_onboarding'), onboardStudent);
+router.get('/students', requireAuth, requireAnyAdmin(), listStudents);
+router.post('/students/:userId/courses', requireAuth, requireAdmin('assign_courses'), assignCoursesToStudent);
+router.delete('/students/:userId/courses/:showId', requireAuth, requireAdmin('assign_courses'), revokeCourseFromStudent);
 
 export default router;

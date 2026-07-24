@@ -5,7 +5,11 @@ export const NAV_CONFIG = [
   },
   {
     section: 'Users',
-    items: [{ id: 'users', label: 'User Management', badge: null }],
+    items: [
+      { id: 'users',              label: 'User Management',     badge: null },
+      { id: 'student_onboarding', label: 'Student Onboarding', badge: null },
+      { id: 'assign_courses',     label: 'Assign Courses',     badge: null },
+    ],
   },
   {
     section: 'Content',
@@ -44,7 +48,9 @@ export const NAV_CONFIG = [
 
 export const PAGE_META = {
   dashboard:     { title: 'Dashboard',            subtitle: 'Platform overview' },
-  users:         { title: 'User Management',      subtitle: 'Manage all registered users' },
+  users:              { title: 'User Management',      subtitle: 'Manage all registered users' },
+  student_onboarding: { title: 'Student Onboarding', subtitle: 'Onboard new students with instant credentials email' },
+  assign_courses:     { title: 'Assign Courses',     subtitle: 'Grant or revoke course access for enrolled students' },
   dramas:        { title: 'Course / Content',      subtitle: 'Manage content library' },
   categories:    { title: 'Categories & Tags',    subtitle: 'Organise and tag content' },
   banners:       { title: 'Banners & Popups',     subtitle: 'Homepage promotions' },

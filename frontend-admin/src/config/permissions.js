@@ -16,6 +16,8 @@ export const ADMIN_SECTIONS = [
   'live',
   'submissions',
   'packages',
+  'student_onboarding',
+  'assign_courses',
 ]
 
 export const SECTION_LABELS = {
@@ -37,6 +39,8 @@ export const SECTION_LABELS = {
   live: 'Live Streaming',
   submissions: 'Submissions',
   packages: 'Packages',
+  student_onboarding: 'Student Onboarding',
+  assign_courses: 'Assign Courses',
 }
 
 /** Sub-admin assignable sections (roles management is main-admin only) */

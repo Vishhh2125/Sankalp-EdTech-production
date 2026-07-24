@@ -538,6 +538,7 @@ export async function purchasePackage(id, userId) {
           user_id: userId,
           show_id: show.id,
           coins_spent: 0, // Costs are counted under PackagePurchase
+          access_type: 'PACKAGE_BUNDLE',
         })),
       });
     }

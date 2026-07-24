@@ -62,13 +62,12 @@ async function checkEpisodeAccess(userId, isGuest, episodeId, isFree, categoryId
   });
   if (membership) return { is_locked: false, lock_reason: null };
 
-  // 4. Has the user bought this show?
-  const showPurchase = await prisma.showAccess.findUnique({
+  // 4. Has the user bought this show or received admin access (non-revoked)?
+  const showPurchase = await prisma.showAccess.findFirst({
     where: {
-      idx_sa_user_show: {
-        user_id: userId,
-        show_id: ep.show_id,
-      }
+      user_id: userId,
+      show_id: ep.show_id,
+      revoked_at: null,
     }
   });
   if (showPurchase) return { is_locked: false, lock_reason: null };
@@ -129,12 +128,11 @@ async function checkShowAccess(userId, isGuest, showId) {
   });
   if (membership) return { is_locked: false, lock_reason: null };
 
-  const showPurchase = await prisma.showAccess.findUnique({
+  const showPurchase = await prisma.showAccess.findFirst({
     where: {
-      idx_sa_user_show: {
-        user_id: userId,
-        show_id: showId,
-      }
+      user_id: userId,
+      show_id: showId,
+      revoked_at: null,
     }
   });
   if (showPurchase) return { is_locked: false, lock_reason: null };

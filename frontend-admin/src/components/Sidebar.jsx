@@ -21,6 +21,20 @@ const NAV_ICONS = {
       <path d="M14 13c0-1.5-.7-2.8-1.7-3.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity=".4"/>
     </>
   ),
+  student_onboarding: (
+    <>
+      <path d="M8 2L1 5l7 3 7-3-7-3z" fill="currentColor" opacity=".9"/>
+      <path d="M2.5 7v4.5L8 14l5.5-2.5V7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity=".6"/>
+      <circle cx="12" cy="12" r="3" fill="currentColor" opacity=".3"/>
+      <path d="M12 10.5v3M10.5 12h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+    </>
+  ),
+  assign_courses: (
+    <>
+      <path d="M3 2h8a1.5 1.5 0 011.5 1.5v10.5L8 11.5 3.5 14V3.5A1.5 1.5 0 013 2z" fill="currentColor" opacity=".3"/>
+      <path d="M6 5h4M6 7.5h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity=".8"/>
+    </>
+  ),
   dramas: (
     <>
       <rect x="1" y="3" width="14" height="10" rx="1.5" fill="currentColor" opacity=".3"/>

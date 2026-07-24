@@ -20,6 +20,8 @@ export const ADMIN_SECTIONS = [
   'coursework',
   'submissions',
   'packages',
+  'student_onboarding',
+  'assign_courses',
 ];
 
 export const SECTION_LABELS = {
@@ -40,6 +42,8 @@ export const SECTION_LABELS = {
   coursework: 'Coursework Management',
   submissions: 'Submissions',
   packages: 'Packages',
+  student_onboarding: 'Student Onboarding',
+  assign_courses: 'Assign Courses',
 };
 
 export function isValidSection(section) {

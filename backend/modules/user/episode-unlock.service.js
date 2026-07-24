@@ -62,9 +62,9 @@ export async function unlockEpisodeForUser(userId, episodeId) {
   const categoryId = episode.show?.category_id;
   const now = new Date();
 
-  // Check if show is purchased
-  const showPurchase = await prisma.showAccess.findUnique({
-    where: { idx_sa_user_show: { user_id: userId, show_id: episode.show_id } },
+  // Check if show is purchased or admin granted (non-revoked)
+  const showPurchase = await prisma.showAccess.findFirst({
+    where: { user_id: userId, show_id: episode.show_id, revoked_at: null },
   });
   if (showPurchase) {
     const user = await prisma.user.findUnique({
@@ -212,8 +212,8 @@ export async function unlockShowForUser(userId, showId) {
     return { ok: false, status: 400, data: null, message: 'Show has no coin cost' };
   }
 
-  const existingAccess = await prisma.showAccess.findUnique({
-    where: { idx_sa_user_show: { user_id: userId, show_id: showId } },
+  const existingAccess = await prisma.showAccess.findFirst({
+    where: { user_id: userId, show_id: showId, revoked_at: null },
   });
   if (existingAccess) {
     const user = await prisma.user.findUnique({

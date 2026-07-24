@@ -499,6 +499,15 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
         role: true,
         plan: true,
         coins: true,
+        avatar_url: true,
+        mobile_no: true,
+        dob: true,
+        gender: true,
+        country: true,
+        state: true,
+        city: true,
+        student_id: true,
+        onboarded_by: true,
       },
     });
 
@@ -538,6 +547,101 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
     }
     throw new ApiError(500, 'Failed to fetch user profile');
   }
+});
+
+/**
+ * PATCH /auth/me
+ * Partial update for authenticated user's profile details ("My Details")
+ * Body: { name, mobile_no, dob, gender, country, state, city }
+ */
+export const updateMyDetails = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { name, mobile_no, dob, gender, country, state, city } = req.body;
+
+  const updateData = {};
+
+  if (name !== undefined) {
+    if (typeof name !== 'string' || name.trim() === '') {
+      throw new ApiError(400, 'Name must be a non-empty string');
+    }
+    updateData.name = name.trim();
+  }
+
+  if (mobile_no !== undefined) {
+    if (mobile_no === null || mobile_no === '') {
+      updateData.mobile_no = null;
+    } else {
+      const str = String(mobile_no).trim();
+      if (str.length > 20) {
+        throw new ApiError(400, 'Mobile number cannot exceed 20 characters');
+      }
+      updateData.mobile_no = str;
+    }
+  }
+
+  if (dob !== undefined) {
+    if (dob === null || dob === '') {
+      updateData.dob = null;
+    } else {
+      const parsedDate = new Date(dob);
+      if (isNaN(parsedDate.getTime())) {
+        throw new ApiError(400, 'Invalid date of birth format');
+      }
+      updateData.dob = parsedDate;
+    }
+  }
+
+  if (gender !== undefined) {
+    if (gender === null || gender === '') {
+      updateData.gender = null;
+    } else {
+      const validGenders = ['MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY'];
+      const upperGender = String(gender).toUpperCase().trim();
+      if (!validGenders.includes(upperGender)) {
+        throw new ApiError(
+          400,
+          `Invalid gender. Must be one of: ${validGenders.join(', ')}`
+        );
+      }
+      updateData.gender = upperGender;
+    }
+  }
+
+  if (country !== undefined) {
+    updateData.country = country === null || country === '' ? null : String(country).trim();
+  }
+
+  if (state !== undefined) {
+    updateData.state = state === null || state === '' ? null : String(state).trim();
+  }
+
+  if (city !== undefined) {
+    updateData.city = city === null || city === '' ? null : String(city).trim();
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: updateData,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      plan: true,
+      coins: true,
+      avatar_url: true,
+      mobile_no: true,
+      dob: true,
+      gender: true,
+      country: true,
+      state: true,
+      city: true,
+      student_id: true,
+      onboarded_by: true,
+    },
+  });
+
+  return res.json(new ApiResponse(200, updatedUser, 'Profile details updated successfully'));
 });
 
 /**

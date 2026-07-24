@@ -30,6 +30,7 @@ import notificationRouter from './modules/notifications/notification.router.js';
 import liveRouter from './modules/live/live.router.js';
 import packageRouter from './modules/content/package.router.js';
 import teacherRouter from './modules/teacher/teacher.routes.js';
+import geoRouter from './modules/geo/geo.routes.js';
 import helmet from 'helmet';
 
 import morgan from 'morgan';
@@ -185,6 +186,8 @@ app.use('/api/v1/notifications', notificationRouter); // NEW
 app.use('/api/v1/live', liveRouter);
 app.use('/api/live', liveRouter);
 app.use('/api/v1/teacher', teacherRouter);
+app.use('/api/geo', geoRouter);
+app.use('/api/v1/geo', geoRouter);
 
 // ============= 404 HANDLER =============
 

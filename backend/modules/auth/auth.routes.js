@@ -6,6 +6,7 @@ import {
   refreshToken,
   logout,
   getCurrentUser,
+  updateMyDetails,
   verifyOtp,
   resendOtpController,
   forgotPassword,
@@ -90,6 +91,12 @@ router.get("/refresh-token", refreshToken);
  * Used by frontend to sync user data (coins) in real-time
  */
 router.get('/me', requireAuth, getCurrentUser);
+
+/**
+ * PATCH /auth/me
+ * Partial update for authenticated user's profile details ("My Details")
+ */
+router.patch('/me', requireAuth, updateMyDetails);
 
 /**
  * POST /auth/logout
