@@ -161,7 +161,7 @@ const WalletScreen = () => {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.topUpButton} onPress={openTopUpList}>
+      <TouchableOpacity style={styles.topUpButton} onPress={() => navigation.navigate(ROUTES.TOP_UP)}>
         <Text style={styles.topUpText}>Top Up</Text>
       </TouchableOpacity>
 

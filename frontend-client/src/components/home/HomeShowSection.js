@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../context/ThemeContext';
 import { API_BASE_URL } from '../../constants/config';
+import CoinIcon from '../CoinIcon';
 
 // Wider card to match reference image (Udemy-style)
 const CARD_WIDTH = 110;
@@ -36,13 +37,19 @@ function resolveThumbnailUrl(url) {
   return `${API_BASE_URL}${url}`;
 }
 
-function SectionCard({ item, onPress }) {
+function SectionCard({ item, onPress, hasAllAccess, memberships }) {
   const { theme: appTheme } = useTheme();
   const styles = useStyles(appTheme);
   const uri = resolveThumbnailUrl(item.thumbnail_url);
   const categoryLabel = item.tags?.length > 0
     ? item.tags[0]
     : (item.category_name || item.category || '');
+
+  // Hide price if user has membership covering this category or all-access
+  const showPrice = item.coin_cost > 0 && !item.is_free && !hasAllAccess &&
+    !memberships?.some(m =>
+      !m.category_id || String(m.category_id) === String(item.category_id)
+    );
 
   return (
     <TouchableOpacity
@@ -87,6 +94,14 @@ function SectionCard({ item, onPress }) {
       <Text style={styles.cardTitle} numberOfLines={2}>
         {item.title}
       </Text>
+      {showPrice && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+          <CoinIcon size={12} color={appTheme.gold || "#FFD700"} />
+          <Text style={{ color: appTheme.text, fontSize: 12, fontWeight: 'bold', marginLeft: 4 }}>
+            {Number(item.coin_cost).toFixed(2)}
+          </Text>
+        </View>
+      )}
 
       {/* Category / tag label */}
       {categoryLabel ? (
@@ -115,6 +130,8 @@ export default function HomeShowSection({
   onCategoryPress,
   renderItem,
   emptyText,
+  hasAllAccess = false,
+  memberships = [],
 }) {
   const { theme: appTheme } = useTheme();
   const styles = useStyles(appTheme);
@@ -188,6 +205,8 @@ export default function HomeShowSection({
                   key={itemKey}
                   item={item}
                   onPress={() => onItemPress?.(item)}
+                  hasAllAccess={hasAllAccess}
+                  memberships={memberships}
                 />
               )
             );

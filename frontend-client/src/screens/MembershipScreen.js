@@ -15,6 +15,8 @@ import { useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 
+import CoinIcon from '../components/CoinIcon';
+
 import GuestAccessPrompt from '../components/GuestAccessPrompt';
 import {
   fetchMembershipPlans,
@@ -420,7 +422,7 @@ export default function MembershipScreen({ navigation }) {
       >
         <View style={styles.heroArea}>
           <LinearGradient
-            colors={theme.isDark ? ['#1A0B2E', '#0A0A0A'] : ['#FF6B35', '#FF8C5A']}
+            colors={theme.isDark ? ['#cd6728ff', '#44250fff'] : ['#FF6B35', '#FFB38F']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.heroGradient}
@@ -509,18 +511,24 @@ export default function MembershipScreen({ navigation }) {
                   <Text style={styles.planScope}>
                     {plan.category_id ? plan.category_name : 'All categories'}
                   </Text>
-                  <Text style={styles.planPrice}>
-                    {formatPlanPrice(plan.price, plan.currency)}
-                    {isLifetimePlan(plan)
-                      ? ' · one-time payment'
-                      : ` /${getDurationLabel(plan.duration)}`}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                    <CoinIcon size={16} color={theme.gold} />
+                    <Text style={[styles.planPrice, { marginLeft: 4 }]}>
+                      {formatPlanPrice(plan.price, plan.currency)}
+                      {isLifetimePlan(plan)
+                        ? ' · one-time'
+                        : ` /${getDurationLabel(plan.duration)}`}
+                    </Text>
+                  </View>
                   {isLifetimePlan(plan) ? (
                     <Text style={styles.planDetail}>Lifetime access · never expires</Text>
                   ) : (plan.duration === 'weekly' || plan.duration === 'week') ? (
-                    <Text style={styles.planDetail}>
-                      {formatPlanPrice(plan.price, plan.currency)} per week
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                      <CoinIcon size={13} color={theme.gold} />
+                      <Text style={[styles.planDetail, { marginLeft: 3 }]}>
+                        {formatPlanPrice(plan.price, plan.currency)} per week
+                      </Text>
+                    </View>
                   ) : null}
                 </View>
               </View>
@@ -584,12 +592,15 @@ export default function MembershipScreen({ navigation }) {
                   <Text style={styles.confirmPlanName}>
                     {selectedPlanData.name} Membership
                   </Text>
-                  <Text style={styles.confirmPlanPrice}>
-                    {formatPlanPrice(selectedPlanData.price, selectedPlanData.currency)}
-                    {isLifetimePlan(selectedPlanData)
-                      ? ' · one-time payment'
-                      : ` / ${getDurationLabel(selectedPlanData.duration)}`}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                    <CoinIcon size={16} color={theme.gold} />
+                    <Text style={[styles.confirmPlanPrice, { marginLeft: 4 }]}>
+                      {formatPlanPrice(selectedPlanData.price, selectedPlanData.currency)}
+                      {isLifetimePlan(selectedPlanData)
+                        ? ' · one-time'
+                        : ` / ${getDurationLabel(selectedPlanData.duration)}`}
+                    </Text>
+                  </View>
                   <Text style={styles.confirmPlanHint}>
                     Unlocks {getPlanUnlockScopeLabel(selectedPlanData)} paid episodes
                     {isLifetimePlan(selectedPlanData)

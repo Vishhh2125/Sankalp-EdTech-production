@@ -203,7 +203,7 @@ const useCardStyles = (appTheme) => StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.65)',
+    backgroundColor: appTheme.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -225,7 +225,7 @@ const useCardStyles = (appTheme) => StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: appTheme.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -567,8 +567,9 @@ export default function MyListScreen() {
             cancelSelection();
           }}
         >
-          <Text style={[styles.tabText, activeTab === TAB_SAVED && styles.tabTextActive]}>
-            Saved {bookmarks.length > 0 ? `(${bookmarks.length})` : ''}
+          <Text style={[styles.tabText, activeTab === TAB_SAVED && styles.tabTextActive]}>Saved</Text>
+          <Text style={[styles.tabText, activeTab === TAB_SAVED && styles.tabTextActive, { marginTop: 2, fontSize: 11 }]}>
+            ({bookmarks.length})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -578,8 +579,9 @@ export default function MyListScreen() {
             cancelSelection();
           }}
         >
-          <Text style={[styles.tabText, activeTab === TAB_CONTINUE && styles.tabTextActive]}>
-            Continue Watching {watchHistory.length > 0 ? `(${watchHistory.length})` : ''}
+          <Text style={[styles.tabText, activeTab === TAB_CONTINUE && styles.tabTextActive]}>Continue Watching</Text>
+          <Text style={[styles.tabText, activeTab === TAB_CONTINUE && styles.tabTextActive, { marginTop: 2, fontSize: 11 }]}>
+            ({watchHistory.length})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -589,8 +591,9 @@ export default function MyListScreen() {
             cancelSelection();
           }}
         >
-          <Text style={[styles.tabText, activeTab === TAB_DOWNLOADS && styles.tabTextActive]}>
-            Downloads {downloads.length > 0 ? `(${downloads.length})` : ''}
+          <Text style={[styles.tabText, activeTab === TAB_DOWNLOADS && styles.tabTextActive]}>Downloads</Text>
+          <Text style={[styles.tabText, activeTab === TAB_DOWNLOADS && styles.tabTextActive, { marginTop: 2, fontSize: 11 }]}>
+            ({downloads.length})
           </Text>
         </TouchableOpacity>
       </View>

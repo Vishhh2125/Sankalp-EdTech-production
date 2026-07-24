@@ -70,14 +70,14 @@ export default function LoginScreen({ navigation, route, onGuestAccess }) {
           <Ionicons name="play" size={16} color={appTheme.white} />
         </View>
         <Text style={styles.logoText}>
-          7<Text style={styles.logoPrimary}>K</Text>
+          Alpha<Text style={styles.logoPrimary}>Minds</Text>
         </Text>
       </View>
 
       {/* Title */}
       <Text style={styles.title}>Welcome back</Text>
       <Text style={styles.subtitle}>
-        Sign in to continue watching your dramas
+        Sign in to Continue Learning
       </Text>
 
       {/* Email */}
@@ -305,7 +305,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     fontWeight: '700',
   },
   googleBtn: {
-    backgroundColor: '#4285F4',
+    backgroundColor: '#ea5516ff',
     borderRadius: 30,
     paddingVertical: 16,
     alignItems: 'center',

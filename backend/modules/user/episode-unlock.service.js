@@ -39,10 +39,10 @@ export async function unlockEpisodeForUser(userId, episodeId) {
   });
 
   if (!episode) {
-    return { ok: false, status: 404, data: null, message: 'Episode not found' };
+    return { ok: false, status: 404, data: null, message: 'Lecture not found' };
   }
   if (episode.is_free) {
-    return { ok: false, status: 400, data: null, message: 'Episode is free' };
+    return { ok: false, status: 400, data: null, message: 'Lecture is free' };
   }
 
   // If episode is show-only, block individual unlock
@@ -51,12 +51,12 @@ export async function unlockEpisodeForUser(userId, episodeId) {
       ok: false,
       status: 400,
       data: null,
-      message: 'This episode can only be unlocked by purchasing the show',
+      message: 'This lecture can only be unlocked by purchasing the show',
     };
   }
 
   if (!episode.coin_cost || episode.coin_cost <= 0) {
-    return { ok: false, status: 400, data: null, message: 'Episode has no coin cost' };
+    return { ok: false, status: 400, data: null, message: 'Lecture has no coin cost' };
   }
 
   const categoryId = episode.show?.category_id;
@@ -149,8 +149,8 @@ export async function unlockEpisodeForUser(userId, episodeId) {
     });
 
     const unlockLabel = episode.show?.title
-      ? `${episode.show.title} · EP.${episode.episode_num}`
-      : episode.title || `Episode ${episode.episode_num}`;
+      ? `${episode.show.title} · Lec.${episode.episode_num}`
+      : episode.title || `Lecture ${episode.episode_num}`;
 
     await tx.coinTransaction.create({
       data: {
@@ -159,7 +159,7 @@ export async function unlockEpisodeForUser(userId, episodeId) {
         amount: episode.coin_cost,
         reason: 'episode_unlock',
         ref_id: episodeId,
-        title: 'Episode unlock',
+        title: 'Lecture unlock',
         description: unlockLabel,
         status: 'completed',
       },
@@ -183,7 +183,7 @@ export async function unlockEpisodeForUser(userId, episodeId) {
   return {
     ok: true,
     data: buildUnlockResponse(episode, txResult.coins),
-    message: 'Episode unlocked',
+    message: 'Lecture unlocked',
   };
 }
 

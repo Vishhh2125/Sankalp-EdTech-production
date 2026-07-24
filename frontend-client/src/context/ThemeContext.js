@@ -18,7 +18,7 @@ const darkTheme = {
   border: '#303541',
   primary: '#FF5C1A',
   primaryHover: '#FF713D',
-  primarySoft: '#3D1A0D',
+  primarySoft: '#81361aff',
   accent: '#FFD60A',
   success: '#22C55E',
   warning: '#FBBF24',
@@ -26,7 +26,7 @@ const darkTheme = {
   info: '#60A5FA',
   tabBarBackground: '#181B23',
   inputBackground: '#21252F',
-  
+
   // Specific Component Backwards Compatibility / Legacy Primitives
   deepBlack: '#0F1117',
   black: '#000000',
@@ -77,7 +77,7 @@ const lightTheme = {
   info: '#2563EB',
   tabBarBackground: '#FFFFFF',
   inputBackground: '#F5F5F5',
-  
+
   // Specific Component Backwards Compatibility / Legacy Primitives
   deepBlack: '#F5F5F5',
   black: '#FFFFFF',
@@ -109,7 +109,7 @@ const lightTheme = {
 const ThemeContext = createContext({
   theme: darkTheme,
   isDarkMode: true,
-  toggleTheme: () => {},
+  toggleTheme: () => { },
 });
 
 export function ThemeProvider({ children }) {
@@ -123,7 +123,7 @@ export function ThemeProvider({ children }) {
       } else if (systemTheme) {
         setIsDarkMode(systemTheme === 'dark');
       }
-    }).catch(() => {});
+    }).catch(() => { });
   }, [systemTheme]);
 
   const toggleTheme = useCallback(async () => {

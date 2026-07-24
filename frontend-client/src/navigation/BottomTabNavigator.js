@@ -70,16 +70,53 @@ export default function BottomTabNavigator() {
           tabBarBackground: (isLandscape || shouldHide)
             ? undefined
             : () => (
-              <View style={StyleSheet.absoluteFill}>
+              <View
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    borderRadius: 34,
+                    overflow: 'hidden',
+
+                    // Soft floating glass shadow
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: isDarkMode ? 0.28 : 0.12,
+                    shadowRadius: 20,
+                    elevation: 10,
+                  },
+                ]}
+              >
+                {/* Frosted glass */}
                 <BlurView
                   tint={isDarkMode ? 'dark' : 'light'}
-                  intensity={100}
+                  intensity={70}
+                  style={StyleSheet.absoluteFill}
+                />
+
+                {/* Translucent glass tint */}
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFill,
+                    {
+                      backgroundColor: isDarkMode
+                        ? 'rgba(30, 30, 35, 0.30)'
+                        : 'rgba(255, 255, 255, 0.22)',
+                    },
+                  ]}
+                />
+
+                {/* Glass edge/highlight */}
+                <View
+                  pointerEvents="none"
                   style={[
                     StyleSheet.absoluteFill,
                     {
                       borderRadius: 34,
-                      overflow: 'hidden',
-                      backgroundColor: isDarkMode ? 'rgba(28, 28, 30, 0.4)' : 'rgba(255, 255, 255, 0.4)',
+                      borderWidth: 1,
+                      borderColor: isDarkMode
+                        ? 'rgba(255, 255, 255, 0.14)'
+                        : 'rgba(255, 255, 255, 0.65)',
                     },
                   ]}
                 />

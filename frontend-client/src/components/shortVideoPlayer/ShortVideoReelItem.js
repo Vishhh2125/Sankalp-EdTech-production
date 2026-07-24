@@ -1205,7 +1205,7 @@ function LockOverlay({ item, accessToken, navigation, dispatch, walletReturnPara
         if (!episodeId) return;
         const result = await dispatch(unlockEpisode(episodeId)).unwrap();
         if (result?.is_locked) {
-          setError('Could not unlock this episode');
+          setError('Could not unlock this lecture');
         }
       }
     } catch (err) {
@@ -1236,7 +1236,7 @@ function LockOverlay({ item, accessToken, navigation, dispatch, walletReturnPara
         <View style={styles.lockIconWrap}>
           <Ionicons name="lock-closed" size={32} color="#fff" />
         </View>
-        <Text style={styles.lockTitle}>This episode is locked</Text>
+        <Text style={styles.lockTitle}>This lecture is locked</Text>
       </View>
     );
   }
@@ -1247,11 +1247,11 @@ function LockOverlay({ item, accessToken, navigation, dispatch, walletReturnPara
         <Ionicons name="lock-closed" size={32} color="#fff" />
       </View>
       <Text style={styles.lockTitle}>
-        {isShowLock ? `Unlock Show · ${coinCost} coins` : `Unlock · ${coinCost} coins`}
+        {isShowLock ? `Unlock Course · ${coinCost} coins` : `Unlock · ${coinCost} coins`}
       </Text>
       {isShowLock && (
         <Text style={{ color: '#ccc', fontSize: 12, marginBottom: 8, textAlign: 'center', paddingHorizontal: 20 }}>
-          This episode requires purchasing the parent show. Unlocking the show grants access to all episodes.
+          This lecture requires purchasing the parent show. Unlocking the course grants access to all episodes.
         </Text>
       )}
       <Text style={styles.lockBalance}>Your coins: {coins}</Text>

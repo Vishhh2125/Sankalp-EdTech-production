@@ -31,9 +31,8 @@ export async function simulateMembershipPurchase(planId) {
 
 export function formatPlanPrice(price, currency = 'INR') {
   const n = parseFloat(price);
-  if (currency === 'INR') return `₹${n.toFixed(2)}`;
-  if (currency === 'USD') return `$${n.toFixed(2)}`;
-  return String(price);
+  if (!n || isNaN(n)) return '0';
+  return n % 1 === 0 ? String(n) : n.toFixed(2);
 }
 
 export function getDurationLabel(duration) {

@@ -88,12 +88,12 @@ export default function SignUpScreen({ navigation, onGuestAccess }) {
           <Ionicons name="play" size={16} color={appTheme.white} />
         </View>
         <Text style={styles.logoText}>
-          7<Text style={styles.logoPrimary}>K</Text>
+          Alpha<Text style={styles.logoPrimary}>Minds</Text>
         </Text>
       </View>
 
       {/* Title */}
-      <Text style={styles.title}>Join the drama</Text>
+      <Text style={styles.title}>Let's Crack It</Text>
       <Text style={styles.subtitle}>Create your free account</Text>
 
       {/* Name */}
@@ -371,7 +371,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     fontWeight: '700',
   },
   googleBtn: {
-    backgroundColor: '#4285F4',
+    backgroundColor: '#ea5516ff',
     borderRadius: 30,
     paddingVertical: 16,
     alignItems: 'center',

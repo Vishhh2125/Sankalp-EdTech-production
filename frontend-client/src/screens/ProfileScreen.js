@@ -36,9 +36,6 @@ const MENU_ITEMS = [
   { icon: 'gift-outline', label: 'Earn Rewards', badge: null },
 ];
 
-const SETTINGS_ITEMS = [
-  { icon: 'help-circle-outline', label: 'Help & feedback', right: null },
-];
 
 function MenuItem({ icon, label, right, rightComponent, badge, onPress, disabled, labelStyle, hideArrow }) {
   const { theme: appTheme } = useTheme();
@@ -111,9 +108,6 @@ function GuestProfileScreen({ insets }) {
       </View>
 
       <View style={styles.menuCard}>
-        {SETTINGS_ITEMS.map((item) => (
-          <MenuItem key={item.label} {...item} disabled />
-        ))}
         <MenuItem
           icon="moon-outline"
           label="Appearance"
@@ -264,7 +258,7 @@ export default function ProfileScreen({ navigation }) {
 
       {!isPaid && (
         <LinearGradient
-          colors={appTheme.isDark ? ['#1A0B02', '#2D1606'] : ['#FF6B35', '#FF8C5A']}
+          colors={appTheme.isDark ? ['#cd6728ff', '#44250fff'] : ['#FF6B35', '#FFB38F']}
           style={styles.memberBanner}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
@@ -321,9 +315,6 @@ export default function ProfileScreen({ navigation }) {
       </View>
 
       <View style={styles.menuCard}>
-        {SETTINGS_ITEMS.map((item) => (
-          <MenuItem key={item.label} {...item} />
-        ))}
         <MenuItem
           icon="moon-outline"
           label="Appearance"

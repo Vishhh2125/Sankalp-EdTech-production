@@ -14,6 +14,7 @@ import {
   Pressable,
   Keyboard,
   Modal,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons, FontAwesome6 } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -100,9 +101,16 @@ function ThumbnailProgressBar({ progressSec, durationSec }) {
   );
 }
 
-const DramaCard = ({ item, onPress }) => {
+const DramaCard = ({ item, onPress, hasAllAccess, memberships }) => {
   const { theme: appTheme } = useTheme();
   const styles = useStyles(appTheme);
+
+  // Hide coin cost if user has access via membership, package, or it's free
+  const showPrice = item.coin_cost > 0 && !item.is_free && !hasAllAccess &&
+    !memberships?.some(m =>
+      !m.category_id || String(m.category_id) === String(item.category_id)
+    );
+
   return (
     <TouchableOpacity style={styles.cardContainer} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.imageWrapper}>
@@ -128,6 +136,14 @@ const DramaCard = ({ item, onPress }) => {
         />
       </View>
       <Text style={styles.dramaTitle} numberOfLines={2}>{item.title}</Text>
+      {showPrice && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+          <CoinIcon size={14} color={appTheme.gold} />
+          <Text style={{ color: appTheme.text, fontSize: 12, fontWeight: 'bold', marginLeft: 4 }}>
+            {Number(item.coin_cost).toFixed(2)}
+          </Text>
+        </View>
+      )}
       <Text style={styles.dramaTagsText} numberOfLines={1}>
         {item.tags?.length > 0 ? item.tags[0] : (item.category_name || item.category || '')}
       </Text>
@@ -152,6 +168,14 @@ const PackageCard = ({ item, onPress }) => {
         )}
       </View>
       <Text style={styles.dramaTitle} numberOfLines={2}>{item.title}</Text>
+      {item.coin_price > 0 && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+          <CoinIcon size={12} color={appTheme.gold} />
+          <Text style={{ color: appTheme.text, fontSize: 12, fontWeight: 'bold', marginLeft: 4 }}>
+            {Number(item.coin_price).toFixed(2)}
+          </Text>
+        </View>
+      )}
       <Text style={styles.dramaTagsText} numberOfLines={1}>
         {item.shows_count} {item.shows_count === 1 ? 'Course' : 'Courses'}
       </Text>
@@ -160,10 +184,12 @@ const PackageCard = ({ item, onPress }) => {
 };
 
 export default function PopularScreen() {
-  const { theme: appTheme } = useTheme();
+  const { theme: appTheme, isDarkMode } = useTheme();
   const styles = useStyles(appTheme);
   const dispatch = useDispatch();
   const accessToken = useSelector((state) => state.auth?.accessToken);
+  const hasAllAccess = useSelector((state) => state.auth?.has_all_access) || false;
+  const memberships = useSelector((state) => state.auth?.memberships) || [];
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const isFocused = useIsFocused();
@@ -185,6 +211,7 @@ export default function PopularScreen() {
   const [shows, setShows] = useState([]);
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [showDetails, setShowDetails] = useState(null);
   const [showDetailsLoading, setShowDetailsLoading] = useState(false);
   const [showDetailsError, setShowDetailsError] = useState(null);
@@ -419,6 +446,29 @@ export default function PopularScreen() {
         });
     }, [loadShows, accessToken, dispatch])
   );
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadShows();
+    fetchHeroBanners(10)
+      .then(setHeroBanners)
+      .catch(() => setHeroBanners([]));
+    if (accessToken) {
+      dispatch(fetchBookmarks());
+      dispatch(fetchWatchHistory());
+    }
+    packageApi.getActivePackages()
+      .then((res) => {
+        setPackages(res.data?.data || res.data || []);
+      })
+      .catch((e) => {
+        console.error("Failed to load active packages:", e);
+        setPackages([]);
+      })
+      .finally(() => {
+        setTimeout(() => setRefreshing(false), 800);
+      });
+  }, [loadShows, accessToken, dispatch]);
 
   // Re-open drama sheet after returning from ShowPlayer (back, gesture, title, episodes)
   useFocusEffect(
@@ -670,7 +720,7 @@ export default function PopularScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
 
       <View
         style={styles.header}
@@ -800,10 +850,10 @@ export default function PopularScreen() {
               })
             }
           >
-            <FontAwesome6 name="crown" size={22} color="#FFD700" />
+            <FontAwesome6 name="crown" size={22} color="#f4753fff" />
           </TouchableOpacity>
           <TouchableOpacity onPress={goToEarnRewards} hitSlop={8}>
-            <Ionicons name="gift" size={24} color="#FFD700" />
+            <Ionicons name="gift" size={24} color="#f4753fff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -835,12 +885,13 @@ export default function PopularScreen() {
       ) : isSearchActive ? (
         <FlatList
           data={shows}
-          renderItem={({ item }) => <DramaCard item={item} onPress={() => openDetails(item)} />}
+          renderItem={({ item }) => <DramaCard item={item} onPress={() => openDetails(item)} hasAllAccess={hasAllAccess} memberships={memberships} />}
           keyExtractor={(item, index) => `${item.id || item.show_id || 'show'}-${index}`}
           numColumns={3}
           contentContainerStyle={styles.listContent}
           columnWrapperStyle={styles.columnWrapper}
           showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={appTheme.primary} />}
           ListEmptyComponent={
             <View style={{ alignItems: 'center', marginTop: 40 }}>
               <Ionicons name={isOffline ? "cloud-offline-outline" : "search-outline"} size={48} color="#555" />
@@ -852,6 +903,7 @@ export default function PopularScreen() {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.homeScrollContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={appTheme.primary} />}
         >
           <HomeHeroSlider banners={heroBanners} onBannerPress={handleBannerPress} />
 
@@ -864,6 +916,8 @@ export default function PopularScreen() {
             activeCategoryId={activeTab}
             onCategoryPress={(tab) => setActiveTab(tab.id)}
             emptyText="No courses found."
+            hasAllAccess={hasAllAccess}
+            memberships={memberships}
           />
 
           {packages.length > 0 && (
@@ -885,6 +939,8 @@ export default function PopularScreen() {
             items={trendingShowsPreview}
             onItemPress={(item) => openDetails(item)}
             onExpand={() => setExpandedSection('trending')}
+            hasAllAccess={hasAllAccess}
+            memberships={memberships}
           />
 
           {accessToken && watchHistory.length > 0 ? (
