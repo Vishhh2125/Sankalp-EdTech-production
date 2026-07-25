@@ -76,7 +76,7 @@ function GuestProfileScreen({ insets }) {
       style={styles.screen}
       contentContainerStyle={[
         styles.container,
-        { paddingTop: insets.top + 12 },
+        { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 100 },
       ]}
     >
       <View style={styles.header}>
@@ -226,7 +226,7 @@ export default function ProfileScreen({ navigation }) {
       style={styles.screen}
       contentContainerStyle={[
         styles.container,
-        { paddingTop: insets.top + 12 },
+        { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 100 },
       ]}
     >
       <View style={styles.header}>

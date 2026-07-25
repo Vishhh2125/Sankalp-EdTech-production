@@ -86,9 +86,13 @@ const usePStyles = (appTheme) => StyleSheet.create({
 // ─────────────────────────────────────────────────────────────────
 function resolveThumbnailUrl(url) {
   if (!url) return null;
-  if (url.startsWith('http') || url.startsWith('file://')) return url; // already absolute
+  if (url.startsWith('http') || url.startsWith('file://')) {
+    if (url.includes('/ott-media/')) return `${API_BASE_URL}${url.substring(url.indexOf('/ott-media/'))}`;
+    if (url.includes('/uploads/')) return `${API_BASE_URL}${url.substring(url.indexOf('/uploads/'))}`;
+    return url;
+  }
   const separator = url.startsWith('/') ? '' : '/';
-  return `${API_BASE_URL}${separator}${url}`; // make it absolute
+  return `${API_BASE_URL}${separator}${url}`;
 }
 
 
