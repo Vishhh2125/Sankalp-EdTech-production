@@ -29,7 +29,7 @@ const iosClientIdPrefix = iosClientId.split('.').shift() || '';
 module.exports = {
   expo: {
     name: "AlphaMinds",
-    slug: "ott_7k",
+    slug: "7k",
     scheme: [
       "7k",
       androidClientIdPrefix ? `com.googleusercontent.apps.${androidClientIdPrefix}` : null,
