@@ -127,9 +127,9 @@ module.exports = {
     ],
     extra: {
       eas: {
-        projectId: "f9b1fb0c-aa11-4a05-b20b-f2c88d71fa2f"
+        projectId: "5dd61ee9-e865-46d2-bda6-9064e3107aa3"
       }
     },
-    owner: "sam0805s-organization"
+    owner: "prasen_10"
   }
 };
