@@ -602,7 +602,7 @@ export default function MembershipScreen({ navigation }) {
                     </Text>
                   </View>
                   <Text style={styles.confirmPlanHint}>
-                    Unlocks {getPlanUnlockScopeLabel(selectedPlanData)} paid episodes
+                    Unlocks {getPlanUnlockScopeLabel(selectedPlanData)} paid Lectures
                     {isLifetimePlan(selectedPlanData)
                       ? ' for life'
                       : ' for the plan duration'}

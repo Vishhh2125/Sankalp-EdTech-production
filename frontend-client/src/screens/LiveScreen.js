@@ -470,7 +470,8 @@ function resolveThumbnailUrl(url) {
     return url;
   }
 
-  return `${API_BASE_URL}${url}`;
+  const separator = url.startsWith('/') ? '' : '/';
+  return `${API_BASE_URL}${separator}${url}`;
 }
 
 // ─────────────────────────────────────────────────────────────────

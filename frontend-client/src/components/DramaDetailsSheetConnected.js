@@ -48,7 +48,8 @@ const RELATED_LIMIT = 6;
 function resolveThumbnailUrl(url) {
   if (!url) return null;
   if (url.startsWith('http')) return url;
-  return `${API_BASE_URL}${url}`;
+  const separator = url.startsWith('/') ? '' : '/';
+  return `${API_BASE_URL}${separator}${url}`;
 }
 
 function Tag({ label }) {
@@ -431,7 +432,8 @@ export default function DramaDetailsSheetConnected({
     const resolveThumbnailUrl = (url) => {
       if (!url) return null;
       if (url.startsWith('http')) return url; // already absolute
-      return `${API_BASE_URL}${url}`; // make it absolute
+      const separator = url.startsWith('/') ? '' : '/';
+  return `${API_BASE_URL}${separator}${url}`; // make it absolute
     };
 
     if (details?.show_id === item.show_id && details?.thumbnail_url) {

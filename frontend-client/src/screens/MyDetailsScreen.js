@@ -6,13 +6,17 @@ import {
   View,
   TextInput,
   Pressable,
+  TouchableOpacity,
   ActivityIndicator,
   Modal,
   FlatList,
+  Platform,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch } from 'react-redux';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
@@ -101,6 +105,12 @@ export default function MyDetailsScreen({ navigation }) {
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState('');
 
+  // Validation error states
+  const [mobileError, setMobileError] = useState('');
+  const [stateError, setStateError] = useState('');
+  const [cityError, setCityError] = useState('');
+  const [dobError, setDobError] = useState('');
+
   // Location Fields
   const [country, setCountry] = useState('IN');
   const [state, setState] = useState('');
@@ -116,6 +126,17 @@ export default function MyDetailsScreen({ navigation }) {
   const [countryModalOpen, setCountryModalOpen] = useState(false);
   const [stateModalOpen, setStateModalOpen] = useState(false);
   const [cityModalOpen, setCityModalOpen] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  useFocusEffect(
+    React.useCallback(() => {
+      navigation.getParent()?.setOptions({ tabBarStyle: { display: 'none' } });
+      return () => {
+        navigation.getParent()?.setOptions({ tabBarStyle: undefined });
+      };
+    }, [navigation])
+  );
 
   // Load User Profile and Countries on Mount
   useEffect(() => {
@@ -137,6 +158,10 @@ export default function MyDetailsScreen({ navigation }) {
         setStudentId(u.student_id || '');
         setMobileNo(u.mobile_no || '');
         setDob(u.dob ? u.dob.split('T')[0] : '');
+        if (u.dob) {
+          const parsedDob = new Date(u.dob);
+          if (!isNaN(parsedDob)) setSelectedDate(parsedDob);
+        }
         setGender(u.gender || '');
         setCountry(u.country || 'IN');
         setState(u.state || '');
@@ -196,17 +221,31 @@ export default function MyDetailsScreen({ navigation }) {
       return;
     }
 
-    let formattedDob = dob.trim();
-    if (!formattedDob || formattedDob.toLowerCase() === 'yyyy-mm-dd') {
-      formattedDob = null;
-    } else {
-      const parsed = new Date(formattedDob);
-      if (isNaN(parsed.getTime())) {
-        showAlert('Invalid Date', 'Please enter a valid Date of Birth (YYYY-MM-DD) or leave it empty.');
-        return;
-      }
-      formattedDob = parsed.toISOString();
+    let hasError = false;
+    setMobileError('');
+    setStateError('');
+    setCityError('');
+    setDobError('');
+
+    if (!mobileNo.trim()) {
+      setMobileError('Mobile number required');
+      hasError = true;
     }
+    if (city && !state) {
+      setStateError('Select state before city');
+      hasError = true;
+    }
+    let formattedDob = null;
+    if (dob && dob.trim() && dob.trim().toLowerCase() !== 'yyyy-mm-dd') {
+      const parsed = new Date(dob.trim());
+      if (isNaN(parsed.getTime())) {
+        setDobError('Invalid date');
+        hasError = true;
+      } else {
+        formattedDob = parsed.toISOString();
+      }
+    }
+    if (hasError) return;
 
     try {
       setSaving(true);
@@ -318,25 +357,36 @@ export default function MyDetailsScreen({ navigation }) {
 
         <View style={styles.fieldGroup}>
           <Text style={[styles.label, { color: mutedTextColor }]}>Mobile Number</Text>
-          <TextInput
-            style={[styles.input, { color: textColor, borderColor, backgroundColor: isDarkMode ? 'transparent' : '#fcfcfc' }]}
-            value={mobileNo}
-            onChangeText={setMobileNo}
-            placeholder="+91 9876543210"
-            placeholderTextColor={mutedTextColor}
-            keyboardType="phone-pad"
-          />
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {/* Country Code Selector */}
+            <Pressable style={styles.selectInput} onPress={() => setCountryModalOpen(true)}>
+              <Text style={{ color: selectedCountryObj ? textColor : mutedTextColor, fontSize: 15 }}>
+                {selectedCountryObj ? `${selectedCountryObj.flag} ${selectedCountryObj.phone_code}` : 'Select Country'}
+              </Text>
+              <Ionicons name="chevron-down" size={18} color={mutedTextColor} />
+            </Pressable>
+            <TextInput
+              style={[styles.input, { flex: 1, marginLeft: 8, color: textColor, borderColor, backgroundColor: isDarkMode ? 'transparent' : '#fcfcfc' }]}
+              value={mobileNo}
+              onChangeText={setMobileNo}
+              placeholder="9876543210"
+              placeholderTextColor={mutedTextColor}
+              keyboardType="phone-pad"
+            />
+          </View>
+          {mobileError ? <Text style={styles.errorText}>{mobileError}</Text> : null}
         </View>
 
         <View style={styles.fieldGroup}>
-          <Text style={[styles.label, { color: mutedTextColor }]}>Date of Birth (YYYY-MM-DD)</Text>
-          <TextInput
-            style={[styles.input, { color: textColor, borderColor, backgroundColor: isDarkMode ? 'transparent' : '#fcfcfc' }]}
-            value={dob}
-            onChangeText={setDob}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor={mutedTextColor}
-          />
+          <Text style={[styles.label, { color: mutedTextColor }]}>Date of Birth</Text>
+          <Pressable
+            style={[styles.input, { justifyContent: 'center', backgroundColor: isDarkMode ? 'transparent' : '#fcfcfc' }]}
+            onPress={() => setShowDatePicker(true)}>
+            <Text style={{ color: dob ? textColor : mutedTextColor }}>
+              {dob ? new Date(dob).toLocaleDateString() : 'Select Date'}
+            </Text>
+          </Pressable>
+          {dobError ? <Text style={styles.errorText}>{dobError}</Text> : null}
         </View>
 
         <View style={styles.fieldGroup}>
@@ -431,7 +481,7 @@ export default function MyDetailsScreen({ navigation }) {
         title="Select Country"
         items={countriesList}
         getKey={(item) => item.code}
-        getLabel={(item) => `${item.flag} ${item.name}`}
+        getLabel={(item) => `${item.flag} ${item.name} (${item.phone_code})`}
         onSelect={(item) => {
           setCountry(item.code);
           setState('');
@@ -462,68 +512,43 @@ export default function MyDetailsScreen({ navigation }) {
         onSelect={(item) => setCity(item.name)}
         onClose={() => setCityModalOpen(false)}
       />
+
+      {/* Custom Date Picker Modal */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={(event, date) => {
+            setShowDatePicker(Platform.OS === 'ios');
+            if (date) {
+              setSelectedDate(date);
+              setDob(date.toISOString().split('T')[0]);
+            }
+          }}
+        />
+      )}
+      {Platform.OS === 'ios' && showDatePicker && (
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 10, backgroundColor: cardBg }}>
+          <Pressable onPress={() => setShowDatePicker(false)}>
+            <Text style={{ color: appTheme.primary || '#ea5516', fontSize: 16, fontWeight: 'bold' }}>Done</Text>
+          </Pressable>
+        </View>
+      )}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
-  container: {
-    padding: 16,
-    gap: 16,
-  },
-  card: {
-    borderRadius: 14,
-    padding: 16,
-    gap: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  cardHeader: {
-    fontSize: 13,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginBottom: 2,
-  },
-  fieldGroup: {
-    gap: 6,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    fontSize: 15,
-  },
-  selectInput: {
-    height: 48,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justify: 'space-between',
-  },
-  saveButton: {
-    height: 52,
-    borderRadius: 12,
-    justify: 'center',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  saveButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
+  screen: { flex: 1 },
+  container: { padding: 16, gap: 16 },
+  card: { borderRadius: 14, padding: 16, gap: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1 },
+  cardHeader: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 },
+  fieldGroup: { gap: 6 },
+  label: { fontSize: 12, fontWeight: '600' },
+  input: { height: 48, borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, fontSize: 15 },
+  selectInput: { height: 48, borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justify: 'space-between' },
+  saveButton: { height: 52, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 8 },
+  saveButtonText: { color: '#ffffff', fontSize: 16, fontWeight: '700' },
+  errorText: { color: 'red', fontSize: 12, marginTop: 4 },
 });

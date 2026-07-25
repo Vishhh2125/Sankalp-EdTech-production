@@ -87,7 +87,8 @@ const usePStyles = (appTheme) => StyleSheet.create({
 function resolveThumbnailUrl(url) {
   if (!url) return null;
   if (url.startsWith('http') || url.startsWith('file://')) return url; // already absolute
-  return `${API_BASE_URL}${url}`; // make it absolute
+  const separator = url.startsWith('/') ? '' : '/';
+  return `${API_BASE_URL}${separator}${url}`; // make it absolute
 }
 
 
@@ -579,7 +580,7 @@ export default function MyListScreen() {
             cancelSelection();
           }}
         >
-          <Text style={[styles.tabText, activeTab === TAB_CONTINUE && styles.tabTextActive]}>Continue Watching</Text>
+          <Text style={[styles.tabText, activeTab === TAB_CONTINUE && styles.tabTextActive]}>Continue Learning</Text>
           <Text style={[styles.tabText, activeTab === TAB_CONTINUE && styles.tabTextActive, { marginTop: 2, fontSize: 11 }]}>
             ({watchHistory.length})
           </Text>

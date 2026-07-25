@@ -21,7 +21,8 @@ const AUTO_ADVANCE_MS = 4500;
 function resolveImageUrl(url) {
   if (!url) return null;
   if (url.startsWith('http')) return url;
-  return `${API_BASE_URL}${url}`;
+  const separator = url.startsWith('/') ? '' : '/';
+  return `${API_BASE_URL}${separator}${url}`;
 }
 
 export default function HomeHeroSlider({ banners = [], onBannerPress }) {

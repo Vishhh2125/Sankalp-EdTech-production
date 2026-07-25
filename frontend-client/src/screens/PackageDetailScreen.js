@@ -36,7 +36,8 @@ const feedApi = createAuthenticatedApi({
 function resolveThumbnailUrl(url) {
   if (!url) return null;
   if (url.startsWith('http')) return url;
-  return `${API_BASE_URL}${url}`;
+  const separator = url.startsWith('/') ? '' : '/';
+  return `${API_BASE_URL}${separator}${url}`;
 }
 
 export default function PackageDetailScreen() {
@@ -394,9 +395,16 @@ export default function PackageDetailScreen() {
                     {show.title}
                   </Text>
                   <View style={styles.showMetaRow}>
-                    <Text style={styles.showMetaText}>
-                      {show.has_access ? (show.is_free ? 'Free Show' : 'Unlocked') : `${show.coin_cost || 0} Coins`}
-                    </Text>
+                    {show.has_access ? (
+                      <Text style={styles.showMetaText}>{show.is_free ? 'Free Show' : 'Unlocked'}</Text>
+                    ) : (
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <CoinIcon size={12} color={theme.gold || "#FFD700"} />
+                        <Text style={[styles.showMetaText, { marginLeft: 4 }]}>
+                          {Number(show.coin_cost || 0).toFixed(2)}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.darkGray} />

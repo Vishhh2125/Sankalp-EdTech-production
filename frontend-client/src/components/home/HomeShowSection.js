@@ -34,7 +34,8 @@ function ThumbnailProgressBar({ progressSec, durationSec }) {
 function resolveThumbnailUrl(url) {
   if (!url) return null;
   if (url.startsWith('http')) return url;
-  return `${API_BASE_URL}${url}`;
+  const separator = url.startsWith('/') ? '' : '/';
+  return `${API_BASE_URL}${separator}${url}`;
 }
 
 function SectionCard({ item, onPress, hasAllAccess, memberships }) {
@@ -45,8 +46,8 @@ function SectionCard({ item, onPress, hasAllAccess, memberships }) {
     ? item.tags[0]
     : (item.category_name || item.category || '');
 
-  // Hide price if user has membership covering this category or all-access
-  const showPrice = item.coin_cost > 0 && !item.is_free && !hasAllAccess &&
+  // Hide price if user has membership covering this category or all-access, or has purchased
+  const showPrice = item.coin_cost > 0 && !item.is_free && !hasAllAccess && !item.has_access && !item.is_unlocked &&
     !memberships?.some(m =>
       !m.category_id || String(m.category_id) === String(item.category_id)
     );
