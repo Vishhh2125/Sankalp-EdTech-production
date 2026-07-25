@@ -231,28 +231,33 @@ export default function ProfileScreen({ navigation }) {
     >
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={[styles.avatar, isPaid && styles.avatarPaid]}>
-            <Ionicons
-              name="person"
-              size={28}
-              color={isPaid ? '#4CAF50' : appTheme.darkGray}
-            />
-          </View>
-          <View>
-            <View style={styles.loginRow}>
-              <Text style={styles.loginText}>{name || 'User'}</Text>
-              <Ionicons name="chevron-forward" size={16} color={appTheme.white} />
+          <Pressable
+            onPress={() => navigation.navigate(ROUTES.MY_DETAILS)}
+            style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12 }, pressed && { opacity: 0.75 }]}
+          >
+            <View style={[styles.avatar, isPaid && styles.avatarPaid]}>
+              <Ionicons
+                name="person"
+                size={28}
+                color={isPaid ? '#4CAF50' : appTheme.darkGray}
+              />
             </View>
-            {isPaid && memberships.length > 0 ? (
-              <Text style={styles.membershipEndText}>
-                {memberships.map((m) => {
-                  const scope = m.category_name ? ` · ${m.category_name}` : '';
-                  if (!m.end_date) return `Lifetime${scope}`;
-                  return `Until ${formatMembershipEnd(m.end_date)}${scope}`;
-                }).join('  ·  ')}
-              </Text>
-            ) : null}
-          </View>
+            <View>
+              <View style={styles.loginRow}>
+                <Text style={styles.loginText}>{name || 'User'}</Text>
+                <Ionicons name="chevron-forward" size={16} color={appTheme.white} />
+              </View>
+              {isPaid && memberships.length > 0 ? (
+                <Text style={styles.membershipEndText}>
+                  {memberships.map((m) => {
+                    const scope = m.category_name ? ` · ${m.category_name}` : '';
+                    if (!m.end_date) return `Lifetime${scope}`;
+                    return `Until ${formatMembershipEnd(m.end_date)}${scope}`;
+                  }).join('  ·  ')}
+                </Text>
+              ) : null}
+            </View>
+          </Pressable>
         </View>
       </View>
 

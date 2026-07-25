@@ -468,11 +468,27 @@ const authSlice = createSlice({
       state.plan = action.payload;
     },
     patchUserProfile(state, action) {
-      const { plan, coins, memberships, has_all_access } = action.payload || {};
+      const { name, plan, coins, memberships, has_all_access, mobile_no, dob, gender, country, state: userState, city } = action.payload || {};
+      if (name !== undefined) state.name = name;
       if (plan !== undefined) state.plan = plan;
       if (coins !== undefined) state.coins = coins;
       if (memberships !== undefined) state.memberships = memberships;
       if (has_all_access !== undefined) state.has_all_access = has_all_access;
+      if (mobile_no !== undefined) state.mobile_no = mobile_no;
+      if (dob !== undefined) state.dob = dob;
+      if (gender !== undefined) state.gender = gender;
+      if (country !== undefined) state.country = country;
+      if (userState !== undefined) state.state = userState;
+      if (city !== undefined) state.city = city;
+    },
+    setUser(state, action) {
+      const user = action.payload || {};
+      if (user.name !== undefined) state.name = user.name;
+      if (user.email !== undefined) state.email = user.email;
+      if (user.plan !== undefined) state.plan = user.plan;
+      if (user.coins !== undefined) state.coins = user.coins;
+      if (user.memberships !== undefined) state.memberships = user.memberships;
+      if (user.has_all_access !== undefined) state.has_all_access = user.has_all_access;
     },
     setPendingRegistration(state, action) {
       state.pendingRegistration = action.payload || null;
@@ -735,6 +751,7 @@ export const {
   setCoins,
   setPlan,
   patchUserProfile,
+  setUser,
   setPendingRegistration,
   logout,
 } = authSlice.actions;

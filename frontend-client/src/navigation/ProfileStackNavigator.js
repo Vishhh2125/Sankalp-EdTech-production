@@ -7,6 +7,7 @@ import MyWallet from '../screens/MyWallet';
 import TopUpScreen from '../screens/TopUpScreen';
 import TransactionHistoryScreen from '../screens/TransactionHistoryScreen';
 import EarnRewardsScreen from '../screens/EarnRewardsScreen';
+import MyDetailsScreen from '../screens/MyDetailsScreen';
 import { ROUTES } from '../constants/routes';
 import { useTheme } from '../context/ThemeContext';
 
@@ -31,6 +32,11 @@ export default function ProfileStackNavigator() {
         name={ROUTES.PROFILE}
         component={ProfileScreen}
         options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name={ROUTES.MY_DETAILS}
+        component={MyDetailsScreen}
+        options={{ ...dynamicHeader, title: 'Personal Details' }}
       />
       <Stack.Screen
         name={ROUTES.MEMBERSHIP}
