@@ -129,32 +129,36 @@ async function seed() {
         name: 'Privacy Policy',
         slug: 'privacy-policy',
         status: 'published',
-        content: 'Your privacy is important to us.',
+        content: '<h1>Privacy Policy</h1><p>Your privacy is important to us. This policy explains how we collect, use, and protect your personal information.</p><h2>1. Information We Collect</h2><p>We collect information you provide directly, such as your email address and profile details.</p><h2>2. Data Protection</h2><p>We implement strict security measures to protect your personal data.</p>',
       },
       {
         name: 'Terms & Conditions',
         slug: 'terms-conditions',
         status: 'published',
-        content: 'By using our platform you agree to these terms.',
+        content: '<h1>Terms & Conditions</h1><p>By using our platform you agree to the following terms and conditions.</p><h2>1. Account Usage</h2><p>You must maintain the confidentiality of your account credentials.</p><h2>2. Content Rights</h2><p>All streaming content is protected by intellectual property laws.</p>',
       },
       {
         name: 'About Us',
         slug: 'about-us',
         status: 'published',
-        content: 'We are a premium short-form drama streaming platform.',
+        content: '<h1>About Us</h1><p>We are a premier educational and short-form video streaming platform empowering learning and entertainment worldwide.</p>',
       },
       {
         name: 'Help / FAQ',
         slug: 'help-faq',
         status: 'published',
-        content: 'Q: How do I subscribe?\nA: Go to Membership.',
+        content: '<h1>Help & FAQ</h1><h2>Q: How do I subscribe?</h2><p>A: Navigate to the Membership section in your profile to choose a subscription plan.</p><h2>Q: How do coins work?</h2><p>A: Coins allow you to unlock premium content individually.</p>',
       },
     ];
 
     for (const page of pages) {
       await prisma.cmsPage.upsert({
         where: { slug: page.slug },
-        update: {},
+        update: {
+          name: page.name,
+          content: page.content,
+          status: page.status,
+        },
         create: page,
       });
     }

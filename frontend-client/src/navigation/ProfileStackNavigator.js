@@ -8,6 +8,7 @@ import TopUpScreen from '../screens/TopUpScreen';
 import TransactionHistoryScreen from '../screens/TransactionHistoryScreen';
 import EarnRewardsScreen from '../screens/EarnRewardsScreen';
 import MyDetailsScreen from '../screens/MyDetailsScreen';
+import CmsViewerScreen from '../screens/CmsViewerScreen';
 import { ROUTES } from '../constants/routes';
 import { useTheme } from '../context/ThemeContext';
 
@@ -62,6 +63,11 @@ export default function ProfileStackNavigator() {
         name={ROUTES.EARN_REWARDS}
         component={EarnRewardsScreen}
         options={{ ...dynamicHeader, title: 'Earn Rewards' }}
+      />
+      <Stack.Screen
+        name={ROUTES.CMS_VIEWER}
+        component={CmsViewerScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

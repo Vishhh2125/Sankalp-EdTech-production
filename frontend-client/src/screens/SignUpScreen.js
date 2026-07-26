@@ -173,12 +173,7 @@ export default function SignUpScreen({ navigation, onGuestAccess }) {
         </>
       )}
 
-      {/* Terms */}
-      <Text style={styles.terms}>
-        By signing up you agree to our{' '}
-        <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
-        <Text style={styles.termsLink}>Privacy Policy</Text>
-      </Text>
+
 
       {/* Create Account Button */}
       <Pressable

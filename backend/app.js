@@ -31,6 +31,7 @@ import liveRouter from './modules/live/live.router.js';
 import packageRouter from './modules/content/package.router.js';
 import teacherRouter from './modules/teacher/teacher.routes.js';
 import geoRouter from './modules/geo/geo.routes.js';
+import { adminCmsRouter, clientCmsRouter } from './modules/cms/cms.routes.js';
 import helmet from 'helmet';
 
 import morgan from 'morgan';
@@ -188,6 +189,8 @@ app.use('/api/live', liveRouter);
 app.use('/api/v1/teacher', teacherRouter);
 app.use('/api/geo', geoRouter);
 app.use('/api/v1/geo', geoRouter);
+app.use('/api/v1/cms', clientCmsRouter);
+app.use('/api/v1/admin/cms', adminCmsRouter);
 
 // ============= 404 HANDLER =============
 

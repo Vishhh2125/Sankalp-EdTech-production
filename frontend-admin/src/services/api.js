@@ -430,3 +430,13 @@ export const studentsApi = {
   assignCourses: (userId, showIds) => api.post(`/v1/admin/students/${userId}/courses`, { show_ids: showIds }),
   revokeCourse: (userId, showId) => api.delete(`/v1/admin/students/${userId}/courses/${showId}`),
 };
+
+// ── CMS Pages API ──
+export const cmsApi = {
+  list: () => api.get('/v1/admin/cms'),
+  getById: (id) => api.get(`/v1/admin/cms/${id}`),
+  create: (data) => api.post('/v1/admin/cms', data),
+  update: (id, data) => api.put(`/v1/admin/cms/${id}`, data),
+  updateStatus: (id, status) => api.patch(`/v1/admin/cms/${id}/status`, { status }),
+  delete: (id) => api.delete(`/v1/admin/cms/${id}`),
+};

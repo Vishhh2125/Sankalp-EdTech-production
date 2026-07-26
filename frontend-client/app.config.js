@@ -29,9 +29,9 @@ const iosClientIdPrefix = iosClientId.split('.').shift() || '';
 module.exports = {
   expo: {
     name: "AlphaMinds",
-    slug: "7k",
+    slug: "alphaminds",
     scheme: [
-      "7k",
+      "alphaminds",
       androidClientIdPrefix ? `com.googleusercontent.apps.${androidClientIdPrefix}` : null,
       iosClientIdPrefix ? `com.googleusercontent.apps.${iosClientIdPrefix}` : null
     ].filter(Boolean),
@@ -46,13 +46,13 @@ module.exports = {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.samyak_8505.x7K",
+      bundleIdentifier: "com.samyak_8505.alphaminds",
       associatedDomains: [
         "applinks:ott.ventagenie.com"
       ]
     },
     android: {
-      package: "com.samyak_8505.x7K",
+      package: "com.samyak_8505.alphaminds",
       adaptiveIcon: {
         foregroundImage: "./assets/AlphaMinds.png",
         backgroundColor: "#ffffff"
@@ -122,14 +122,13 @@ module.exports = {
           }
         }
       ],
-      "expo-web-browser",
-      "@react-native-community/datetimepicker"
+      "expo-web-browser"
     ],
     extra: {
       eas: {
-        projectId: "5dd61ee9-e865-46d2-bda6-9064e3107aa3"
+        projectId: "968573ea-3b1f-42f7-a1ab-431da549d092"
       }
     },
-    owner: "prasen_10"
+    owner: "samyak_8505"
   }
 };

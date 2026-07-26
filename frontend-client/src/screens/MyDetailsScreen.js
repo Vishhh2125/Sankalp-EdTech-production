@@ -16,7 +16,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch } from 'react-redux';
-import { useFocusEffect } from '@react-navigation/native';
 
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
@@ -128,15 +127,6 @@ export default function MyDetailsScreen({ navigation }) {
   const [cityModalOpen, setCityModalOpen] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
-
-  useFocusEffect(
-    React.useCallback(() => {
-      navigation.getParent()?.setOptions({ tabBarStyle: { display: 'none' } });
-      return () => {
-        navigation.getParent()?.setOptions({ tabBarStyle: undefined });
-      };
-    }, [navigation])
-  );
 
   // Load User Profile and Countries on Mount
   useEffect(() => {

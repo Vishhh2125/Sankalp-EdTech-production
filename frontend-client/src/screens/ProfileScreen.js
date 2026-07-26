@@ -24,6 +24,7 @@ import { fetchCheckinStatus } from '../components/rewards/dailyCheckinApi';
 import { formatMembershipEnd } from '../components/membership/membershipApi';
 import { logoutUser, clearLogoutError } from '../redux/slices/authSlice';
 import { showAlert } from '../services/alertService';
+import { fetchPublishedCmsPages } from '../services/cmsApi';
 
 const FEATURE_ICONS = [
   { icon: 'infinite-outline', label: 'Unlimited Access' },
@@ -144,14 +145,29 @@ export default function ProfileScreen({ navigation }) {
   const dispatch = useDispatch();
   const { logout: logoutState } = useSelector((state) => state.auth);
   const [earnRewardsBadge, setEarnRewardsBadge] = useState(null);
+  const [cmsPages, setCmsPages] = useState([]);
 
   useFocusEffect(
     useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        try {
+          const pages = await fetchPublishedCmsPages();
+          if (!cancelled && Array.isArray(pages)) {
+            setCmsPages(pages);
+          }
+        } catch {
+          if (!cancelled) setCmsPages([]);
+        }
+      })();
+
       if (!accessToken) {
         setEarnRewardsBadge(null);
-        return;
+        return () => {
+          cancelled = true;
+        };
       }
-      let cancelled = false;
+
       (async () => {
         try {
           const data = await fetchCheckinStatus(accessToken);
@@ -165,6 +181,7 @@ export default function ProfileScreen({ navigation }) {
           if (!cancelled) setEarnRewardsBadge(null);
         }
       })();
+
       return () => {
         cancelled = true;
       };
@@ -318,6 +335,25 @@ export default function ProfileScreen({ navigation }) {
           />
         ))}
       </View>
+
+      {/* Dynamic Published CMS Pages */}
+      {cmsPages.length > 0 ? (
+        <View style={styles.menuCard}>
+          {cmsPages.map((pg) => (
+            <MenuItem
+              key={pg.id || pg.slug}
+              icon="document-text-outline"
+              label={pg.name}
+              onPress={() =>
+                navigation.navigate(ROUTES.CMS_VIEWER, {
+                  slug: pg.slug,
+                  title: pg.name,
+                })
+              }
+            />
+          ))}
+        </View>
+      ) : null}
 
       <View style={styles.menuCard}>
         <MenuItem

@@ -36,6 +36,7 @@ export default function BottomTabNavigator() {
       screenOptions={({ route }) => {
         const routeName = getFocusedRouteNameFromRoute(route);
         const hideOnScreens = [
+          ROUTES.MY_DETAILS,
           ROUTES.MEMBERSHIP,
           ROUTES.MY_WALLET,
           ROUTES.TOP_UP,

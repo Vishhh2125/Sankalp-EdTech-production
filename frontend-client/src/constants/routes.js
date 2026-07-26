@@ -21,4 +21,5 @@ export const ROUTES = {
   QUIZ_TAKING: 'QuizTaking',
   PACKAGE_DETAIL: 'PackageDetail',
   MY_DETAILS: 'MyDetails',
+  CMS_VIEWER: 'CmsViewer',
 };
