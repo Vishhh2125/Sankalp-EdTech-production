@@ -124,7 +124,7 @@ async function uploadImageFile(type, entityId, file) {
 }
 
 // Called after video upload completes — enqueues transcode jobs
-async function confirmVideoUpload(episodeId) {
+async function confirmVideoUpload(episodeId, admin) {
   console.log('[Media] confirmVideoUpload called for episode:', episodeId);
   const episode = await prisma.episode.findUnique({ where: { id: episodeId } });
   if (!episode) throw new AppError('Episode not found', 404);
@@ -140,7 +140,7 @@ async function confirmVideoUpload(episodeId) {
     completed_profiles: 0
   };
 
-  if (isTeacherShow) {
+  if (isTeacherShow && admin?.role === 'TEACHER') {
     updateData.approval_status = 'DRAFT';
   }
 

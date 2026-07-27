@@ -1401,6 +1401,30 @@ export default function Dramas() {
                                     Submit
                                   </button>
                                 )}
+                                {user?.role !== 'teacher' && (
+                                  <button
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      try {
+                                        const nextStatus = ep.approval_status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
+                                        await episodesApi.update(ep.id, { approval_status: nextStatus });
+                                        await reload();
+                                      } catch (err) {
+                                        alert('Failed to update status: ' + (err.response?.data?.error || err.message));
+                                      }
+                                    }}
+                                    style={{
+                                      fontSize: 10,
+                                      padding: '2px 8px',
+                                      height: 24,
+                                      background: ep.approval_status === 'PUBLISHED' ? 'rgba(239, 68, 68, 0.15)' : 'var(--accent2)',
+                                      color: ep.approval_status === 'PUBLISHED' ? '#ef4444' : 'white'
+                                    }}
+                                  >
+                                    {ep.approval_status === 'PUBLISHED' ? 'Unpublish' : 'Publish'}
+                                  </button>
+                                )}
                                 <button className="btn btn-ghost btn-sm" onClick={() => open('edit-ep', { ...d, selectedEpisode: ep })} title="Edit episode">
                                   <Edit2 size={11}/>
                                 </button>

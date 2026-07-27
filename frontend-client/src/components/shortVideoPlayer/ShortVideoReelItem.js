@@ -365,11 +365,17 @@ export default function ShortVideoReelItem({
   }, [seekTo, currentTime, duration, item.duration_sec]);
 
   const handlePlaybackEnd = useCallback(() => {
+    const finalSec = Math.floor(duration || item.duration_sec || currentTime || 0);
+    if (finalSec > 0 && onProgressUpdate) {
+      onProgressUpdate(finalSec);
+    }
     setControlsVisible(true);
     onPlaybackEnd?.(item);
-  }, [item, onPlaybackEnd]);
+  }, [duration, item, onProgressUpdate, currentTime, onPlaybackEnd]);
 
   const handleVideoEnd = useCallback(() => {
+    handlePlaybackEnd();
+
     if (!autoAdvanceOnEnd) {
       if (repeatPlayback) {
         setManualPaused(false);
@@ -382,8 +388,6 @@ export default function ShortVideoReelItem({
       setControlsVisible(true);
       return;
     }
-
-    handlePlaybackEnd();
   }, [
     autoAdvanceOnEnd,
     handlePlaybackEnd,

@@ -321,6 +321,8 @@ export default function ForYouScreen() {
       }));
     }
 
+    const startProgressSec = episode?.is_completed ? 0 : (episode?.progress_sec || 0);
+
     dispatch(
       initShowPlayer({
         showId: showMode.show_id,
@@ -329,6 +331,7 @@ export default function ForYouScreen() {
         totalEpisodes: showMode.total_episodes,
         seedEpisodes: showMode.episodes || [],
         startEpisodeNum: episode.episode_num,
+        startProgressSec,
         streamBase: API_BASE_URL,
       })
     );

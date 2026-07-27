@@ -9,6 +9,7 @@ import {
 } from './daily-checkin.service.js';
 import { getAllActiveTopUpPlans } from '../topup/topup.service.js';
 import { recordView } from './view-count.service.js';
+import { getMyCoursesForUser } from './my-courses.service.js';
 
 const router = express.Router();
 
@@ -207,6 +208,21 @@ router.get('/bookmarks', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+/**
+ * GET /api/v1/user/my-courses
+ * Fetch all enrolled/purchased courses for the logged-in user.
+ * Aggregates direct show access, episode access, package purchases, and active membership.
+ */
+router.get('/my-courses', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const courses = await getMyCoursesForUser(userId);
+    return res.json(new ApiResponse(200, { items: courses }, 'Enrolled courses fetched successfully'));
+  } catch (e) {
+    next(e);
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────
 // WATCH HISTORY
 // ─────────────────────────────────────────────────────────────────
@@ -236,16 +252,23 @@ router.post('/watch-history', requireAuth, async (req, res, next) => {
       return res.status(404).json(new ApiResponse(404, null, 'Episode not found'));
     }
 
+    const existing = await prisma.watchHistory.findUnique({
+      where: { idx_wh_user_ep: { user_id: userId, episode_id } },
+    });
+
+    const newProgress = Math.floor(progress_sec || 0);
+    const finalProgress = existing ? Math.max(existing.progress_sec, newProgress) : newProgress;
+
     const entry = await prisma.watchHistory.upsert({
       where: { idx_wh_user_ep: { user_id: userId, episode_id } },
       create: {
         user_id: userId,
         episode_id,
-        progress_sec: Math.floor(progress_sec || 0),
+        progress_sec: finalProgress,
         last_watched: new Date(),
       },
       update: {
-        progress_sec: Math.floor(progress_sec || 0),
+        progress_sec: finalProgress,
         last_watched: new Date(),
       },
     });

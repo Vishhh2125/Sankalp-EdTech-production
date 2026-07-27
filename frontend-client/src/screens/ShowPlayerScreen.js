@@ -115,7 +115,7 @@ export default function ShowPlayerScreen({ navigation }) {
 
   // Helper to dispatch watch history
   const recordWatchHistory = useCallback((ep, progressSec) => {
-    if (!accessToken || !ep) return;
+    if (!accessToken || !ep || ep.is_locked) return;
     dispatch(upsertWatchHistory({
       episodeId: ep.episode_id,
       progressSec,

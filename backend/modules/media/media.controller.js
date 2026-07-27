@@ -49,7 +49,7 @@ async function getImageUploadUrl(req, res, next) {
 
 async function confirmVideoUpload(req, res, next) {
   try {
-    const result = await mediaService.confirmVideoUpload(req.body.episode_id);
+    const result = await mediaService.confirmVideoUpload(req.body.episode_id, req.admin);
     res.json(result);
   } catch (e) { next(e); }
 }

@@ -19,34 +19,42 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 
 import GuestAccessPrompt from '../components/GuestAccessPrompt';
+import DramaDetailsSheetConnected, { TrophyProgressRing } from '../components/DramaDetailsSheetConnected';
 import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
 import { API_BASE_URL } from '../constants/config';
+import { createAuthenticatedApi } from '../services/api';
 import {
   fetchBookmarks,
   fetchWatchHistory,
+  fetchMyCourses,
   toggleBookmark,
   deleteWatchHistory,
   selectBookmarks,
   selectWatchHistory,
+  selectMyCourses,
   selectBookmarksLoading,
   selectWatchHistoryLoading,
+  selectMyCoursesLoading,
   selectBookmarksLoaded,
   selectWatchHistoryLoaded,
+  selectMyCoursesLoaded,
 } from '../redux/slices/myListSlice';
 import {
   initShowPlayer,
   fetchShowPlayerPage,
 } from '../redux/slices/showPlayerSlice';
+import { getDownloadedEpisodes, removeDownload } from '../services/downloadManager';
 
 const { width } = Dimensions.get('window');
 
 // Tab constants
+const TAB_MY_COURSES = 'my_courses';
 const TAB_SAVED = 'saved';
 const TAB_CONTINUE = 'continue';
 const TAB_DOWNLOADS = 'downloads';
 
-import { getDownloadedEpisodes, removeDownload } from '../services/downloadManager';
+const feedApi = createAuthenticatedApi({ baseURL: API_BASE_URL });
 
 // ─────────────────────────────────────────────────────────────────
 // Progress bar shown on the thumbnail
@@ -95,18 +103,83 @@ function resolveThumbnailUrl(url) {
   return `${API_BASE_URL}${separator}${url}`;
 }
 
+// ─────────────────────────────────────────────────────────────────
+// Course Card — rendered in "My Courses" tab
+// Tapping opens Course Details sheet on Lectures tab (No video auto-play)
+// ─────────────────────────────────────────────────────────────────
+function CourseCard({ item, onPress }) {
+  const { theme: appTheme } = useTheme();
+  const cardStyles = useCardStyles(appTheme);
+  const resolvedThumbnailUrl = resolveThumbnailUrl(item.thumbnail_url);
+
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        cardStyles.card,
+        pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
+      ]}
+      onPress={onPress}
+    >
+      {/* Thumbnail */}
+      <View style={cardStyles.thumbnailWrap}>
+        {resolvedThumbnailUrl ? (
+          <Image
+            source={{ uri: resolvedThumbnailUrl }}
+            style={cardStyles.thumbnail}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[cardStyles.thumbnail, { backgroundColor: appTheme.surface }]} />
+        )}
+
+        {/* Access Badge */}
+        {item.access_label ? (
+          <View style={cardStyles.accessBadge}>
+            <Text style={cardStyles.accessBadgeText} numberOfLines={1}>
+              {item.access_label}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+
+      {/* Info */}
+      <View style={cardStyles.info}>
+        {/* Category & Top Right Trophy Badge */}
+        <View style={cardStyles.cardTopRow}>
+          <Text style={cardStyles.category} numberOfLines={1}>
+            {item.category || item.teacher_name || 'Course'}
+          </Text>
+
+          <TrophyProgressRing
+            completedCount={item.completed_episodes || 0}
+            totalEpisodes={item.total_episodes || 1}
+            size={20}
+          />
+        </View>
+
+        {/* Title */}
+        <Text style={cardStyles.title} numberOfLines={2}>
+          {item.show_title}
+        </Text>
+
+        {/* EP / Lectures Info */}
+        <View style={cardStyles.metaRow}>
+          <Ionicons name="book-outline" size={13} color={appTheme.gray} style={{ marginRight: 4 }} />
+          <Text style={cardStyles.epLine}>
+            {item.unlocked_episodes} / {item.total_episodes || 0} Lectures
+          </Text>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────
-// Show card — matches the UI reference image exactly
-// thumbnail on left, title + category + EP.X / EP.TOTAL on right
+// Show card — matches Saved / Continue / Downloads
 // ─────────────────────────────────────────────────────────────────
 function ShowCard({ item, onPress, onLongPress, selectionMode, selected, onDelete }) {
   const { theme: appTheme } = useTheme();
   const cardStyles = useCardStyles(appTheme);
-  const progressPct =
-    item.duration_sec > 0
-      ? Math.min(Math.round((item.progress_sec / item.duration_sec) * 100), 100)
-      : 0;
 
   const resolvedThumbnailUrl = resolveThumbnailUrl(item.thumbnail_url);
 
@@ -165,7 +238,7 @@ function ShowCard({ item, onPress, onLongPress, selectionMode, selected, onDelet
 
         {/* Title */}
         <Text style={cardStyles.title} numberOfLines={2}>
-          {item.show_title}
+          {item.show_title || item.title}
         </Text>
 
         {/* EP.X / EP.TOTAL */}
@@ -221,54 +294,77 @@ const useCardStyles = (appTheme) => StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  accessBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    backgroundColor: appTheme.primary,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    zIndex: 2,
+  },
+  accessBadgeText: {
+    color: appTheme.white,
+    fontSize: 10,
+    fontWeight: '700',
+  },
   playOverlay: {
     position: 'absolute',
-    top: '50%',
-    left: '50%',
-    marginTop: -18,
-    marginLeft: -18,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: appTheme.surface,
-    justifyContent: 'center',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.25)',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   info: {
     flex: 1,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    justifyContent: 'center',
-    gap: 4,
+    justifyContent: 'space-between',
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
   },
   category: {
-    color: '#E0E0E0',
     fontSize: 11,
-    fontWeight: '400',
+    fontWeight: '600',
+    color: appTheme.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    flex: 1,
   },
   title: {
-    color: appTheme.white,
     fontSize: 15,
     fontWeight: '700',
+    color: appTheme.white,
     lineHeight: 20,
   },
-  epLine: {
-    color: appTheme.lightGray,
-    fontSize: 13,
-    fontWeight: '500',
-    marginTop: 2,
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-});;
+  epLine: {
+    fontSize: 12,
+    color: appTheme.gray,
+    fontWeight: '500',
+  },
+});
 
 // ─────────────────────────────────────────────────────────────────
-// Empty state component
+// Empty state
 // ─────────────────────────────────────────────────────────────────
 function EmptyState({ icon, title, subtitle }) {
   const { theme: appTheme } = useTheme();
   const emptyStyles = useEmptyStyles(appTheme);
   return (
-    <View style={emptyStyles.wrap}>
-      <Ionicons name={icon} size={48} color={appTheme.border} />
+    <View style={emptyStyles.container}>
+      <Ionicons name={icon} size={64} color={appTheme.gray} style={{ opacity: 0.5 }} />
       <Text style={emptyStyles.title}>{title}</Text>
       <Text style={emptyStyles.subtitle}>{subtitle}</Text>
     </View>
@@ -276,27 +372,29 @@ function EmptyState({ icon, title, subtitle }) {
 }
 
 const useEmptyStyles = (appTheme) => StyleSheet.create({
-  wrap: {
+  container: {
+    flex: 1,
     alignItems: 'center',
-    paddingTop: 60,
-    gap: 10,
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    paddingBottom: 60,
   },
   title: {
-    color: appTheme.gray,
-    fontSize: 16,
-    fontWeight: '600',
+    color: appTheme.white,
+    fontSize: 18,
+    fontWeight: '700',
+    marginTop: 16,
+    textAlign: 'center',
   },
   subtitle: {
-    color: appTheme.darkGray,
+    color: appTheme.gray,
     fontSize: 13,
+    marginTop: 8,
     textAlign: 'center',
-    paddingHorizontal: 32,
+    lineHeight: 18,
   },
-});;
+});
 
-// ─────────────────────────────────────────────────────────────────
-// Guest screen
-// ─────────────────────────────────────────────────────────────────
 function GuestScreen() {
   return (
     <GuestAccessPrompt
@@ -318,26 +416,38 @@ export default function MyListScreen() {
   const styles = useStyles(appTheme);
 
   const accessToken = useSelector((state) => state.auth?.accessToken);
+  const myCourses = useSelector(selectMyCourses);
   const bookmarks = useSelector(selectBookmarks);
   const watchHistory = useSelector(selectWatchHistory);
+  const myCoursesLoading = useSelector(selectMyCoursesLoading);
   const bookmarksLoading = useSelector(selectBookmarksLoading);
   const watchHistoryLoading = useSelector(selectWatchHistoryLoading);
+  const myCoursesLoaded = useSelector(selectMyCoursesLoaded);
   const bookmarksLoaded = useSelector(selectBookmarksLoaded);
   const watchHistoryLoaded = useSelector(selectWatchHistoryLoaded);
 
-  const [activeTab, setActiveTab] = useState(route.params?.initialTab || TAB_SAVED);
+  const [activeTab, setActiveTab] = useState(route.params?.initialTab || TAB_MY_COURSES);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [downloads, setDownloads] = useState([]);
 
-  // Fetch data on mount if authenticated and not yet loaded
+  // Drama Details Sheet State for My Courses
+  const [selectedShow, setSelectedShow] = useState(null);
+  const [showDetails, setShowDetails] = useState(null);
+  const [showDetailsLoading, setShowDetailsLoading] = useState(false);
+  const [showDetailsError, setShowDetailsError] = useState(null);
+  const [showSheetVisible, setShowSheetVisible] = useState(false);
+  const [dramaSheetKey, setDramaSheetKey] = useState(0);
+
+  // Fetch data on mount if authenticated
   useEffect(() => {
     if (!accessToken) return;
+    if (!myCoursesLoaded) dispatch(fetchMyCourses());
     if (!bookmarksLoaded) dispatch(fetchBookmarks());
     if (!watchHistoryLoaded) dispatch(fetchWatchHistory());
-  }, [accessToken, bookmarksLoaded, watchHistoryLoaded, dispatch]);
+  }, [accessToken, myCoursesLoaded, bookmarksLoaded, watchHistoryLoaded, dispatch]);
 
   useEffect(() => {
     if (route.params?.initialTab) {
@@ -345,22 +455,120 @@ export default function MyListScreen() {
     }
   }, [route.params?.initialTab]);
 
-  // Refetch bookmarks and watch history when screen comes into focus
-  // This ensures data is fresh after watching/browsing in other screens
+  // Refetch data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       if (!accessToken) return;
-      // Refetch to ensure we have the latest bookmarks and watch history
+      dispatch(fetchMyCourses());
       dispatch(fetchBookmarks());
       dispatch(fetchWatchHistory());
       getDownloadedEpisodes().then(setDownloads);
     }, [accessToken, dispatch])
   );
 
-  // ── Navigate to player from a bookmark or watch history entry ──
+  // ── Show Sheet Handlers for My Courses ──
+  const fetchShowDetails = useCallback(async (showId, fromEp = 1) => {
+    setShowDetailsLoading(true);
+    setShowDetailsError(null);
+    try {
+      const res = await feedApi.get(`/api/feed/show/${showId}`, {
+        params: { from_ep: fromEp, limit: 30 },
+      });
+      setShowDetails(res.data);
+    } catch (e) {
+      console.error('Show Details Sheet Load Error:', e);
+      setShowDetails(null);
+      setShowDetailsError(e?.response?.data?.message || e?.message || 'Failed to load details');
+    } finally {
+      setShowDetailsLoading(false);
+    }
+  }, []);
+
+  const openCourseSheet = useCallback((course) => {
+    setDramaSheetKey((k) => k + 1);
+    const selectedItem = {
+      ...course,
+      show_id: course.show_id,
+      show_title: course.show_title,
+      total_episodes: course.total_episodes || 0,
+      episode_num: course.latest_watched_episode_num || 1,
+    };
+    setSelectedShow(selectedItem);
+    setShowDetails(null);
+    setShowSheetVisible(true);
+    fetchShowDetails(course.show_id, 1);
+  }, [fetchShowDetails]);
+
+  const handleRangeChange = useCallback((fromEp) => {
+    if (!selectedShow?.show_id) return;
+    fetchShowDetails(selectedShow.show_id, fromEp);
+  }, [selectedShow, fetchShowDetails]);
+
+  const handleEpisodePress = useCallback((episode) => {
+    if (!selectedShow || !showDetails) return;
+    if (episode.status !== 'ready' && !episode.is_locked) return;
+
+    const startProgressSec = episode?.is_completed ? 0 : (episode?.progress_sec || 0);
+
+    dispatch(
+      initShowPlayer({
+        showId: showDetails.show_id,
+        showTitle: showDetails.show_title || selectedShow.show_title,
+        thumbnailUrl: showDetails.thumbnail_url || selectedShow.thumbnail_url,
+        totalEpisodes: showDetails.total_episodes || selectedShow.total_episodes || 0,
+        seedEpisodes: showDetails.episodes || [],
+        startEpisodeNum: episode?.episode_num || 1,
+        streamBase: API_BASE_URL,
+        startProgressSec,
+      })
+    );
+
+    dispatch(
+      fetchShowPlayerPage({
+        showId: showDetails.show_id,
+        fromEp: Math.max(1, Math.floor(((episode?.episode_num || 1) - 1) / 30) * 30 + 1),
+        limit: 30,
+      })
+    );
+
+    setShowSheetVisible(false);
+    navigation.navigate(ROUTES.SHOW_PLAYER, { fromMyList: true });
+  }, [dispatch, navigation, selectedShow, showDetails]);
+
+  const handleStartWatching = useCallback((startEpNum) => {
+    if (!selectedShow || !showDetails) return;
+
+    const targetEpNum = startEpNum || 1;
+    const targetEp = (showDetails.episodes || []).find((e) => e.episode_num === targetEpNum);
+    const startProgressSec = targetEp?.is_completed ? 0 : (targetEp?.progress_sec || 0);
+
+    dispatch(
+      initShowPlayer({
+        showId: showDetails.show_id,
+        showTitle: showDetails.show_title || selectedShow.show_title,
+        thumbnailUrl: showDetails.thumbnail_url || selectedShow.thumbnail_url,
+        totalEpisodes: showDetails.total_episodes || selectedShow.total_episodes || 0,
+        seedEpisodes: showDetails.episodes || [],
+        startEpisodeNum: targetEpNum,
+        streamBase: API_BASE_URL,
+        startProgressSec,
+      })
+    );
+
+    dispatch(
+      fetchShowPlayerPage({
+        showId: showDetails.show_id,
+        fromEp: Math.max(1, Math.floor((targetEpNum - 1) / 30) * 30 + 1),
+        limit: 30,
+      })
+    );
+
+    setShowSheetVisible(false);
+    navigation.navigate(ROUTES.SHOW_PLAYER, { fromMyList: true });
+  }, [dispatch, navigation, selectedShow, showDetails]);
+
+  // ── Navigate to player from Saved/Continue ──
   const handleCardPress = useCallback((entry) => {
-    // entry has: show_id, show_title, thumbnail_url, episode_id,
-    // episode_num, duration_sec, progress_sec, total_episodes
     dispatch(
       initShowPlayer({
         showId: entry.show_id,
@@ -369,10 +577,9 @@ export default function MyListScreen() {
         totalEpisodes: entry.total_episodes || 1,
         seedEpisodes: [
           {
-            // Shape matches what mapEpisode expects in showPlayerSlice
             episode_id: entry.episode_id,
             episode_num: entry.episode_num,
-            hls_url: null, // will be fetched by fetchShowPlayerPage
+            hls_url: null,
             duration_sec: entry.duration_sec || 0,
             title: null,
             is_locked: false,
@@ -389,8 +596,6 @@ export default function MyListScreen() {
       })
     );
 
-    // Immediately fetch the full episode list from backend
-    // so the player has HLS URL and can scroll through all episodes
     if (!entry.localVideoPath) {
       dispatch(
         fetchShowPlayerPage({
@@ -427,6 +632,7 @@ export default function MyListScreen() {
   }, [selectionMode, activeTab, handleCardPress]);
 
   const handleCardLongPress = useCallback((entry) => {
+    if (activeTab === TAB_MY_COURSES) return;
     if (!selectionMode) {
       setSelectionMode(true);
       let id;
@@ -492,14 +698,10 @@ export default function MyListScreen() {
     setDeleteModalVisible(true);
   }, []);
 
-  // ── Merge bookmark with latest watch history ──────────────────
-  // If a show was bookmarked but the user watched a later episode,
-  // show and play the latest watched episode instead
   const getDisplayEntry = useCallback((bookmark) => {
     const watchEntry = watchHistory.find(w => w.show_id === bookmark.show_id);
 
     if (watchEntry) {
-      // Merge: use bookmark data but replace episode info with latest watched
       return {
         show_id: bookmark.show_id,
         show_title: bookmark.show_title,
@@ -515,7 +717,6 @@ export default function MyListScreen() {
       };
     }
 
-    // No watch history for this show — use bookmark as-is
     return bookmark;
   }, [watchHistory]);
 
@@ -525,7 +726,7 @@ export default function MyListScreen() {
     ? "Are you sure you want to delete the selected videos from your list?"
     : "Are you sure you want to remove this video from your list?";
 
-  const totalCount = bookmarks.length + watchHistory.length + downloads.length;
+  const totalCount = myCourses.length + bookmarks.length + watchHistory.length + downloads.length;
 
   if (!accessToken) {
     return (
@@ -535,7 +736,8 @@ export default function MyListScreen() {
     );
   }
 
-  const isLoading = (bookmarksLoading && !bookmarksLoaded) ||
+  const isLoading = (myCoursesLoading && !myCoursesLoaded) ||
+    (bookmarksLoading && !bookmarksLoaded) ||
     (watchHistoryLoading && !watchHistoryLoaded);
 
   return (
@@ -556,51 +758,72 @@ export default function MyListScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>My Learning</Text>
             <View style={styles.countBadge}>
-              <Text style={styles.countText}>{totalCount} Videos</Text>
+              <Text style={styles.countText}>{totalCount} Items</Text>
             </View>
           </View>
-          <Text style={styles.subtitle}>Your saved shows and watch progress</Text>
+          <Text style={styles.subtitle}>Your enrolled courses and learning progress</Text>
         </>
       )}
 
       {/* ── Tab bar ── */}
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === TAB_SAVED && styles.tabActive]}
-          onPress={() => {
-            setActiveTab(TAB_SAVED);
-            cancelSelection();
-          }}
+      <View style={styles.tabBarScrollWrap}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabBarContainer}
         >
-          <Text style={[styles.tabText, activeTab === TAB_SAVED && styles.tabTextActive]}>Saved</Text>
-          <Text style={[styles.tabText, activeTab === TAB_SAVED && styles.tabTextActive, { marginTop: 2, fontSize: 11 }]}>
-            ({bookmarks.length})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === TAB_CONTINUE && styles.tabActive]}
-          onPress={() => {
-            setActiveTab(TAB_CONTINUE);
-            cancelSelection();
-          }}
-        >
-          <Text style={[styles.tabText, activeTab === TAB_CONTINUE && styles.tabTextActive]}>Continue Learning</Text>
-          <Text style={[styles.tabText, activeTab === TAB_CONTINUE && styles.tabTextActive, { marginTop: 2, fontSize: 11 }]}>
-            ({watchHistory.length})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === TAB_DOWNLOADS && styles.tabActive]}
-          onPress={() => {
-            setActiveTab(TAB_DOWNLOADS);
-            cancelSelection();
-          }}
-        >
-          <Text style={[styles.tabText, activeTab === TAB_DOWNLOADS && styles.tabTextActive]}>Downloads</Text>
-          <Text style={[styles.tabText, activeTab === TAB_DOWNLOADS && styles.tabTextActive, { marginTop: 2, fontSize: 11 }]}>
-            ({downloads.length})
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === TAB_MY_COURSES && styles.tabActive]}
+            onPress={() => {
+              setActiveTab(TAB_MY_COURSES);
+              cancelSelection();
+            }}
+          >
+            <Text style={[styles.tabText, activeTab === TAB_MY_COURSES && styles.tabTextActive]}>My Courses</Text>
+            <Text style={[styles.tabText, activeTab === TAB_MY_COURSES && styles.tabTextActive, { marginTop: 2, fontSize: 11 }]}>
+              ({myCourses.length})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tab, activeTab === TAB_SAVED && styles.tabActive]}
+            onPress={() => {
+              setActiveTab(TAB_SAVED);
+              cancelSelection();
+            }}
+          >
+            <Text style={[styles.tabText, activeTab === TAB_SAVED && styles.tabTextActive]}>Saved</Text>
+            <Text style={[styles.tabText, activeTab === TAB_SAVED && styles.tabTextActive, { marginTop: 2, fontSize: 11 }]}>
+              ({bookmarks.length})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tab, activeTab === TAB_CONTINUE && styles.tabActive]}
+            onPress={() => {
+              setActiveTab(TAB_CONTINUE);
+              cancelSelection();
+            }}
+          >
+            <Text style={[styles.tabText, activeTab === TAB_CONTINUE && styles.tabTextActive]}>Continue Learning</Text>
+            <Text style={[styles.tabText, activeTab === TAB_CONTINUE && styles.tabTextActive, { marginTop: 2, fontSize: 11 }]}>
+              ({watchHistory.length})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tab, activeTab === TAB_DOWNLOADS && styles.tabActive]}
+            onPress={() => {
+              setActiveTab(TAB_DOWNLOADS);
+              cancelSelection();
+            }}
+          >
+            <Text style={[styles.tabText, activeTab === TAB_DOWNLOADS && styles.tabTextActive]}>Downloads</Text>
+            <Text style={[styles.tabText, activeTab === TAB_DOWNLOADS && styles.tabTextActive, { marginTop: 2, fontSize: 11 }]}>
+              ({downloads.length})
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
       </View>
 
       {/* ── Content ── */}
@@ -608,6 +831,28 @@ export default function MyListScreen() {
         <View style={styles.loadingWrap}>
           <ActivityIndicator size="large" color={appTheme.primary} />
         </View>
+      ) : activeTab === TAB_MY_COURSES ? (
+        // ── My Courses tab ─────────────────────────────────────
+        myCourses.length === 0 ? (
+          <EmptyState
+            icon="school-outline"
+            title="No enrolled courses yet"
+            subtitle="Explore available courses or purchase a membership to start learning"
+          />
+        ) : (
+          <FlatList
+            data={myCourses}
+            keyExtractor={(item) => item.show_id}
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <CourseCard
+                item={item}
+                onPress={() => openCourseSheet(item)}
+              />
+            )}
+          />
+        )
       ) : activeTab === TAB_SAVED ? (
         // ── Saved / Bookmarks tab ──────────────────────────────
         bookmarks.length === 0 ? (
@@ -649,7 +894,7 @@ export default function MyListScreen() {
                     episode_num: displayEntry.episode_num,
                     duration_sec: displayEntry.duration_sec,
                     progress_sec: displayEntry.progress_sec,
-                    total_episodes: displayEntry.total_episodes || 1,
+                    total_episodes: displayEntry.total_episodes || null,
                     bookmark_id: item.bookmark_id,
                   })}
                   onLongPress={() => handleCardLongPress(item)}
@@ -659,12 +904,12 @@ export default function MyListScreen() {
           />
         )
       ) : activeTab === TAB_CONTINUE ? (
-        // ── Continue Watching tab ──────────────────────────────
+        // ── Continue Learning tab ──────────────────────────────
         watchHistory.length === 0 ? (
           <EmptyState
             icon="play-circle-outline"
-            title="Nothing in progress yet"
-            subtitle="Start learning a lecture and it will appear here"
+            title="No watch progress"
+            subtitle="Start watching courses to track your progress here"
           />
         ) : (
           <FlatList
@@ -684,7 +929,6 @@ export default function MyListScreen() {
                   duration_sec: item.duration_sec,
                   progress_sec: item.progress_sec,
                   total_episodes: item.total_episodes || null,
-                  tags: item.tags,
                 }}
                 selectionMode={selectionMode}
                 selected={selectedItems.has(item.history_id)}
@@ -696,12 +940,12 @@ export default function MyListScreen() {
           />
         )
       ) : (
-        // ── Downloads tab ──────────────────────────────
+        // ── Downloads tab ──────────────────────────────────────
         downloads.length === 0 ? (
           <EmptyState
             icon="download-outline"
-            title="No downloads yet"
-            subtitle="Download lectures to learn offline"
+            title="No downloaded videos"
+            subtitle="Download episodes to watch offline anytime"
           />
         ) : (
           <FlatList
@@ -712,40 +956,46 @@ export default function MyListScreen() {
             renderItem={({ item }) => (
               <ShowCard
                 item={{
-                  show_id: item.showName, // mock for local playback
-                  show_title: item.showName || item.title,
-                  thumbnail_url: item.localImagePath,
-                  category: 'Downloaded',
+                  show_id: item.showId || item.episodeId,
+                  show_title: item.showName || item.show_title || item.showTitle || item.title || 'Downloaded Video',
+                  thumbnail_url: item.localImagePath || item.thumbnailUrl || item.thumbnail_url || null,
+                  category: 'Offline',
                   episode_id: item.episodeId,
-                  episode_num: item.episodeNum,
-                  duration_sec: item.duration,
-                  progress_sec: 0,
-                  total_episodes: item.episodeNum,
-                  tags: ['Offline'],
+                  episode_num: item.episodeNum || 1,
+                  duration_sec: item.duration || item.durationSec || 0,
+                  progress_sec: item.progressSec || 0,
+                  total_episodes: item.totalEpisodes || 1,
+                  localVideoPath: item.localVideoPath,
                 }}
                 selectionMode={selectionMode}
                 selected={selectedItems.has(item.episodeId)}
                 onDelete={() => handleDeleteDirect(item, TAB_DOWNLOADS)}
-                onPress={() => handleCardPressAction({
-                  episodeId: item.episodeId,
-                  show_id: item.showName || item.episodeId,
-                  show_title: item.showName || item.title,
-                  thumbnail_url: item.localImagePath,
-                  episode_id: item.episodeId,
-                  episode_num: item.episodeNum,
-                  duration_sec: item.duration,
-                  progress_sec: 0,
-                  total_episodes: 1,
-                  localVideoPath: item.localVideoPath,
-                })}
-                onLongPress={() => handleCardLongPress({
-                  episodeId: item.episodeId,
-                })}
+                onPress={() => handleCardPressAction(item)}
+                onLongPress={() => handleCardLongPress(item)}
               />
             )}
           />
         )
       )}
+
+      {/* Course Detail Sheet overlay for My Courses */}
+      <DramaDetailsSheetConnected
+        key={`drama-${dramaSheetKey}-${selectedShow?.show_id ?? 'none'}`}
+        visible={showSheetVisible}
+        item={selectedShow}
+        details={selectedShow?.show_id === showDetails?.show_id ? showDetails : null}
+        loading={showDetailsLoading}
+        error={showDetailsError}
+        initialTab="episodes"
+        onRangeChange={handleRangeChange}
+        onEpisodePress={handleEpisodePress}
+        onStartWatching={handleStartWatching}
+        onClose={() => {
+          setShowSheetVisible(false);
+          setSelectedShow(null);
+          dispatch(fetchMyCourses());
+        }}
+      />
 
       {/* Delete Confirmation Modal */}
       <Modal visible={deleteModalVisible} transparent animationType="fade">
@@ -810,17 +1060,18 @@ const useStyles = (appTheme) => StyleSheet.create({
     marginBottom: 16,
   },
   // Tab bar
-  tabBar: {
+  tabBarScrollWrap: {
+    marginBottom: 20,
+  },
+  tabBarContainer: {
     flexDirection: 'row',
     backgroundColor: appTheme.surface,
     borderRadius: 12,
     padding: 4,
-    marginBottom: 20,
   },
   tab: {
-    flex: 1,
     paddingVertical: 8,
-    paddingHorizontal: 4,
+    paddingHorizontal: 14,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 10,
@@ -838,7 +1089,7 @@ const useStyles = (appTheme) => StyleSheet.create({
     color: appTheme.white,
   },
   list: {
-    paddingBottom: 100, // added extra padding bottom for the rectangular tab bar overlap prevention
+    paddingBottom: 100,
   },
   loadingWrap: {
     flex: 1,
@@ -858,76 +1109,73 @@ const useStyles = (appTheme) => StyleSheet.create({
     fontWeight: '700',
   },
   cancelBtn: {
-    padding: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
   },
   cancelBtnText: {
-    color: appTheme.white,
-    fontSize: 16,
+    color: appTheme.gray,
+    fontSize: 15,
   },
   deleteActionBtn: {
-    padding: 8,
-    backgroundColor: appTheme.primary,
+    backgroundColor: 'rgba(255,59,48,0.15)',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
     borderRadius: 8,
   },
   deleteActionText: {
-    color: appTheme.white,
-    fontSize: 14,
-    fontWeight: '700',
+    color: appTheme.danger || '#FF3B30',
+    fontSize: 15,
+    fontWeight: '600',
   },
   modalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
   },
   modalContainer: {
+    width: '100%',
     backgroundColor: appTheme.surface,
-    width: '80%',
     borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
+    padding: 20,
   },
   modalTitle: {
     color: appTheme.white,
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   modalText: {
     color: appTheme.gray,
     fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 24,
     lineHeight: 20,
+    marginBottom: 20,
   },
   modalButtons: {
     flexDirection: 'row',
-    width: '100%',
-    justifyContent: 'space-between',
-    gap: 12,
+    justifyContent: 'flex-end',
   },
   modalBtnCancel: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginRight: 10,
   },
   modalBtnCancelText: {
-    color: appTheme.white,
-    fontSize: 16,
+    color: appTheme.gray,
+    fontSize: 14,
     fontWeight: '600',
   },
   modalBtnDelete: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 24,
-    backgroundColor: appTheme.primary,
-    alignItems: 'center',
+    backgroundColor: appTheme.danger || '#FF3B30',
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 8,
   },
   modalBtnDeleteText: {
     color: appTheme.white,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
-});;
+});

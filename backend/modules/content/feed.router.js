@@ -188,10 +188,44 @@ router.get('/show/:showId', allowGuest, async (req, res, next) => {
 
     const totalEpisodes = await prisma.episode.count({ where: { show_id: showId, approval_status: 'PUBLISHED' } });
 
+    // Fetch user watch history for episodes of this show
+    const userWatchHistoryMap = new Map();
+    if (userId) {
+      const watchHistories = await prisma.watchHistory.findMany({
+        where: {
+          user_id: userId,
+          episode: { show_id: showId, approval_status: 'PUBLISHED' },
+        },
+        select: {
+          episode_id: true,
+          progress_sec: true,
+        },
+      });
+
+      for (const wh of watchHistories) {
+        userWatchHistoryMap.set(wh.episode_id, wh.progress_sec);
+      }
+    }
+
+    let completedCount = 0;
     const items = await Promise.all(episodes.map(async (ep) => {
       const { is_locked, lock_reason } = await checkEpisodeAccess(
         userId, isGuest, ep.id, ep.is_free, show.category_id
       );
+
+      const progressSec = userWatchHistoryMap.get(ep.id) ?? 0;
+      const isYt = ep.video_source === 'YOUTUBE';
+
+      // Locked episodes are NEVER marked completed!
+      const isCompleted = is_locked
+        ? false
+        : isYt
+        ? userWatchHistoryMap.has(ep.id)
+        : (ep.duration_sec > 0 ? progressSec >= Math.floor(ep.duration_sec * 0.90) : progressSec > 0);
+
+      if (isCompleted) {
+        completedCount++;
+      }
 
       return {
         episode_id: ep.id,
@@ -209,6 +243,8 @@ router.get('/show/:showId', allowGuest, async (req, res, next) => {
         hls_url: (!is_locked && ep.video_source !== 'YOUTUBE') ? getSignedEpisodeHlsPath(ep) : null,
         is_locked,
         lock_reason,
+        progress_sec: is_locked ? 0 : progressSec,
+        is_completed: isCompleted,
       };
     }));
 
@@ -227,6 +263,7 @@ router.get('/show/:showId', allowGuest, async (req, res, next) => {
       is_locked: isShowLocked,
       lock_reason: showLockReason,
       total_episodes: totalEpisodes,
+      completed_count: completedCount,
       episodes: items,
       has_more: fromEp + limit - 1 < totalEpisodes,
     });

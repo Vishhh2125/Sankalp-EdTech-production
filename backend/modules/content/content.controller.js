@@ -79,7 +79,7 @@ async function createEpisode(req, res, next) {
   try { res.status(201).json(await service.createEpisode(req.body, req.admin)); } catch (e) { next(e); }
 }
 async function updateEpisode(req, res, next) {
-  try { res.json(await service.updateEpisode(req.params.id, req.body)); } catch (e) { next(e); }
+  try { res.json(await service.updateEpisode(req.params.id, req.body, req.admin)); } catch (e) { next(e); }
 }
 async function deleteEpisode(req, res, next) {
   try { res.json(await service.deleteEpisode(req.params.id)); } catch (e) { next(e); }

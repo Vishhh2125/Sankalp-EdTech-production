@@ -94,9 +94,12 @@ export const startDownload = async (episodeId, onProgress) => {
       episodeNum: data.episode_num,
       title: data.title,
       showName: data.show_name,
+      showTitle: data.show_name,
       localVideoPath: uri,
       localImagePath: localImagePath,
+      thumbnailUrl: localImagePath,
       duration: data.duration_sec,
+      durationSec: data.duration_sec,
       downloadedAt: new Date().toISOString()
     };
 

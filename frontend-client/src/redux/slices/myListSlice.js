@@ -35,6 +35,22 @@ export const fetchBookmarks = createAsyncThunk(
 );
 
 /**
+ * Fetch all enrolled courses for the logged-in user.
+ */
+export const fetchMyCourses = createAsyncThunk(
+  'myList/fetchMyCourses',
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const token = getState().auth?.accessToken;
+      const res = await userApi.get('/my-courses', { headers: authHeader(token) });
+      return res.data.data.items;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to fetch my courses');
+    }
+  }
+);
+
+/**
  * Toggle bookmark for a show.
  * Payload: { showId, episodeId, progressSec, showData? }
  *
@@ -142,6 +158,12 @@ export const upsertWatchHistory = createAsyncThunk(
 const myListSlice = createSlice({
   name: 'myList',
   initialState: {
+    // My Courses
+    myCourses: [],
+    myCoursesLoading: false,
+    myCoursesLoaded: false,
+    myCoursesError: null,
+
     // Bookmarks
     bookmarks: [],               // full bookmark objects from API
     bookmarkedShowIds: {},       // { [show_id]: { episode_id, progress_sec } } for O(1) lookup
@@ -159,6 +181,8 @@ const myListSlice = createSlice({
   reducers: {
     // Call this on logout to clear all myList state
     clearMyList: (state) => {
+      state.myCourses = [];
+      state.myCoursesLoaded = false;
       state.bookmarks = [];
       state.bookmarkedShowIds = {};
       state.bookmarksLoaded = false;
@@ -168,6 +192,21 @@ const myListSlice = createSlice({
   },
 
   extraReducers: (builder) => {
+    // ── fetchMyCourses ──────────────────────────────────────────
+    builder
+      .addCase(fetchMyCourses.pending, (state) => {
+        state.myCoursesLoading = true;
+        state.myCoursesError = null;
+      })
+      .addCase(fetchMyCourses.fulfilled, (state, action) => {
+        state.myCoursesLoading = false;
+        state.myCoursesLoaded = true;
+        state.myCourses = action.payload;
+      })
+      .addCase(fetchMyCourses.rejected, (state, action) => {
+        state.myCoursesLoading = false;
+        state.myCoursesError = action.payload;
+      });
     // ── fetchBookmarks ──────────────────────────────────────────
     builder
       .addCase(fetchBookmarks.pending, (state) => {
@@ -269,11 +308,13 @@ const myListSlice = createSlice({
           thumbnailUrl, category, episodeNum, durationSec, lastWatched,
         } = action.payload;
 
-        // Find existing entry for this show in watchHistory
         const existingShowIdx = state.watchHistory.findIndex(h => h.show_id === showId);
+        const existingEntry = state.watchHistory[existingShowIdx];
+        const existingProgress = existingEntry?.episode_id === episodeId ? (existingEntry?.progress_sec || 0) : 0;
+        const finalProgressSec = Math.max(existingProgress, progressSec);
 
         const updatedEntry = {
-          history_id: state.watchHistory[existingShowIdx]?.history_id || null,
+          history_id: existingEntry?.history_id || null,
           show_id: showId,
           show_title: showTitle || '',
           thumbnail_url: thumbnailUrl || null,
@@ -281,7 +322,7 @@ const myListSlice = createSlice({
           episode_id: episodeId,
           episode_num: episodeNum || 1,
           duration_sec: durationSec || 0,
-          progress_sec: progressSec,
+          progress_sec: finalProgressSec,
           last_watched: lastWatched,
         };
 
@@ -318,6 +359,9 @@ export const { clearMyList } = myListSlice.actions;
 // SELECTORS
 // ─────────────────────────────────────────────────────────────────
 
+export const selectMyCourses = (state) => state.myList.myCourses;
+export const selectMyCoursesLoaded = (state) => state.myList.myCoursesLoaded;
+export const selectMyCoursesLoading = (state) => state.myList.myCoursesLoading;
 export const selectBookmarks = (state) => state.myList.bookmarks;
 export const selectWatchHistory = (state) => state.myList.watchHistory;
 export const selectBookmarkedShowIds = (state) => state.myList.bookmarkedShowIds;

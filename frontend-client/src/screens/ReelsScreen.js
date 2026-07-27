@@ -590,6 +590,8 @@ export default function PopularScreen() {
       })
     );
 
+    const startProgressSec = episode?.is_completed ? 0 : (episode?.progress_sec || 0);
+
     dispatch(
       initShowPlayer({
         showId: showDetails.show_id,
@@ -598,6 +600,7 @@ export default function PopularScreen() {
         totalEpisodes: showDetails.total_episodes || selected.total_episodes || 0,
         seedEpisodes: showDetails.episodes || [],
         startEpisodeNum: episode?.episode_num || 1,
+        startProgressSec,
         streamBase: API_BASE_URL,
       })
     );

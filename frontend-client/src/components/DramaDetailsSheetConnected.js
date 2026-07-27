@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import Svg, { Circle } from 'react-native-svg';
 import {
   ActivityIndicator,
   Animated,
@@ -185,6 +186,77 @@ function RelatedDramaCard({ drama, onPress, style }) {
   );
 }
 
+export function TrophyProgressRing({ completedCount = 0, totalEpisodes = 1, showText = true, size = 26 }) {
+  const { theme } = useTheme();
+  const ringStyles = useRingStyles(theme);
+
+  const total = totalEpisodes > 0 ? totalEpisodes : 1;
+  const pct = Math.min(Math.round((completedCount / total) * 100), 100);
+  const isAllDone = pct === 100;
+
+  const strokeWidth = 3;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (pct / 100) * circumference;
+  const activeColor = isAllDone ? theme.primary : '#A855F7';
+
+  return (
+    <View style={ringStyles.container}>
+      <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+        <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={theme.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}
+            strokeWidth={strokeWidth}
+            fill="none"
+          />
+          {pct > 0 && (
+            <Circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              stroke={activeColor}
+              strokeWidth={strokeWidth}
+              fill="none"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              transform={`rotate(-90 ${size / 2} ${size / 2})`}
+            />
+          )}
+        </Svg>
+        <Ionicons
+          name="trophy"
+          size={size * 0.48}
+          color={activeColor}
+        />
+      </View>
+      {showText && <Text style={ringStyles.pctText}>{pct}%</Text>}
+    </View>
+  );
+}
+
+const useRingStyles = (theme) => StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.surface,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: theme.border,
+    gap: 6,
+  },
+  pctText: {
+    color: theme.text,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+});
+
 function EpisodeRow({ episode, isCurrentEpisode, onPress }) {
   const { theme } = useTheme();
   const styles = useStyles(theme);
@@ -192,6 +264,27 @@ function EpisodeRow({ episode, isCurrentEpisode, onPress }) {
 
   const locked = episode.is_locked;
   const isReady = episode.status === 'ready';
+  const isCompleted = Boolean(episode.is_completed) && !locked;
+  const progressSec = locked ? 0 : (episode.progress_sec || 0);
+  const durationSec = episode.duration_sec || 0;
+  const isInProgress = !isCompleted && !locked && progressSec > 0;
+
+  let iconName = 'play';
+  if (locked) {
+    iconName = 'lock-closed';
+  } else if (isCompleted) {
+    iconName = 'checkmark-circle';
+  } else if (!isInProgress && !isCurrentEpisode) {
+    iconName = 'play-outline';
+  }
+
+  const iconCircleStyle = locked
+    ? styles.episodeIconCircleLocked
+    : (isCompleted || isInProgress || isCurrentEpisode)
+    ? styles.episodeIconCircleActive
+    : styles.episodeIconCircleUnstarted;
+
+  const isTitleOrange = isCompleted;
 
   return (
     <Pressable
@@ -202,15 +295,11 @@ function EpisodeRow({ episode, isCurrentEpisode, onPress }) {
       onPress={() => onPress && onPress(episode)}
       disabled={!onPress}
     >
-      {/* Play / Lock icon circle */}
-      <View style={[
-        styles.episodeIconCircle,
-        isCurrentEpisode && styles.episodeIconCircleActive,
-        locked && styles.episodeIconCircleLocked,
-      ]}>
+      {/* Play / Checkmark / Lock icon circle */}
+      <View style={[styles.episodeIconCircle, iconCircleStyle]}>
         <Ionicons
-          name={locked ? 'lock-closed' : 'play'}
-          size={16}
+          name={iconName}
+          size={isCompleted ? 18 : 16}
           color={locked ? (theme.isDark ? 'rgba(255,255,255,0.5)' : 'rgba(26,26,26,0.5)') : '#fff'}
         />
       </View>
@@ -220,23 +309,26 @@ function EpisodeRow({ episode, isCurrentEpisode, onPress }) {
         <Text
           style={[
             styles.episodeRowTitle,
-            isCurrentEpisode && styles.episodeRowTitleActive,
+            isTitleOrange && styles.episodeRowTitleActive,
           ]}
           numberOfLines={1}
         >
           Lectures {episode.episode_num}
-          {episode.episode_title ? `  •  ${episode.episode_title}` : ''}
+          {episode.title || episode.episode_title ? `  •  ${episode.title || episode.episode_title}` : ''}
         </Text>
         <Text style={styles.episodeRowMeta} numberOfLines={1}>
           Lec {episode.episode_num}
-          {episode.duration_sec ? `  •  ${Math.round(episode.duration_sec / 60)} min` : ''}
+          {durationSec > 0 ? `  •  ${Math.round(durationSec / 60)} min` : ''}
+          {isCompleted ? '  •  Completed' : isInProgress ? `  •  ${Math.round(progressSec / 60)}m watched` : ''}
         </Text>
-      </View>
 
-      {/* Active indicator */}
-      {isCurrentEpisode ? (
-        <View style={styles.episodeRowActiveBar} />
-      ) : null}
+        {/* In-progress mini progress bar */}
+        {isInProgress && durationSec > 0 && (
+          <View style={styles.inProgressTrack}>
+            <View style={[styles.inProgressFill, { width: `${Math.min((progressSec / durationSec) * 100, 100)}%` }]} />
+          </View>
+        )}
+      </View>
     </Pressable>
   );
 }
@@ -257,7 +349,8 @@ export default function DramaDetailsSheetConnected({
   const { theme, isDarkMode } = useTheme();
   const styles = useStyles(theme);
   // All hooks must be called unconditionally, before any returns
-  const [tab, setTab] = useState(initialTab);
+  const resolvedInitialTab = initialTab === 'lectures' ? 'episodes' : initialTab;
+  const [tab, setTab] = useState(resolvedInitialTab);
   const [activeRangeStart, setActiveRangeStart] = useState(1);
   const [relatedShows, setRelatedShows] = useState([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
@@ -294,7 +387,7 @@ export default function DramaDetailsSheetConnected({
   useEffect(() => {
     if (!visible || !item) return;
 
-    setTab(initialTab);
+    setTab(resolvedInitialTab);
     setActiveRangeStart(getRangeStart(item.episode_num || 1));
     scrollRef.current?.scrollTo({ y: 0, animated: false });
     // Reset coursework fetch flags when show changes
@@ -630,22 +723,32 @@ export default function DramaDetailsSheetConnected({
                   </View>
                 ) : tab === 'episodes' ? (
                   <View>
-                    {ranges.length > 0 ? (
-                      <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.rangeRow}
-                      >
-                        {ranges.map((range) => (
-                          <Pressable key={range.key} onPress={() => handleRangePress(range.start)}>
-                            <Text style={[styles.rangeText, activeRangeStart === range.start && styles.rangeTextActive]}>
-                              {range.label}
-                            </Text>
-                            {activeRangeStart === range.start && <View style={styles.rangeUnderline} />}
-                          </Pressable>
-                        ))}
-                      </ScrollView>
-                    ) : null}
+                    <View style={styles.lecturesHeaderRow}>
+                      {ranges.length > 0 ? (
+                        <ScrollView
+                          horizontal
+                          showsHorizontalScrollIndicator={false}
+                          contentContainerStyle={styles.rangeRow}
+                          style={{ flex: 1 }}
+                        >
+                          {ranges.map((range) => (
+                            <Pressable key={range.key} onPress={() => handleRangePress(range.start)}>
+                              <Text style={[styles.rangeText, activeRangeStart === range.start && styles.rangeTextActive]}>
+                                {range.label}
+                              </Text>
+                              {activeRangeStart === range.start && <View style={styles.rangeUnderline} />}
+                            </Pressable>
+                          ))}
+                        </ScrollView>
+                      ) : (
+                        <View style={{ flex: 1 }} />
+                      )}
+
+                      <TrophyProgressRing
+                        completedCount={details?.completed_count || 0}
+                        totalEpisodes={details?.total_episodes || item?.total_episodes || 1}
+                      />
+                    </View>
 
                     {loading ? (
                       <View style={styles.stateBlock}>
@@ -875,9 +978,15 @@ const useStyles = (theme) => StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
+  lecturesHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    gap: 12,
+  },
   rangeRow: {
     gap: 24,
-    marginBottom: 16,
   },
   rangeText: {
     color: theme.gray,
@@ -925,6 +1034,11 @@ const useStyles = (theme) => StyleSheet.create({
     shadowRadius: 10,
     elevation: 5,
   },
+  episodeIconCircleUnstarted: {
+    backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+    borderWidth: 1,
+    borderColor: theme.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
+  },
   episodeIconCircleLocked: {
     backgroundColor: theme.surface,
     borderWidth: 1,
@@ -932,6 +1046,19 @@ const useStyles = (theme) => StyleSheet.create({
   },
   episodeRowText: {
     flex: 1,
+  },
+  inProgressTrack: {
+    height: 3,
+    backgroundColor: theme.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
+    borderRadius: 2,
+    marginTop: 6,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  inProgressFill: {
+    height: '100%',
+    backgroundColor: theme.primary,
+    borderRadius: 2,
   },
   episodeRowTitle: {
     color: theme.text,

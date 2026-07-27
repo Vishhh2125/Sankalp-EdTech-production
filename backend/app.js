@@ -183,6 +183,7 @@ app.use('/api/content', packageRouter);
 app.use('/api/feed', feedRouter);
 app.use('/api/media', mediaRouter);
 app.use('/api/user', userRouter); // NEW
+app.use('/api/v1/user', userRouter);
 app.use('/api/v1/notifications', notificationRouter); // NEW
 app.use('/api/v1/live', liveRouter);
 app.use('/api/live', liveRouter);

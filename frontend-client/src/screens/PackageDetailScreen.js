@@ -199,6 +199,8 @@ export default function PackageDetailScreen() {
     if (!selectedShow || !showDetails) return;
     if (episode.status !== 'ready' && !episode.is_locked) return;
 
+    const startProgressSec = episode?.is_completed ? 0 : (episode?.progress_sec || 0);
+
     dispatch(
       initShowPlayer({
         showId: showDetails.show_id,
@@ -207,6 +209,7 @@ export default function PackageDetailScreen() {
         totalEpisodes: showDetails.total_episodes || selectedShow.total_episodes || 0,
         seedEpisodes: showDetails.episodes || [],
         startEpisodeNum: episode?.episode_num || 1,
+        startProgressSec,
         streamBase: API_BASE_URL,
       })
     );

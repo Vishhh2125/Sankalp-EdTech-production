@@ -655,12 +655,14 @@ async function createEpisode(data, admin) {
 
   if (admin && admin.role === 'TEACHER') {
     episodeData.approval_status = 'DRAFT';
+  } else if (!data.approval_status) {
+    episodeData.approval_status = 'PUBLISHED';
   }
 
   return prisma.episode.create({ data: episodeData });
 }
 
-async function updateEpisode(id, data) {
+async function updateEpisode(id, data, admin) {
   const ep = await prisma.episode.findUnique({ where: { id } });
   if (!ep) throw new AppError('Episode not found', 404);
 
@@ -675,13 +677,14 @@ async function updateEpisode(id, data) {
 
   const parentShow = await prisma.show.findUnique({ where: { id: ep.show_id } });
   const isTeacherShow = !!parentShow?.teacher_id;
+  const isTeacherActor = admin && admin.role === 'TEACHER';
   
   if (updateData.video_source === 'YOUTUBE' || (updateData.youtube_video_id && ep.video_source === 'YOUTUBE')) {
     const youtubeId = extractYoutubeVideoId(updateData.youtube_video_id || ep.youtube_video_id);
     if (!youtubeId) throw new AppError('Invalid YouTube video ID or URL', 400);
     
     const videoChanged = ep.video_source !== 'YOUTUBE' || ep.youtube_video_id !== youtubeId;
-    if (isTeacherShow && videoChanged) {
+    if (isTeacherShow && isTeacherActor && videoChanged) {
       updateData.approval_status = 'DRAFT';
     }
 
@@ -689,7 +692,7 @@ async function updateEpisode(id, data) {
     updateData.status = 'ready';
     updateData.video_source = 'YOUTUBE';
   } else if (updateData.video_source === 'UPLOAD' && ep.video_source !== 'UPLOAD') {
-    if (isTeacherShow) {
+    if (isTeacherShow && isTeacherActor) {
       updateData.approval_status = 'DRAFT';
     }
     updateData.youtube_video_id = null;
