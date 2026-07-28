@@ -10,6 +10,7 @@ import {
 import { getAllActiveTopUpPlans } from '../topup/topup.service.js';
 import { recordView } from './view-count.service.js';
 import { getMyCoursesForUser } from './my-courses.service.js';
+import { evaluateCertificateCompletion } from '../certificate/certificate.service.js';
 
 const router = express.Router();
 
@@ -272,6 +273,11 @@ router.post('/watch-history', requireAuth, async (req, res, next) => {
         last_watched: new Date(),
       },
     });
+
+    // Asynchronous Certificate Trigger (Non-blocking)
+    if (episode && episode.show_id) {
+      evaluateCertificateCompletion(userId, episode.show_id).catch(() => {});
+    }
 
     return res.json(new ApiResponse(200, {
       episode_id: entry.episode_id,

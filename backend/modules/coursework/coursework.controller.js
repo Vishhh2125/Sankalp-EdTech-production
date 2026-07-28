@@ -184,9 +184,9 @@ async function getSubmissions(req, res, next) {
 async function gradeSubmission(req, res, next) {
   try {
     const { id } = req.params; // Submission ID
-    const { score, feedback } = req.body;
+    const { score, feedback, letter_grade } = req.body;
 
-    const result = await service.gradeSubmission(id, score, feedback);
+    const result = await service.gradeSubmission(id, score, feedback, letter_grade);
     res.json(result);
   } catch (e) {
     next(e);

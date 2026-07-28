@@ -8,6 +8,7 @@ import {
   Pressable,
   Alert,
   Switch,
+  Linking,
 } from 'react-native';
 import { FontAwesome6, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,6 +26,8 @@ import { formatMembershipEnd } from '../components/membership/membershipApi';
 import { logoutUser, clearLogoutError } from '../redux/slices/authSlice';
 import { showAlert } from '../services/alertService';
 import { fetchPublishedCmsPages } from '../services/cmsApi';
+import { courseworkApi } from '../services/courseworkApi';
+import { downloadFile } from '../utils/fileDownloader';
 
 const FEATURE_ICONS = [
   { icon: 'infinite-outline', label: 'Unlimited Access' },
@@ -35,6 +38,7 @@ const MENU_ITEMS = [
   { icon: 'wallet-outline', label: 'Top Up', right: null },
   { icon: 'card-outline', label: 'My Wallet', right: null },
   { icon: 'gift-outline', label: 'Earn Rewards', badge: null },
+  { icon: 'ribbon-outline', label: 'My Certificates', badge: null },
 ];
 
 
@@ -217,10 +221,15 @@ export default function ProfileScreen({ navigation }) {
     navigation.navigate(ROUTES.EARN_REWARDS);
   }
 
+  const handleMyCertificatesPress = () => {
+    navigation.navigate(ROUTES.MY_CERTIFICATES);
+  };
+
   function handleMenuPress(label) {
     if (label === 'Top Up') goToTopUp();
     else if (label === 'My Wallet') goToMyWallet();
     else if (label === 'Earn Rewards') goToEarnRewards();
+    else if (label === 'My Certificates') handleMyCertificatesPress();
   }
 
   function handleLogout() {

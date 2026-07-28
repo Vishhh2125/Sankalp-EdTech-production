@@ -47,9 +47,11 @@ export default function AssignmentDetailScreen({ route, navigation }) {
     setPickedFile(null);
   }, [assignment?.id, assignment?.submission]);
 
-  const isGraded = submission?.status === 'GRADED';
+  const isPassed = submission?.status === 'GRADED_PASSED' || submission?.status === 'GRADED';
+  const isNeedsRevision = submission?.status === 'NEEDS_REVISION';
   const currentAttachmentName = submission?.attachment_url ? getFileNameFromUrl(submission.attachment_url) : null;
-  const canEdit = !isGraded;
+  const canEdit = !isPassed;
+  const letterGradeText = submission?.letter_grade ? submission.letter_grade.replace('GRADE_', 'Grade ') : null;
 
   // Compute time remaining
   const dueAt = assignment.due_at ? new Date(assignment.due_at) : null;
@@ -171,24 +173,28 @@ export default function AssignmentDetailScreen({ route, navigation }) {
           </Text>
         </View>
 
-        {submission && isGraded ? (
+        {submission && isPassed ? (
           <View style={styles.submittedCard}>
-            <Ionicons name="checkmark-circle" size={28} color={theme.green} />
-            <Text style={styles.submittedTitle}>Assignment Graded</Text>
-            {submission.score !== null && submission.score !== undefined ? (
+            <Ionicons name="checkmark-circle" size={32} color={theme.green} />
+            <Text style={styles.submittedTitle}>Assignment Approved</Text>
+            {letterGradeText ? (
               <Text style={styles.submittedScore}>
-                Score: {submission.score}
+                Grade: {letterGradeText} ({submission.score}/100)
+              </Text>
+            ) : submission.score !== null && submission.score !== undefined ? (
+              <Text style={styles.submittedScore}>
+                Score: {submission.score}/100
               </Text>
             ) : null}
             {submission.feedback ? (
               <>
-                <Text style={styles.feedbackLabel}>Feedback:</Text>
+                <Text style={styles.feedbackLabel}>Teacher Feedback:</Text>
                 <Text style={styles.feedbackText}>{submission.feedback}</Text>
               </>
             ) : null}
             {submission.answer_text ? (
               <View style={styles.answerPreviewCard}>
-                <Text style={styles.feedbackLabel}>Saved Answer</Text>
+                <Text style={styles.feedbackLabel}>Submitted Answer</Text>
                 <Text style={styles.answerPreviewText}>{submission.answer_text}</Text>
               </View>
             ) : null}
@@ -206,6 +212,27 @@ export default function AssignmentDetailScreen({ route, navigation }) {
           </View>
         ) : (
           <>
+            {isNeedsRevision && (
+              <View style={[styles.submittedCard, { backgroundColor: 'rgba(255,149,0,0.12)', borderColor: '#FF9500', marginBottom: 16 }]}>
+                <Ionicons name="warning-outline" size={28} color="#FF9500" />
+                <Text style={[styles.submittedTitle, { color: '#FF9500' }]}>Needs Revision</Text>
+                {letterGradeText && (
+                  <Text style={[styles.submittedScore, { color: '#FF9500' }]}>
+                    Current Grade: {letterGradeText} ({submission.score}/100)
+                  </Text>
+                )}
+                {submission.feedback ? (
+                  <>
+                    <Text style={styles.feedbackLabel}>Teacher Feedback:</Text>
+                    <Text style={styles.feedbackText}>{submission.feedback}</Text>
+                  </>
+                ) : null}
+                <Text style={{ fontSize: 12, color: theme.gray, marginTop: 8, fontStyle: 'italic' }}>
+                  Please update your answer below and submit your revision.
+                </Text>
+              </View>
+            )}
+
             {/* Answer Input */}
             <Text style={styles.label}>Your Answer</Text>
             <View style={styles.inputWrap}>

@@ -22,4 +22,5 @@ export const ROUTES = {
   PACKAGE_DETAIL: 'PackageDetail',
   MY_DETAILS: 'MyDetails',
   CMS_VIEWER: 'CmsViewer',
+  MY_CERTIFICATES: 'MyCertificates',
 };

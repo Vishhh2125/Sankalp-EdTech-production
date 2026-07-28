@@ -323,14 +323,6 @@ export default function ShowPlayerScreen({ navigation }) {
         );
       }
 
-      if (fromMyList) {
-        dispatch(setHomeReopenSheetAfterPlayer(true));
-        navigation.navigate(ROUTES.MAIN_TABS, {
-          screen: ROUTES.HOME,
-        });
-        return;
-      }
-
       navigation.goBack();
     },
     [detailsSheetSource, dispatch, episodes, currentIndex, fromMyList, navigation, showId]

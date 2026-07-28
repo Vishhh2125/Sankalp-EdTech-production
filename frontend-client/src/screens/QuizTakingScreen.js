@@ -85,7 +85,7 @@ export default function QuizTakingScreen({ route, navigation }) {
 
     showAlert(
       'Submit Quiz',
-      'Are you sure you want to submit? You cannot retake this quiz.',
+      'Are you sure you want to submit your quiz attempt?',
       [
         { text: 'Cancel', style: 'cancel' },
         {

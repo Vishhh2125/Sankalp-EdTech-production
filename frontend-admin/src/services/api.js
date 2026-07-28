@@ -396,6 +396,16 @@ export const courseworkApi = {
   // Submissions & Grading
   getSubmissions: (params) => api.get('/content/admin/submissions', { params }),
   gradeSubmission: (id, data) => api.post(`/content/admin/submissions/${id}/grade`, data),
+
+  // Certificate Config
+  getCertificateConfig: (showId) => api.get(`/shows/${showId}/certificate-config`),
+  updateCertificateConfig: (showId, data) => api.put(`/shows/${showId}/certificate-config`, data),
+};
+
+// ── Certificate API ──
+export const certificateApi = {
+  getConfig: (showId) => api.get(`/shows/${showId}/certificate-config`),
+  updateConfig: (showId, data) => api.put(`/shows/${showId}/certificate-config`, data),
 };
 
 // ── Packages API ──

@@ -8,6 +8,7 @@ import minioClient from '../../config/minio.js';
 import config from '../../config/index.js';
 import { getPublicUrl } from '../../utils/presigned-url.js';
 import { scanFile } from '../../utils/virus-scanner.js';
+import { evaluateCertificateCompletion } from '../certificate/certificate.service.js';
 
 function validateFileType(filename, mimetype) {
   const allowedExtensions = ['.ppt', '.pptx', '.doc', '.docx', '.pdf', '.png', '.jpg', '.jpeg'];
@@ -42,7 +43,9 @@ async function getAssignments(showId, userId, isGuest) {
       id: asm.id,
       show_id: asm.show_id,
       title: asm.title,
+      problem_statement: null,
       due_at: asm.due_at,
+      min_passing_grade: asm.min_passing_grade,
       order_index: asm.order_index,
       is_locked: true,
       lock_reason: showAccess.lock_reason,
@@ -80,6 +83,7 @@ async function getAssignments(showId, userId, isGuest) {
       title: asm.title,
       problem_statement: is_locked ? null : asm.problem_statement,
       due_at: asm.due_at,
+      min_passing_grade: asm.min_passing_grade,
       order_index: asm.order_index,
       is_locked,
       submission: submission ? {
@@ -127,6 +131,7 @@ async function getQuizzes(showId, userId, isGuest) {
       show_id: qz.show_id,
       title: qz.title,
       order_index: qz.order_index,
+      pass_score_percent: qz.pass_score_percent,
       is_locked: true,
       lock_reason: showAccess.lock_reason,
       question_count: qz._count.questions,
@@ -161,6 +166,7 @@ async function getQuizzes(showId, userId, isGuest) {
       show_id: qz.show_id,
       title: qz.title,
       order_index: qz.order_index,
+      pass_score_percent: qz.pass_score_percent,
       is_locked,
       question_count: qz._count.questions,
       attempt: attempt ? {
@@ -181,13 +187,15 @@ async function createAssignment(showId, data) {
   const show = await prisma.show.findUnique({ where: { id: showId } });
   if (!show) throw new AppError('Show not found', 404);
 
+  const dueRaw = data.due_at || data.due_date;
   return prisma.assignment.create({
     data: {
       show_id: showId,
       title: data.title,
-      problem_statement: data.problem_statement,
-      due_at: data.due_at ? new Date(data.due_at) : null,
+      problem_statement: data.problem_statement || '',
+      due_at: dueRaw ? new Date(dueRaw) : null,
       order_index: parseInt(data.order_index, 10),
+      min_passing_grade: data.min_passing_grade || 'GRADE_C',
       is_active: data.is_active !== undefined ? data.is_active : true,
     },
   });
@@ -199,9 +207,13 @@ async function updateAssignment(id, data) {
 
   const updateData = {};
   if (data.title !== undefined) updateData.title = data.title;
-  if (data.problem_statement !== undefined) updateData.problem_statement = data.problem_statement;
-  if (data.due_at !== undefined) updateData.due_at = data.due_at ? new Date(data.due_at) : null;
+  if (data.problem_statement !== undefined) updateData.problem_statement = data.problem_statement || '';
+  if (data.due_at !== undefined || data.due_date !== undefined) {
+    const dueRaw = data.due_at || data.due_date;
+    updateData.due_at = dueRaw ? new Date(dueRaw) : null;
+  }
   if (data.order_index !== undefined) updateData.order_index = parseInt(data.order_index, 10);
+  if (data.min_passing_grade !== undefined) updateData.min_passing_grade = data.min_passing_grade;
   if (data.is_active !== undefined) updateData.is_active = data.is_active;
 
   return prisma.assignment.update({
@@ -308,6 +320,7 @@ async function createQuiz(showId, data) {
       show_id: showId,
       title: data.title,
       order_index: parseInt(data.order_index, 10),
+      pass_score_percent: data.pass_score_percent !== undefined ? parseInt(data.pass_score_percent, 10) : 70,
       is_active: data.is_active !== undefined ? data.is_active : true,
     },
   });
@@ -320,6 +333,7 @@ async function updateQuiz(id, data) {
   const updateData = {};
   if (data.title !== undefined) updateData.title = data.title;
   if (data.order_index !== undefined) updateData.order_index = parseInt(data.order_index, 10);
+  if (data.pass_score_percent !== undefined) updateData.pass_score_percent = parseInt(data.pass_score_percent, 10);
   if (data.is_active !== undefined) updateData.is_active = data.is_active;
 
   return prisma.quiz.update({
@@ -439,9 +453,9 @@ async function submitAssignment(assignmentId, userId, data, file) {
     },
   });
 
-  if (existingSubmission && existingSubmission.status === 'GRADED') {
+  if (existingSubmission && (existingSubmission.status === 'GRADED_PASSED' || existingSubmission.status === 'GRADED')) {
     if (file) fs.unlink(file.path, () => {});
-    throw new AppError('Cannot resubmit a graded assignment', 400);
+    throw new AppError('Cannot resubmit an approved assignment', 400);
   }
 
   let fileUrl = null;
@@ -524,23 +538,63 @@ async function getSubmissions(filters, page = 1, limit = 20) {
   };
 }
 
-async function gradeSubmission(submissionId, score, feedback) {
-  const submission = await prisma.assignmentSubmission.findUnique({ where: { id: submissionId } });
+async function gradeSubmission(submissionId, score, feedback, letter_grade) {
+  const submission = await prisma.assignmentSubmission.findUnique({
+    where: { id: submissionId },
+    include: { assignment: true },
+  });
   if (!submission) throw new AppError('Submission not found', 404);
 
-  return prisma.assignmentSubmission.update({
+  const gradeDefaults = {
+    GRADE_A: 95,
+    GRADE_B: 85,
+    GRADE_C: 75,
+    GRADE_D: 65,
+    GRADE_F: 50,
+  };
+
+  let numericScore = score !== undefined && score !== null && !isNaN(parseInt(score, 10))
+    ? parseInt(score, 10)
+    : (letter_grade && gradeDefaults[letter_grade] !== undefined ? gradeDefaults[letter_grade] : 75);
+
+  let letterGrade = letter_grade || 'GRADE_F';
+  if (!letter_grade) {
+    if (numericScore >= 90) letterGrade = 'GRADE_A';
+    else if (numericScore >= 80) letterGrade = 'GRADE_B';
+    else if (numericScore >= 70) letterGrade = 'GRADE_C';
+    else if (numericScore >= 60) letterGrade = 'GRADE_D';
+  }
+
+  const minGradeScores = {
+    GRADE_A: 90,
+    GRADE_B: 80,
+    GRADE_C: 70,
+    GRADE_D: 60,
+    GRADE_F: 0,
+  };
+  const minScoreRequired = minGradeScores[submission.assignment.min_passing_grade] || 70;
+  const status = numericScore >= minScoreRequired ? 'GRADED_PASSED' : 'NEEDS_REVISION';
+
+  const updatedSubmission = await prisma.assignmentSubmission.update({
     where: { id: submissionId },
     data: {
-      score: parseInt(score, 10),
+      score: numericScore,
+      letter_grade: letterGrade,
+      status: status,
       feedback: feedback || null,
-      status: 'GRADED',
       graded_at: new Date(),
     },
     include: {
       user: { select: { id: true, name: true, email: true } },
-      assignment: { select: { id: true, title: true } }
-    }
+      assignment: { select: { id: true, title: true, show_id: true } },
+    },
   });
+
+  if (status === 'GRADED_PASSED' && updatedSubmission.assignment && updatedSubmission.assignment.show_id) {
+    evaluateCertificateCompletion(submission.user_id, updatedSubmission.assignment.show_id).catch(() => {});
+  }
+
+  return updatedSubmission;
 }
 
 async function getQuizQuestions(quizId, userId, isGuest, isAdmin = false) {
@@ -596,12 +650,20 @@ async function submitQuizAttempt(quizId, userId, answers) {
   const quiz = await prisma.quiz.findUnique({ where: { id: quizId } });
   if (!quiz) throw new AppError('Quiz not found', 404);
 
-  // Check single-attempt rule
-  const existingAttempt = await prisma.quizAttempt.findFirst({
+  // Check if student has ALREADY PASSED this quiz in a previous attempt
+  const previousAttempts = await prisma.quizAttempt.findMany({
     where: { user_id: userId, quiz_id: quizId },
   });
-  if (existingAttempt) {
-    throw new AppError('Quiz has already been attempted. Only one attempt is allowed.', 400);
+
+  const passScorePercent = quiz.pass_score_percent !== undefined ? quiz.pass_score_percent : 70;
+  const hasPassed = previousAttempts.some((att) => {
+    if (!att.total_questions || att.total_questions === 0) return false;
+    const pct = (att.score / att.total_questions) * 100;
+    return pct >= passScorePercent;
+  });
+
+  if (hasPassed) {
+    throw new AppError('Quiz has already been passed. Further attempts are locked.', 400);
   }
 
   // Check show-level access
@@ -689,6 +751,10 @@ async function submitQuizAttempt(quizId, userId, answers) {
 
     return attempt;
   });
+
+  if (result.total_questions > 0 && (result.score / result.total_questions) * 100 >= passScorePercent) {
+    evaluateCertificateCompletion(userId, quiz.show_id).catch(() => {});
+  }
 
   // Construct response with instant explanations and correctness answers
   const details = questions.map((q) => {

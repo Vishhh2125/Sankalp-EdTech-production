@@ -22,6 +22,7 @@ export default function Submissions() {
   const [gradeModalOpen, setGradeModalOpen] = useState(false)
   const [selectedSub, setSelectedSub] = useState(null)
   const [score, setScore] = useState('')
+  const [letterGrade, setLetterGrade] = useState('GRADE_A')
   const [feedback, setFeedback] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -62,10 +63,27 @@ export default function Submissions() {
     setPage(1)
   }
 
+  // Handle Letter Grade Change
+  const handleLetterGradeChange = (val) => {
+    setLetterGrade(val)
+    const gradeScores = {
+      GRADE_A: '95',
+      GRADE_B: '85',
+      GRADE_C: '75',
+      GRADE_D: '65',
+      GRADE_F: '50',
+    }
+    if (gradeScores[val]) {
+      setScore(gradeScores[val])
+    }
+  }
+
   // Open grading modal
   const openGradingModal = (sub) => {
     setSelectedSub(sub)
-    setScore(sub.score !== null ? sub.score.toString() : '')
+    const subGrade = sub.letter_grade || (sub.score >= 90 ? 'GRADE_A' : sub.score >= 80 ? 'GRADE_B' : sub.score >= 70 ? 'GRADE_C' : sub.score >= 60 ? 'GRADE_D' : 'GRADE_F')
+    setLetterGrade(subGrade)
+    setScore(sub.score !== null ? sub.score.toString() : '95')
     setFeedback(sub.feedback || '')
     setGradeModalOpen(true)
   }
@@ -81,6 +99,7 @@ export default function Submissions() {
     try {
       await courseworkApi.gradeSubmission(selectedSub.id, {
         score: parsedScore,
+        letter_grade: letterGrade,
         feedback: feedback.trim() || null,
       })
       alert('Submission graded successfully!')
@@ -154,13 +173,16 @@ export default function Submissions() {
               </thead>
               <tbody>
                 {submissions.map(sub => {
-                  const isGraded = sub.status === 'GRADED'
+                  const isGraded = sub.status === 'GRADED_PASSED' || sub.status === 'GRADED' || sub.status === 'NEEDS_REVISION'
+                  const isPassed = sub.status === 'GRADED_PASSED' || sub.status === 'GRADED'
+                  const isNeedsRevision = sub.status === 'NEEDS_REVISION'
                   const submitDate = new Date(sub.submitted_at).toLocaleDateString(undefined, {
                     month: 'short',
                     day: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit'
                   })
+                  const letterGradeText = sub.letter_grade ? sub.letter_grade.replace('GRADE_', 'Grade ') : null
 
                   return (
                     <tr key={sub.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} className="table-row-hover">
@@ -201,17 +223,24 @@ export default function Submissions() {
 
                       {/* Status */}
                       <td style={{ padding: '14px 20px' }}>
-                        <span className={`badge ${isGraded ? 'badge-green' : 'badge-blue'}`} style={{ fontSize: 10 }}>
-                          {isGraded ? 'Graded' : 'Submitted (Pending)'}
+                        <span className={`badge ${isPassed ? 'badge-green' : isNeedsRevision ? 'badge-amber' : 'badge-blue'}`} style={{ fontSize: 10 }}>
+                          {isPassed ? 'Approved (Passed)' : isNeedsRevision ? 'Needs Revision' : 'Submitted (Pending)'}
                         </span>
                       </td>
 
                       {/* Score */}
                       <td style={{ padding: '14px 20px', fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 600 }}>
                         {isGraded ? (
-                          <span style={{ color: sub.score >= 50 ? 'var(--green)' : 'var(--red)' }}>
-                            {sub.score}/100
-                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ color: isPassed ? 'var(--green)' : 'var(--red)' }}>
+                              {sub.score}/100
+                            </span>
+                            {letterGradeText && (
+                              <span className={`badge ${isPassed ? 'badge-green' : 'badge-pink'}`} style={{ fontSize: 9 }}>
+                                {letterGradeText}
+                              </span>
+                            )}
+                          </div>
                         ) : (
                           <span style={{ color: 'var(--text3)' }}>—</span>
                         )}
@@ -368,24 +397,51 @@ export default function Submissions() {
                 </div>
               ) : (
                 // Editable grade input form
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <FormGroup label="Score (0 to 100) *">
-                    <input
-                      className="input"
-                      type="number"
-                      min="0"
-                      max="100"
-                      placeholder="e.g. 85"
-                      value={score}
-                      onChange={e => setScore(e.target.value)}
-                      style={{ width: '100%' }}
-                    />
-                  </FormGroup>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {selectedSub?.assignment?.min_passing_grade && (
+                    <div style={{ fontSize: 11, background: 'var(--bg4)', border: '1px solid var(--border)', padding: '8px 12px', borderRadius: 6, color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>Course Requirement:</span>
+                      <span className="badge badge-blue" style={{ fontSize: 10 }}>
+                        Min Grade Required: {selectedSub.assignment.min_passing_grade.replace('GRADE_', 'Grade ')}
+                      </span>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 12 }}>
+                    <FormGroup label="Assign Letter Grade *">
+                      <select
+                        className="select"
+                        value={letterGrade}
+                        onChange={e => handleLetterGradeChange(e.target.value)}
+                        style={{ width: '100%' }}
+                      >
+                        <option value="GRADE_A">Grade A (90%+) — Approved (Passed)</option>
+                        <option value="GRADE_B">Grade B (80%+) — Approved (Passed)</option>
+                        <option value="GRADE_C">Grade C (70%+) — Approved (Passed)</option>
+                        <option value="GRADE_D">Grade D (60%+) — Pass</option>
+                        <option value="GRADE_F">Grade F (Below 60%) — Needs Revision</option>
+                      </select>
+                    </FormGroup>
+
+                    <FormGroup label="Numeric Score (0-100) *">
+                      <input
+                        className="input"
+                        type="number"
+                        min="0"
+                        max="100"
+                        placeholder="e.g. 85"
+                        value={score}
+                        onChange={e => setScore(e.target.value)}
+                        style={{ width: '100%' }}
+                      />
+                    </FormGroup>
+                  </div>
+
                   <FormGroup label="Feedback / Evaluation Comments">
                     <textarea
                       className="input"
                       rows={3}
-                      placeholder="Enter feedback comments for the student..."
+                      placeholder="Provide constructive feedback for the student..."
                       value={feedback}
                       onChange={e => setFeedback(e.target.value)}
                       style={{ width: '100%', resize: 'none' }}

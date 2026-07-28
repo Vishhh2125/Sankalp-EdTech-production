@@ -11,7 +11,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import { useRoute, useNavigation, useIsFocused } from '@react-navigation/native';
+import { useRoute, useNavigation, useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -69,6 +69,7 @@ export default function PackageDetailScreen() {
   const [showDetailsLoading, setShowDetailsLoading] = useState(false);
   const [showDetailsError, setShowDetailsError] = useState(null);
   const [dramaSheetKey, setDramaSheetKey] = useState(0);
+  const [reopenSheetOnReturn, setReopenSheetOnReturn] = useState(false);
 
   const loadPackageDetail = useCallback(async () => {
     if (!packageId) return;
@@ -159,7 +160,7 @@ export default function PackageDetailScreen() {
 
   // ── Show Sheet Handlers ──
 
-  const fetchShowDetails = async (showId, fromEp = 1) => {
+  const fetchShowDetails = useCallback(async (showId, fromEp = 1) => {
     setShowDetailsLoading(true);
     setShowDetailsError(null);
     try {
@@ -174,7 +175,19 @@ export default function PackageDetailScreen() {
     } finally {
       setShowDetailsLoading(false);
     }
-  };
+  }, []);
+
+  // Re-open course details sheet when returning from player
+  useFocusEffect(
+    useCallback(() => {
+      if (reopenSheetOnReturn && selectedShow) {
+        setReopenSheetOnReturn(false);
+        setDramaSheetKey((k) => k + 1);
+        setShowSheetVisible(true);
+        fetchShowDetails(selectedShow.show_id || selectedShow.id);
+      }
+    }, [reopenSheetOnReturn, selectedShow, fetchShowDetails])
+  );
 
   const openShowSheet = (show) => {
     setDramaSheetKey((k) => k + 1);
@@ -214,6 +227,7 @@ export default function PackageDetailScreen() {
       })
     );
 
+    setReopenSheetOnReturn(true);
     setShowSheetVisible(false);
     navigation.navigate(ROUTES.SHOW_PLAYER, { fromPackage: true });
   };
@@ -239,6 +253,7 @@ export default function PackageDetailScreen() {
         streamBase: API_BASE_URL,
       })
     );
+    setReopenSheetOnReturn(true);
     setShowSheetVisible(false);
     navigation.navigate(ROUTES.SHOW_PLAYER, { fromPackage: true });
   };

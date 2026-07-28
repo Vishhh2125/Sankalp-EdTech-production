@@ -42,25 +42,40 @@ export default function QuizTab({ quizzes, loading, showId, onAttemptCompleted }
         <>
           {quizzes.map((q, idx) => {
             const isLocked = q.is_locked;
-            const isCompleted = !!q.attempt;
+            const passScorePct = q.pass_score_percent !== undefined ? q.pass_score_percent : 70;
+            const attempt = q.attempt;
             const questionCount = q.question_count || 0;
 
-            let statusLabel = 'Pending';
+            const attemptTotal = attempt?.total_questions || questionCount || 0;
+            const attemptScore = attempt?.score || 0;
+            const attemptPct = attemptTotal > 0 ? Math.round((attemptScore / attemptTotal) * 100) : 0;
+            const isPassed = attempt && attemptPct >= passScorePct;
+            const isFailed = attempt && attemptPct < passScorePct;
+
+            let statusLabel = `Pass: ${passScorePct}%`;
             let statusStyle = styles.badgePending;
+            let canTake = !isLocked;
+
             if (isLocked) {
               statusLabel = 'Locked';
               statusStyle = styles.badgeLocked;
-            } else if (isCompleted) {
-              statusLabel = `${q.attempt.score}/${questionCount}`;
+              canTake = false;
+            } else if (isPassed) {
+              statusLabel = `Passed · ${attemptScore}/${questionCount}`;
               statusStyle = styles.badgeCompleted;
+              canTake = false; // Passed quizzes locked against further attempts
+            } else if (isFailed) {
+              statusLabel = `Failed (${attemptPct}%) · Retake`;
+              statusStyle = styles.badgeFailed;
+              canTake = true; // Retake allowed on failed attempt
             }
 
             return (
               <Pressable
                 key={q.id}
-                style={[styles.card, isLocked && styles.cardLocked]}
+                style={[styles.card, (isLocked || isPassed) && styles.cardLocked]}
                 onPress={() => {
-                  if (!isLocked && !isCompleted) {
+                  if (canTake) {
                     navigation.navigate(ROUTES.QUIZ_TAKING, {
                       quiz: q,
                       showId,
@@ -68,27 +83,36 @@ export default function QuizTab({ quizzes, loading, showId, onAttemptCompleted }
                     });
                   }
                 }}
-                disabled={isLocked}
+                disabled={!canTake}
               >
                 <View style={styles.cardBody}>
                   <Text style={styles.cardLabel}>Quiz {idx + 1}</Text>
-                  <Text style={[styles.cardTitle, isLocked && styles.textLocked]}>
+                  <Text style={[styles.cardTitle, (isLocked || isPassed) && styles.textLocked]}>
                     {q.title}
                   </Text>
-                  <Text style={styles.questionCount}>{questionCount} Questions</Text>
+                  <Text style={styles.questionCount}>
+                    {questionCount} Questions  •  Min Pass: {passScorePct}%
+                  </Text>
                 </View>
 
                 <View style={styles.cardRight}>
                   <View style={[styles.badge, statusStyle]}>
-                    <Text style={[styles.badgeText, isLocked && styles.badgeTextLocked, isCompleted && styles.badgeTextCompleted]}>
+                    <Text style={[
+                      styles.badgeText,
+                      isLocked && styles.badgeTextLocked,
+                      isPassed && styles.badgeTextCompleted,
+                      isFailed && styles.badgeTextFailed,
+                    ]}>
                       {statusLabel}
                     </Text>
                   </View>
                   {isLocked ? (
                     <Ionicons name="lock-closed" size={14} color={theme.gray} />
-                  ) : !isCompleted ? (
+                  ) : canTake ? (
                     <Ionicons name="chevron-forward" size={16} color={theme.primary} />
-                  ) : null}
+                  ) : (
+                    <Ionicons name="checkmark-circle" size={16} color={theme.green} />
+                  )}
                 </View>
               </Pressable>
             );
@@ -192,6 +216,9 @@ const useStyles = (theme) => StyleSheet.create({
   badgeCompleted: {
     backgroundColor: 'rgba(52,199,89,0.15)',
   },
+  badgeFailed: {
+    backgroundColor: 'rgba(255,149,0,0.18)',
+  },
   badgeLocked: {
     backgroundColor: 'rgba(142,142,147,0.1)',
   },
@@ -205,6 +232,9 @@ const useStyles = (theme) => StyleSheet.create({
   },
   badgeTextCompleted: {
     color: theme.green,
+  },
+  badgeTextFailed: {
+    color: '#FF9500',
   },
   progressCard: {
     backgroundColor: theme.surface,

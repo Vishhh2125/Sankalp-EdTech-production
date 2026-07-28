@@ -440,6 +440,8 @@ export default function MyListScreen() {
   const [showDetailsError, setShowDetailsError] = useState(null);
   const [showSheetVisible, setShowSheetVisible] = useState(false);
   const [dramaSheetKey, setDramaSheetKey] = useState(0);
+  const [sheetInitialTab, setSheetInitialTab] = useState('synopsis');
+  const [reopenSheetOnReturn, setReopenSheetOnReturn] = useState(false);
 
   // Fetch data on mount if authenticated
   useEffect(() => {
@@ -455,7 +457,7 @@ export default function MyListScreen() {
     }
   }, [route.params?.initialTab]);
 
-  // Refetch data when screen comes into focus
+  // Refetch data when screen comes into focus and reopen course sheet if returning from player
   useFocusEffect(
     useCallback(() => {
       if (!accessToken) return;
@@ -463,7 +465,14 @@ export default function MyListScreen() {
       dispatch(fetchBookmarks());
       dispatch(fetchWatchHistory());
       getDownloadedEpisodes().then(setDownloads);
-    }, [accessToken, dispatch])
+
+      if (reopenSheetOnReturn && selectedShow) {
+        setReopenSheetOnReturn(false);
+        setDramaSheetKey((k) => k + 1);
+        setShowSheetVisible(true);
+        fetchShowDetails(selectedShow.show_id || selectedShow.id);
+      }
+    }, [accessToken, dispatch, reopenSheetOnReturn, selectedShow, fetchShowDetails])
   );
 
   // ── Show Sheet Handlers for My Courses ──
@@ -495,6 +504,7 @@ export default function MyListScreen() {
     };
     setSelectedShow(selectedItem);
     setShowDetails(null);
+    setSheetInitialTab('synopsis');
     setShowSheetVisible(true);
     fetchShowDetails(course.show_id, 1);
   }, [fetchShowDetails]);
@@ -531,6 +541,8 @@ export default function MyListScreen() {
       })
     );
 
+    setSheetInitialTab('episodes');
+    setReopenSheetOnReturn(true);
     setShowSheetVisible(false);
     navigation.navigate(ROUTES.SHOW_PLAYER, { fromMyList: true });
   }, [dispatch, navigation, selectedShow, showDetails]);
@@ -563,6 +575,8 @@ export default function MyListScreen() {
       })
     );
 
+    setSheetInitialTab('synopsis');
+    setReopenSheetOnReturn(true);
     setShowSheetVisible(false);
     navigation.navigate(ROUTES.SHOW_PLAYER, { fromMyList: true });
   }, [dispatch, navigation, selectedShow, showDetails]);
@@ -986,7 +1000,7 @@ export default function MyListScreen() {
         details={selectedShow?.show_id === showDetails?.show_id ? showDetails : null}
         loading={showDetailsLoading}
         error={showDetailsError}
-        initialTab="episodes"
+        initialTab={sheetInitialTab}
         onRangeChange={handleRangeChange}
         onEpisodePress={handleEpisodePress}
         onStartWatching={handleStartWatching}

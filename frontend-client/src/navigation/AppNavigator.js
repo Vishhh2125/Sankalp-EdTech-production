@@ -8,6 +8,7 @@ import TopUpScreen from '../screens/TopUpScreen';
 import AssignmentDetailScreen from '../screens/AssignmentDetailScreen';
 import QuizTakingScreen from '../screens/QuizTakingScreen';
 import PackageDetailScreen from '../screens/PackageDetailScreen';
+import MyCertificatesScreen from '../screens/MyCertificatesScreen';
 import { ROUTES } from '../constants/routes';
 import { useTheme } from '../context/ThemeContext';
 
@@ -73,6 +74,14 @@ export default function AppNavigator() {
       <Stack.Screen
         name={ROUTES.PACKAGE_DETAIL}
         component={PackageDetailScreen}
+        options={{
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name={ROUTES.MY_CERTIFICATES}
+        component={MyCertificatesScreen}
         options={{
           animation: 'slide_from_right',
           gestureEnabled: true,

@@ -37,6 +37,13 @@ export const courseworkApi = {
         option_id: answer.selected_option_id,
       })),
     }),
+
+  // Certificates
+  getCertificateStatus: (showId) =>
+    contentApi.get(`/user/certificates/${showId}`),
+
+  getUserCertificates: () =>
+    contentApi.get(`/user/certificates`),
 };
 
 // Helper: format bytes to human-readable

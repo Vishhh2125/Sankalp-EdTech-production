@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AlphaMinds Certificate Template</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #ffffff;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 0;
+      margin: 0;
+    }
+    .cert-container {
+      width: 1000px;
+      height: 660px;
+      background: #ffffff;
+      position: relative;
+      padding: 40px 45px;
+      box-shadow: none;
+      border-radius: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    /* Outer Navy & Gold Border Frame */
+    .border-outer {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      right: 15px;
+      bottom: 15px;
+      border: 3px solid #0f2b5c;
+      pointer-events: none;
+    }
+    .border-inner {
+      position: absolute;
+      top: 22px;
+      left: 22px;
+      right: 22px;
+      bottom: 22px;
+      border: 1px solid #d4af37;
+      pointer-events: none;
+    }
+    /* Corner Accents */
+    .corner-accent {
+      position: absolute;
+      width: 35px;
+      height: 35px;
+      border-color: #d4af37;
+      border-style: solid;
+      pointer-events: none;
+    }
+    .corner-tl { top: 28px; left: 28px; border-width: 3px 0 0 3px; }
+    .corner-tr { top: 28px; right: 28px; border-width: 3px 3px 0 0; }
+    .corner-bl { bottom: 28px; left: 28px; border-width: 0 0 3px 3px; }
+    .corner-br { bottom: 28px; right: 28px; border-width: 0 3px 0 0; }
+
+    /* Background Watermark */
+    .watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-12deg);
+      font-family: Georgia, serif;
+      font-size: 90px;
+      font-weight: 900;
+      color: rgba(15, 43, 92, 0.035);
+      white-space: nowrap;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    /* Content Layout */
+    .cert-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 10px;
+    }
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-badge {
+      width: 44px;
+      height: 44px;
+      background: #0f2b5c;
+      border: 2px solid #d4af37;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #d4af37;
+      font-weight: bold;
+      font-size: 22px;
+      font-family: Georgia, serif;
+    }
+    .brand-title {
+      font-family: Georgia, serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: #0f2b5c;
+      letter-spacing: 2px;
+    }
+    .cert-id-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: #f8fafc;
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1px solid #cbd5e1;
+    }
+
+    /* Main Body Area */
+    .cert-body {
+      text-align: center;
+      padding: 0 20px;
+    }
+    .title-main {
+      font-family: Georgia, serif;
+      font-size: 36px;
+      font-weight: 900;
+      color: #0f2b5c;
+      letter-spacing: 6px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    .title-sub {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: #d4af37;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 25px;
+    }
+    .cert-to {
+      font-size: 14px;
+      color: #64748b;
+      font-style: italic;
+      margin-bottom: 10px;
+    }
+    .student-name {
+      font-family: Georgia, serif;
+      font-size: 48px;
+      font-weight: 700;
+      font-style: italic;
+      color: #0f2b5c;
+      border-bottom: 2px solid #d4af37;
+      display: inline-block;
+      padding: 0 45px 6px 45px;
+      margin-bottom: 20px;
+    }
+    .reason-text {
+      font-size: 15px;
+      color: #475569;
+      line-height: 1.6;
+      max-width: 720px;
+      margin: 0 auto 14px auto;
+    }
+    .course-title {
+      font-family: Arial, sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #0f2b5c;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    .instructor-text {
+      font-size: 14px;
+      color: #475569;
+      font-weight: 600;
+    }
+
+    /* Footer Area */
+    .cert-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 0 10px;
+    }
+    
+    /* Issue Info Block (Left) */
+    .issue-info-block {
+      text-align: left;
+    }
+    .info-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .info-val {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f2b5c;
+      margin-bottom: 4px;
+    }
+
+    /* Gold Medal Seal (Right) */
+    .gold-seal {
+      width: 76px;
+      height: 76px;
+      background: linear-gradient(135deg, #d4af37, #fef08a, #b45309);
+      border-radius: 50%;
+      box-shadow: 0 4px 12px rgba(180, 83, 9, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .seal-inner {
+      width: 62px;
+      height: 62px;
+      border: 2px dashed #ffffff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 10px;
+      text-align: center;
+      font-family: Georgia, serif;
+      letter-spacing: 0.5px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+      line-height: 1.3;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cert-container">
+    <!-- Frame Borders -->
+    <div class="border-outer"></div>
+    <div class="border-inner"></div>
+    <div class="corner-accent corner-tl"></div>
+    <div class="corner-accent corner-tr"></div>
+    <div class="corner-accent corner-bl"></div>
+    <div class="corner-accent corner-br"></div>
+
+    <!-- Watermark -->
+    <div class="watermark">ALPHAMINDS OFFICIAL</div>
+
+    <!-- Header -->
+    <div class="cert-header">
+      <div class="brand-logo">
+        <div class="logo-badge">A</div>
+        <div class="brand-title">ALPHAMINDS</div>
+      </div>
+      <div class="cert-id-tag">ID: {{CERTIFICATE_ID}}</div>
+    </div>
+
+    <!-- Main Body -->
+    <div class="cert-body">
+      <h1 class="title-main">Certificate of Completion</h1>
+      <div class="title-sub">Official Academic Achievement</div>
+
+      <p class="cert-to">This is to certify that</p>
+      <div class="student-name">{{STUDENT_NAME}}</div>
+
+      <p class="reason-text">
+        has successfully completed all required lectures, coursework, and assessment standards for the course
+      </p>
+
+      <h2 class="course-title">{{COURSE_TITLE}}</h2>
+      <p class="instructor-text">Instructed by: {{TEACHER_OR_ADMIN_NAME}}</p>
+    </div>
+
+    <!-- Footer Area -->
+    <div class="cert-footer">
+      <!-- Left Issue Info -->
+      <div class="issue-info-block">
+        <div class="info-label">Date of Issuance</div>
+        <div class="info-val">{{ISSUE_DATE}}</div>
+
+        <div class="info-label">Issued By</div>
+        <div class="info-val">AlphaMinds Platform</div>
+      </div>
+
+      <!-- Right Gold Medal Seal -->
+      <div class="gold-seal">
+        <div class="seal-inner">OFFICIAL<br>ALPHAMINDS</div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

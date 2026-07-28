@@ -849,6 +849,7 @@ export default function Dramas() {
   const [asProblemStatement, setAsProblemStatement] = useState('')
   const [asDueDate, setAsDueDate] = useState('')
   const [asOrderIndex, setAsOrderIndex] = useState(1)
+  const [asMinPassingGrade, setAsMinPassingGrade] = useState('GRADE_C')
   const [asIsActive, setAsIsActive] = useState(true)
   const [asEditing, setAsEditing] = useState(false)
 
@@ -862,7 +863,49 @@ export default function Dramas() {
   const [qzId, setQzId] = useState(null)
   const [qzTitle, setQzTitle] = useState('')
   const [qzOrderIndex, setQzOrderIndex] = useState(1)
+  const [qzPassScorePercent, setQzPassScorePercent] = useState(70)
   const [qzEditing, setQzEditing] = useState(false)
+
+  // Certificate Config states
+  const [certEnabled, setCertEnabled] = useState(false)
+  const [certReqVideos, setCertReqVideos] = useState(true)
+  const [certReqQuizzes, setCertReqQuizzes] = useState(true)
+  const [certReqAssignments, setCertReqAssignments] = useState(true)
+  const [certSaving, setCertSaving] = useState(false)
+
+  // Certificate config handler
+  const loadCertificateConfig = async (showId) => {
+    try {
+      const res = await courseworkApi.getCertificateConfig(showId)
+      if (res.data) {
+        setCertEnabled(!!res.data.certificate_enabled)
+        setCertReqVideos(res.data.cert_req_videos !== undefined ? !!res.data.cert_req_videos : true)
+        setCertReqQuizzes(res.data.cert_req_quizzes !== undefined ? !!res.data.cert_req_quizzes : true)
+        setCertReqAssignments(res.data.cert_req_assignments !== undefined ? !!res.data.cert_req_assignments : true)
+      }
+    } catch (err) {
+      console.error('Failed to load certificate config:', err)
+    }
+  }
+
+  const handleSaveCertificateConfig = async () => {
+    if (!courseworkShow) return
+    setCertSaving(true)
+    try {
+      await courseworkApi.updateCertificateConfig(courseworkShow.id, {
+        certificate_enabled: certEnabled,
+        cert_req_videos: certReqVideos,
+        cert_req_quizzes: certReqQuizzes,
+        cert_req_assignments: certReqAssignments,
+      })
+      alert('Certificate configuration saved successfully!')
+      await loadCertificateConfig(courseworkShow.id)
+    } catch (err) {
+      alert('Failed to save certificate config: ' + (err.response?.data?.message || err.message))
+    } finally {
+      setCertSaving(false)
+    }
+  }
 
   // Quiz Questions management
   const [activeQuiz, setActiveQuiz] = useState(null)
@@ -919,6 +962,7 @@ export default function Dramas() {
       setAssignments(asmRes.data)
       setMaterials(matRes.data)
       setQuizzes(qzRes.data)
+      await loadCertificateConfig(showId)
     } catch (err) {
       alert('Failed to load coursework: ' + (err.response?.data?.message || err.message))
     } finally {
@@ -958,6 +1002,7 @@ export default function Dramas() {
     setAsProblemStatement('')
     setAsDueDate('')
     setAsOrderIndex(list.length ? Math.max(...list.map(a => a.order_index)) + 1 : 1)
+    setAsMinPassingGrade('GRADE_C')
     setAsIsActive(true)
     setAsEditing(false)
   }
@@ -973,6 +1018,7 @@ export default function Dramas() {
     setQzId(null)
     setQzTitle('')
     setQzOrderIndex(list.length ? Math.max(...list.map(q => q.order_index)) + 1 : 1)
+    setQzPassScorePercent(70)
     setQzEditing(false)
   }
 
@@ -1001,11 +1047,14 @@ export default function Dramas() {
     if (!asTitle.trim()) return alert('Title is required')
     setCwSaving(true)
     try {
+      const dueIso = asDueDate ? new Date(asDueDate).toISOString() : null
       const payload = {
         title: asTitle.trim(),
-        problem_statement: asProblemStatement.trim() || null,
-        due_date: asDueDate ? new Date(asDueDate).toISOString() : null,
+        problem_statement: asProblemStatement.trim() || '',
+        due_at: dueIso,
+        due_date: dueIso,
         order_index: parseInt(asOrderIndex, 10),
+        min_passing_grade: asMinPassingGrade,
         is_active: asIsActive
       }
       if (asEditing && asId) {
@@ -1027,8 +1076,10 @@ export default function Dramas() {
     setAsId(as.id)
     setAsTitle(as.title)
     setAsProblemStatement(as.problem_statement || '')
-    setAsDueDate(as.due_date ? new Date(as.due_date).toISOString().split('T')[0] : '')
+    const rawDue = as.due_at || as.due_date
+    setAsDueDate(rawDue ? new Date(rawDue).toISOString().split('T')[0] : '')
     setAsOrderIndex(as.order_index)
+    setAsMinPassingGrade(as.min_passing_grade || 'GRADE_C')
     setAsIsActive(as.is_active)
     setAsEditing(true)
   }
@@ -1084,7 +1135,8 @@ export default function Dramas() {
     try {
       const payload = {
         title: qzTitle.trim(),
-        order_index: parseInt(qzOrderIndex, 10)
+        order_index: parseInt(qzOrderIndex, 10),
+        pass_score_percent: parseInt(qzPassScorePercent, 10)
       }
       if (qzEditing && qzId) {
         await courseworkApi.updateQuiz(qzId, payload)
@@ -1105,6 +1157,7 @@ export default function Dramas() {
     setQzId(qz.id)
     setQzTitle(qz.title)
     setQzOrderIndex(qz.order_index)
+    setQzPassScorePercent(qz.pass_score_percent !== undefined ? qz.pass_score_percent : 70)
     setQzEditing(true)
   }
 
@@ -1504,7 +1557,8 @@ export default function Dramas() {
               {[
                 { id: 'assignments', label: 'Assignments', count: assignments.length },
                 { id: 'materials', label: 'Materials', count: materials.length },
-                { id: 'quizzes', label: 'Quizzes', count: quizzes.length }
+                { id: 'quizzes', label: 'Quizzes', count: quizzes.length },
+                { id: 'certificate', label: 'Certificate Rules', count: certEnabled ? 'ON' : 'OFF' }
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -1513,7 +1567,7 @@ export default function Dramas() {
                   style={{ position: 'relative' }}
                 >
                   {tab.label}
-                  {tab.count > 0 && (
+                  {tab.count !== undefined && (
                     <span style={{
                       marginLeft: 6,
                       background: courseworkTab === tab.id ? 'rgba(255,255,255,0.2)' : 'var(--bg4)',
@@ -1559,6 +1613,9 @@ export default function Dramas() {
                               <span className={`badge ${as.is_active ? 'badge-green' : 'badge-amber'}`} style={{ fontSize: 9 }}>
                                 {as.is_active ? 'Active' : 'Inactive'}
                               </span>
+                              <span className="badge badge-blue" style={{ fontSize: 9 }}>
+                                Min: {as.min_passing_grade ? as.min_passing_grade.replace('GRADE_', 'Grade ') : 'Grade C'}
+                              </span>
                             </div>
                           </div>
                           <div style={{ display: 'flex', gap: 4 }}>
@@ -1588,12 +1645,21 @@ export default function Dramas() {
                       <FormGroup label="Order Index *">
                         <input className="input" type="number" style={{ width: '100%' }} value={asOrderIndex} onChange={e => setAsOrderIndex(e.target.value)} />
                       </FormGroup>
-                      <FormGroup label="Status">
-                        <div style={{ display: 'flex', alignItems: 'center', marginTop: 8 }}>
-                          <Toggle checked={asIsActive} onChange={setAsIsActive} label={asIsActive ? 'Active' : 'Inactive'} />
-                        </div>
+                      <FormGroup label="Min Passing Grade *">
+                        <select className="select" style={{ width: '100%' }} value={asMinPassingGrade} onChange={e => setAsMinPassingGrade(e.target.value)}>
+                          <option value="GRADE_A">Grade A (90%+)</option>
+                          <option value="GRADE_B">Grade B (80%+)</option>
+                          <option value="GRADE_C">Grade C (70%+)</option>
+                          <option value="GRADE_D">Grade D (60%+)</option>
+                          <option value="GRADE_F">Grade F (Pass Any)</option>
+                        </select>
                       </FormGroup>
                     </div>
+                    <FormGroup label="Status">
+                      <div style={{ display: 'flex', alignItems: 'center', marginTop: 4 }}>
+                        <Toggle checked={asIsActive} onChange={setAsIsActive} label={asIsActive ? 'Active' : 'Inactive'} />
+                      </div>
+                    </FormGroup>
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
                       {asEditing && (
                         <button className="btn btn-ghost" onClick={() => resetAssignmentForm()}>Cancel</button>
@@ -1699,8 +1765,13 @@ export default function Dramas() {
                                   <span style={{ fontSize: 10, background: 'var(--bg4)', padding: '2px 6px', borderRadius: 4, color: 'var(--text2)', fontWeight: 600 }}>#{qz.order_index}</span>
                                   <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160 }}>{qz.title}</span>
                                 </div>
-                                <div style={{ fontSize: 11, color: 'var(--accent2)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => { setActiveQuiz(qz); loadQuizQuestions(qz.id); }}>
-                                  <Notebook size={11} /> Manage Questions
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                                  <span className="badge badge-pink" style={{ fontSize: 9 }}>
+                                    Pass: {qz.pass_score_percent !== undefined ? qz.pass_score_percent : 70}%
+                                  </span>
+                                  <span style={{ fontSize: 11, color: 'var(--accent2)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => { setActiveQuiz(qz); loadQuizQuestions(qz.id); }}>
+                                    <Notebook size={11} /> Manage Questions
+                                  </span>
                                 </div>
                               </div>
                               <div style={{ display: 'flex', gap: 4 }}>
@@ -1720,9 +1791,14 @@ export default function Dramas() {
                         <FormGroup label="Title *">
                           <input className="input" style={{ width: '100%' }} placeholder="e.g. Lecture 1 Quiz" value={qzTitle} onChange={e => setQzTitle(e.target.value)} />
                         </FormGroup>
-                        <FormGroup label="Order Index *">
-                          <input className="input" type="number" style={{ width: '100%' }} value={qzOrderIndex} onChange={e => setQzOrderIndex(e.target.value)} />
-                        </FormGroup>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                          <FormGroup label="Order Index *">
+                            <input className="input" type="number" style={{ width: '100%' }} value={qzOrderIndex} onChange={e => setQzOrderIndex(e.target.value)} />
+                          </FormGroup>
+                          <FormGroup label="Pass Threshold % *">
+                            <input className="input" type="number" min="1" max="100" style={{ width: '100%' }} value={qzPassScorePercent} onChange={e => setQzPassScorePercent(e.target.value)} placeholder="e.g. 70" />
+                          </FormGroup>
+                        </div>
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
                           {qzEditing && (
                             <button className="btn btn-ghost" onClick={() => resetQuizForm()}>Cancel</button>
@@ -1861,6 +1937,94 @@ export default function Dramas() {
                     </>
                   )}
                 </>
+              )}
+
+              {/* CERTIFICATE RULES TAB */}
+              {courseworkTab === 'certificate' && (
+                <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  <div style={{ background: 'var(--bg3)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
+                          Course Completion Certificate Settings
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>
+                          Configure automated PDF certificate issuance rules for students upon completing this course.
+                        </div>
+                      </div>
+                      <Toggle
+                        checked={certEnabled}
+                        onChange={setCertEnabled}
+                        label={certEnabled ? 'Certificate Enabled' : 'Certificate Disabled'}
+                      />
+                    </div>
+
+                    {certEnabled && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 4 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Completion Requirements (Check all required criteria)
+                        </div>
+
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', background: 'var(--bg2)', padding: 14, borderRadius: 8, border: '1px solid var(--border)' }}>
+                          <input
+                            type="checkbox"
+                            checked={certReqVideos}
+                            onChange={e => setCertReqVideos(e.target.checked)}
+                            style={{ accentColor: 'var(--accent2)', width: 18, height: 18 }}
+                          />
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                              Require 100% Video Watch Completion
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>
+                              Student must complete all published course video lectures (&ge; 90% watch progress per video).
+                            </div>
+                          </div>
+                        </label>
+
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', background: 'var(--bg2)', padding: 14, borderRadius: 8, border: '1px solid var(--border)' }}>
+                          <input
+                            type="checkbox"
+                            checked={certReqQuizzes}
+                            onChange={e => setCertReqQuizzes(e.target.checked)}
+                            style={{ accentColor: 'var(--accent2)', width: 18, height: 18 }}
+                          />
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                              Require Passing Score on All Active Quizzes
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>
+                              Student must score at or above each quiz's designated passing percentage. (Safeguarded if 0 quizzes exist).
+                            </div>
+                          </div>
+                        </label>
+
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', background: 'var(--bg2)', padding: 14, borderRadius: 8, border: '1px solid var(--border)' }}>
+                          <input
+                            type="checkbox"
+                            checked={certReqAssignments}
+                            onChange={e => setCertReqAssignments(e.target.checked)}
+                            style={{ accentColor: 'var(--accent2)', width: 18, height: 18 }}
+                          />
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                              Require Approved Grade on All Active Assignments
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>
+                              Student must receive a teacher-approved grade at or above the minimum required letter grade. (Safeguarded if 0 assignments exist).
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+                      <button className="btn btn-primary" onClick={handleSaveCertificateConfig} disabled={certSaving}>
+                        {certSaving ? 'Saving Rules...' : 'Save Certificate Settings'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           </>

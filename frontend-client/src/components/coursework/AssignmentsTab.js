@@ -39,15 +39,19 @@ export default function AssignmentsTab({ assignments, loading, showId, onSubmiss
           const isLocked = a.is_locked;
           const submission = a.submission;
           const status = submission?.status;
+          const letterGradeText = submission?.letter_grade ? submission.letter_grade.replace('GRADE_', 'Grade ') : null;
 
           let statusLabel = 'Pending';
           let statusStyle = styles.badgePending;
           if (isLocked) {
             statusLabel = 'Locked';
             statusStyle = styles.badgeLocked;
-          } else if (status === 'GRADED') {
-            statusLabel = `Graded · ${submission.score}`;
+          } else if (status === 'GRADED_PASSED' || status === 'GRADED') {
+            statusLabel = letterGradeText ? `Approved · ${letterGradeText}` : `Approved · ${submission?.score}`;
             statusStyle = styles.badgeGraded;
+          } else if (status === 'NEEDS_REVISION') {
+            statusLabel = letterGradeText ? `Needs Revision (${letterGradeText})` : 'Needs Revision';
+            statusStyle = styles.badgeNeedsRevision;
           } else if (status === 'SUBMITTED') {
             statusLabel = 'Submitted';
             statusStyle = styles.badgeSubmitted;
@@ -55,7 +59,7 @@ export default function AssignmentsTab({ assignments, loading, showId, onSubmiss
 
           const dueText = a.due_at
             ? `Due: ${new Date(a.due_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`
-            : null;
+            : a.min_passing_grade ? `Min Required: ${a.min_passing_grade.replace('GRADE_', 'Grade ')}` : null;
 
           return (
             <Pressable
@@ -189,6 +193,9 @@ const useStyles = (theme) => StyleSheet.create({
   },
   badgeGraded: {
     backgroundColor: 'rgba(52,199,89,0.2)',
+  },
+  badgeNeedsRevision: {
+    backgroundColor: 'rgba(255,149,0,0.2)',
   },
   badgeLocked: {
     backgroundColor: 'rgba(142,142,147,0.1)',

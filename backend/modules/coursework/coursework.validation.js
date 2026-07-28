@@ -2,17 +2,21 @@ import Joi from 'joi';
 
 const createAssignmentSchema = Joi.object({
   title: Joi.string().min(1).max(255).required(),
-  problem_statement: Joi.string().min(1).required(),
+  problem_statement: Joi.string().allow(null, '').optional(),
   due_at: Joi.date().iso().allow(null).optional(),
+  due_date: Joi.date().iso().allow(null).optional(),
   order_index: Joi.number().integer().min(0).required(),
+  min_passing_grade: Joi.string().valid('GRADE_A', 'GRADE_B', 'GRADE_C', 'GRADE_D', 'GRADE_F').optional(),
   is_active: Joi.boolean().default(true),
 });
 
 const updateAssignmentSchema = Joi.object({
   title: Joi.string().min(1).max(255),
-  problem_statement: Joi.string().min(1),
-  due_at: Joi.date().iso().allow(null),
+  problem_statement: Joi.string().allow(null, '').optional(),
+  due_at: Joi.date().iso().allow(null).optional(),
+  due_date: Joi.date().iso().allow(null).optional(),
   order_index: Joi.number().integer().min(0),
+  min_passing_grade: Joi.string().valid('GRADE_A', 'GRADE_B', 'GRADE_C', 'GRADE_D', 'GRADE_F'),
   is_active: Joi.boolean(),
 }).min(1);
 
@@ -33,12 +37,14 @@ const updateMaterialSchema = Joi.object({
 const createQuizSchema = Joi.object({
   title: Joi.string().min(1).max(255).required(),
   order_index: Joi.number().integer().min(0).required(),
+  pass_score_percent: Joi.number().integer().min(1).max(100).optional(),
   is_active: Joi.boolean().default(true),
 });
 
 const updateQuizSchema = Joi.object({
   title: Joi.string().min(1).max(255),
   order_index: Joi.number().integer().min(0),
+  pass_score_percent: Joi.number().integer().min(1).max(100),
   is_active: Joi.boolean(),
 }).min(1);
 
@@ -62,9 +68,10 @@ const createQuizQuestionSchema = Joi.object({
 });
 
 const gradeSubmissionSchema = Joi.object({
-  score: Joi.number().integer().min(0).max(100).required(),
+  score: Joi.number().integer().min(0).max(100).optional(),
+  letter_grade: Joi.string().valid('GRADE_A', 'GRADE_B', 'GRADE_C', 'GRADE_D', 'GRADE_F').optional(),
   feedback: Joi.string().allow('', null).optional(),
-});
+}).or('score', 'letter_grade');
 
 const submitQuizAnswersSchema = Joi.object({
   answers: Joi.array().items(

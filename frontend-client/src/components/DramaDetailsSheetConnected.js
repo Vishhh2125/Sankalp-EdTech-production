@@ -5,6 +5,7 @@ import {
   Animated,
   Dimensions,
   Image,
+  Linking,
   Modal,
   Pressable,
   ScrollView,
@@ -18,6 +19,7 @@ import { formatCount } from './shortVideoPlayer/utils';
 import { useTheme } from '../context/ThemeContext';
 import { API_BASE_URL } from '../constants/config';
 import { courseworkApi } from '../services/courseworkApi';
+import { downloadFile } from '../utils/fileDownloader';
 import AssignmentsTab from './coursework/AssignmentsTab';
 import MaterialsTab from './coursework/MaterialsTab';
 import QuizTab from './coursework/QuizTab';
@@ -367,6 +369,7 @@ export default function DramaDetailsSheetConnected({
   const [quizzes, setQuizzes] = useState([]);
   const [quizzesLoading, setQuizzesLoading] = useState(false);
   const [quizzesFetched, setQuizzesFetched] = useState(false);
+  const [certStatus, setCertStatus] = useState(null);
 
   const handleAssignmentSubmitted = useCallback((assignmentId, submission) => {
     setAssignments((current) => current.map((assignment) => (
@@ -394,6 +397,14 @@ export default function DramaDetailsSheetConnected({
     setAssignmentsFetched(false);
     setMaterialsFetched(false);
     setQuizzesFetched(false);
+    setCertStatus(null);
+
+    // Fetch certificate status for show
+    if (item.show_id) {
+      courseworkApi.getCertificateStatus(item.show_id)
+        .then(res => setCertStatus(res.data || null))
+        .catch(() => setCertStatus(null));
+    }
   }, [visible, initialTab, item]);
 
   // Fetch coursework data on tab switch
@@ -663,6 +674,46 @@ export default function DramaDetailsSheetConnected({
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.content}
               >
+                {/* Course Certificate Card */}
+                {(certStatus?.rules?.certificate_enabled || certStatus?.config?.certificate_enabled) && (
+                  <View style={styles.certCardRoot}>
+                    {certStatus.is_issued ? (
+                      <View style={styles.certIssuedRow}>
+                        <View style={styles.certIconBadge}>
+                          <Ionicons name="ribbon" size={24} color="#F59E0B" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.certCardTitle}>Course Certificate Earned! 🎉</Text>
+                          <Text style={styles.certCardSubtitle}>
+                            Code: {certStatus.certificate?.certificate_code}
+                          </Text>
+                        </View>
+                        <Pressable
+                          style={({ pressed }) => [styles.certDownloadBtn, pressed && styles.certDownloadBtnPressed]}
+                          onPress={() => {
+                            if (certStatus.certificate?.pdf_url) {
+                              downloadFile(certStatus.certificate.pdf_url, `${title || 'Course'}_Certificate`, 'pdf');
+                            }
+                          }}
+                        >
+                          <Ionicons name="download-outline" size={14} color="#FFF" />
+                          <Text style={styles.certDownloadBtnText}>PDF</Text>
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <View style={styles.certReqRow}>
+                        <Ionicons name="ribbon-outline" size={20} color={theme.primary} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.certReqTitle}>Official Completion Certificate</Text>
+                          <Text style={styles.certReqSub}>
+                            Complete required lectures, quizzes, and assignments to earn your certificate.
+                          </Text>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                )}
+
                 {tab === 'synopsis' ? (
                   <View>
                     <Text style={styles.synopsis}>{synopsisText}</Text>
@@ -1285,5 +1336,68 @@ const useStyles = (theme) => StyleSheet.create({
     fontSize: 13,
     color: theme.textMuted,
     flex: 1,
+  },
+  certCardRoot: {
+    backgroundColor: theme.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.3)',
+    padding: 12,
+    marginBottom: 16,
+  },
+  certIssuedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  certIconBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(245,158,11,0.15)',
+    alignItems: 'center',
+    justify: 'center',
+  },
+  certCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: theme.white || theme.text,
+  },
+  certCardSubtitle: {
+    fontSize: 11,
+    color: theme.gray || theme.textMuted,
+    marginTop: 2,
+  },
+  certDownloadBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F59E0B',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 4,
+  },
+  certDownloadBtnPressed: {
+    opacity: 0.8,
+  },
+  certDownloadBtnText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  certReqRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  certReqTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: theme.white || theme.text,
+  },
+  certReqSub: {
+    fontSize: 11,
+    color: theme.gray || theme.textMuted,
+    marginTop: 2,
   },
 });

@@ -108,6 +108,7 @@ model User {
   graded_submissions     AssignmentSubmission[] @relation("GradedSubmissions")
   quiz_attempts          QuizAttempt[]
   package_purchases      PackagePurchase[]
+  certificates           Certificate[]
 
   @@map("users")
 }
@@ -298,6 +299,10 @@ model Show {
   teacher_id          String?  @db.Uuid
   teacher             User?    @relation("TeacherShows", fields: [teacher_id], references: [id], onDelete: SetNull)
   approval_status     ApprovalStatus @default(PUBLISHED)
+  certificate_enabled Boolean  @default(false)
+  cert_req_videos     Boolean  @default(true)
+  cert_req_quizzes    Boolean  @default(true)
+  cert_req_assignments Boolean @default(true)
 
   category          Category         @relation(fields: [category_id], references: [id])
   episodes          Episode[]
@@ -315,6 +320,7 @@ model Show {
   show_access       ShowAccess[]
   package_shows     PackageShow[]
   live_streams      LiveStream[]
+  certificates      Certificate[]
 
   @@index([category_id, is_active], name: "idx_shows_category")
   @@index([feed_position, is_active], name: "idx_shows_feed_position")
@@ -720,6 +726,8 @@ enum SubmissionStatus {
   PENDING
   SUBMITTED
   GRADED
+  GRADED_PASSED
+  NEEDS_REVISION
 }
 
 model Assignment {
@@ -729,6 +737,7 @@ model Assignment {
   problem_statement String   @db.Text
   due_at            DateTime?
   order_index       Int
+  min_passing_grade String   @default("GRADE_C") @db.VarChar(20)
   is_active         Boolean  @default(true)
   created_at        DateTime @default(now())
 
@@ -746,6 +755,7 @@ model AssignmentSubmission {
   attachment_url String?          @db.VarChar(500)
   status         SubmissionStatus @default(PENDING)
   score          Int?
+  letter_grade   String?          @db.VarChar(10)
   feedback       String?          @db.Text
   graded_by      String?          @db.Uuid
   graded_at      DateTime?
@@ -778,12 +788,13 @@ model Material {
 }
 
 model Quiz {
-  id          String   @id @default(uuid()) @db.Uuid
-  show_id     String   @db.Uuid
-  title       String   @db.VarChar(255)
-  order_index Int
-  is_active   Boolean  @default(true)
-  created_at  DateTime @default(now())
+  id                 String   @id @default(uuid()) @db.Uuid
+  show_id            String   @db.Uuid
+  title              String   @db.VarChar(255)
+  order_index        Int
+  pass_score_percent Int      @default(70)
+  is_active          Boolean  @default(true)
+  created_at         DateTime @default(now())
 
   show      Show           @relation(fields: [show_id], references: [id], onDelete: Cascade)
   questions QuizQuestion[]
@@ -833,8 +844,29 @@ model QuizAttempt {
   user    User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
   answers QuizAnswer[]
 
-  @@unique([quiz_id, user_id])
+  @@index([quiz_id, user_id], name: "idx_qa_quiz_user")
   @@map("quiz_attempts")
+}
+
+// ──────────────────────────────────────
+// CERTIFICATES
+// ──────────────────────────────────────
+
+model Certificate {
+  id               String   @id @default(uuid()) @db.Uuid
+  user_id          String   @db.Uuid
+  show_id          String   @db.Uuid
+  certificate_code String   @unique @db.VarChar(50)
+  issued_at        DateTime @default(now())
+  snapshot_data    Json
+  pdf_url          String?  @db.VarChar(500)
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  show Show @relation(fields: [show_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, show_id], name: "idx_cert_user_show")
+  @@index([show_id], name: "idx_cert_show")
+  @@map("certificates")
 }
 
 model QuizAnswer {

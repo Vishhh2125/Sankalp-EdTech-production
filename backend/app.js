@@ -32,6 +32,7 @@ import packageRouter from './modules/content/package.router.js';
 import teacherRouter from './modules/teacher/teacher.routes.js';
 import geoRouter from './modules/geo/geo.routes.js';
 import { adminCmsRouter, clientCmsRouter } from './modules/cms/cms.routes.js';
+import certificateRouter from './modules/certificate/certificate.router.js';
 import helmet from 'helmet';
 
 import morgan from 'morgan';
@@ -180,6 +181,7 @@ app.use('/api/v1/wallet', walletRouter);
 app.use('/api/content', contentRouter);
 app.use('/api/content', courseworkRouter);
 app.use('/api/content', packageRouter);
+app.use('/api/content', certificateRouter);
 app.use('/api/feed', feedRouter);
 app.use('/api/media', mediaRouter);
 app.use('/api/user', userRouter); // NEW
@@ -192,6 +194,8 @@ app.use('/api/geo', geoRouter);
 app.use('/api/v1/geo', geoRouter);
 app.use('/api/v1/cms', clientCmsRouter);
 app.use('/api/v1/admin/cms', adminCmsRouter);
+app.use('/api', certificateRouter);
+app.use('/api/v1', certificateRouter);
 
 // ============= 404 HANDLER =============
 
