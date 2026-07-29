@@ -28,7 +28,7 @@ services:
   # ── Nginx reverse proxy ────────────────────────────────────────────────────
   nginx:
     image: nginx:alpine
-    container_name: ott-nginx
+    container_name: edtech-nginx
 
     ports:
       - "8080:80"
@@ -58,7 +58,7 @@ services:
   admin:
     # ✅ No build: — image pulled from GHCR by GitHub Actions CI
     image: ghcr.io/vishhh2125/sankalp-edtech-production/ott-admin:latest
-    container_name: ott-admin
+    container_name: edtech-admin
 
     deploy:
       resources:
@@ -73,7 +73,7 @@ services:
   backend:
     # ✅ No build: — image pulled from GHCR by GitHub Actions CI
     image: ghcr.io/vishhh2125/sankalp-edtech-production/ott-backend:latest
-    container_name: ott-backend
+    container_name: edtech-backend
 
     command:
       [
@@ -122,7 +122,7 @@ services:
   worker:
     # ✅ Same image as backend — no second build needed
     image: ghcr.io/vishhh2125/sankalp-edtech-production/ott-backend:latest
-    container_name: ott-worker
+    container_name: edtech-worker
 
     command: ["node", "workers/transcode.worker.js"]
 
@@ -155,7 +155,7 @@ services:
   # ── PostgreSQL — public image, unchanged ───────────────────────────────────
   postgres:
     image: postgres:16-alpine
-    container_name: ott-postgres
+    container_name: edtech-postgres
 
     ports:
       - "5432:5432"
@@ -179,7 +179,7 @@ services:
   # ── Redis — public image, unchanged ───────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: ott-redis
+    container_name: edtech-redis
 
     command: redis-server --maxmemory 8gb --maxmemory-policy noeviction
 
@@ -198,7 +198,7 @@ services:
   # ── MinIO object storage — public image, unchanged ────────────────────────
   minio:
     image: minio/minio:latest
-    container_name: ott-minio
+    container_name: edtech-minio
 
     command: server /data --console-address ':9001'
 
@@ -225,7 +225,7 @@ services:
   prisma-studio:
     # ✅ Reuses the backend image — no separate build needed
     image: ghcr.io/vishhh2125/sankalp-edtech-production/ott-backend:latest
-    container_name: ott-prisma-studio
+    container_name: edtech-prisma-studio
 
     command: >
       sh -c "npx prisma generate && npx prisma studio --port 5555 --browser none --hostname 0.0.0.0"
