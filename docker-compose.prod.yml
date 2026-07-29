@@ -83,9 +83,6 @@ services:
 
     # ✅ No source volume mount — code is baked into the image
     # prisma schema is baked into the image at /app/prisma
-    # MOUNTING server.js locally to fix the missing module error in the GHCR image
-    volumes:
-      - ./backend/server.js:/app/server.js
 
     ports:
       - "3001:3000"
