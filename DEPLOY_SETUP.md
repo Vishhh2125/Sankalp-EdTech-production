@@ -1,7 +1,5 @@
 # OTT Platform — Production Server Setup Guide (Windows)
 
-Run these commands ONCE on your Windows instance (e.g. EC2 Windows Server) before the first deploy. After this, every git push to main will auto-deploy via GitHub Actions.
-
 ## STEP 1 — Install Docker & Docker Compose (Windows Server)
 
 1. Install Docker Desktop for Windows (if using a standard Windows VM) or Docker Engine. You can download it from: [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)
