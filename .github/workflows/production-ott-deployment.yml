@@ -3,8 +3,7 @@ name: Production OTT Deployment
 on:
   push:
     branches:
-      - main
-      - post_7k
+      -edutech_platform_v1
 
 permissions:
   packages: write
