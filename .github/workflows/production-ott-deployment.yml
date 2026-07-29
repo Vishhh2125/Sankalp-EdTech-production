@@ -63,7 +63,7 @@ jobs:
           key: ${{ secrets.PROD_SERVER_SSH_KEY }}
           port: ${{ secrets.PROD_SERVER_PORT }}
           script: |
-            cd /d C:\ott-platform
+            cd /d C:\Users\Administrator\Desktop\EDUTECH-CICD
 
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d --no-deps backend worker admin
