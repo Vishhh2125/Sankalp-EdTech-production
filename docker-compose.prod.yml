@@ -31,7 +31,7 @@ services:
     container_name: edtech-nginx
 
     ports:
-      - "8080:80"
+      - "8081:80"
 
     volumes:
       # nginx.conf must be present on the server in ./nginx/nginx.conf
@@ -88,7 +88,7 @@ services:
       - ./backend/server.js:/app/server.js
 
     ports:
-      - "3000:3000"
+      - "3001:3000"
 
     # All secrets live in .env.production on the server (never committed to git)
     env_file:
@@ -158,7 +158,7 @@ services:
     container_name: edtech-postgres
 
     ports:
-      - "5432:5432"
+      - "5433:5432"
 
     # Credentials read from .env.production
     env_file:
@@ -203,8 +203,8 @@ services:
     command: server /data --console-address ':9001'
 
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "9002:9000"
+      - "9003:9001"
 
     # Credentials read from .env.production
     env_file:
@@ -231,7 +231,7 @@ services:
       sh -c "npx prisma generate && npx prisma studio --port 5555 --browser none --hostname 0.0.0.0"
 
     ports:
-      - "5555:5555"
+      - "5556:5555"
 
     env_file:
       - .env.production
